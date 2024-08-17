@@ -1,0 +1,179 @@
+{% extends 'inicio/base_home.html' %}
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <img class="wave" src="https://raw.githubusercontent.com/Jhonierpc/WebDevelopment/master/Login%20Responsive/img/wave.png" alt="">
+    <div class="container">
+        <div class="img">
+            <img src="{% static 'img/10711566_2085.jpg' %}" alt="">
+        </div>
+        <div class="login-container">
+            <form id="loginForm" method="post">
+                {% csrf_token %}
+                <h2>Inicio de sesión</h2>
+                <div class="input-div one">
+                    <div class="i">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h5>Usuario</h5>
+                        <input name="username" class="input" type="text" required>
+                    </div>
+                </div>
+                <div class="input-div two">
+                    <div class="i">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div>
+                        <h5>Contraseña</h5>
+                        <input name="password" class="input" type="password" required>
+                    </div>
+                </div>
+                <button class="iniciar_btn" type="submit">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="userTypeModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <p>¿Desea continuar como cliente o tienda?</p>
+            <button id="clienteButton">Cliente</button>
+            <button id="tiendaButton">Tienda</button>
+        </div>
+    </div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch("{% url 'login' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Accept': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                if (data.role === 'both') {
+                    // Mostrar el modal si el usuario tiene ambos registros
+                    document.getElementById('userTypeModal').style.display = 'block';
+                    // Guardar el nombre de usuario para validaciones posteriores
+                    document.getElementById('userTypeModal').setAttribute('data-username', formData.get('username'));
+                } else if (data.role === 'cliente') {
+                    window.location.href = "{% url 'index_cliente' %}";
+                } else if (data.role === 'tienda') {
+                    window.location.href = "{% url 'index' %}";
+                }
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Ha habido un problema con su operación de recuperación:', error);
+            alert('Error en la conexión. Inténtelo de nuevo más tarde.');
+        });
+    });
+
+    document.getElementById('clienteButton').addEventListener('click', function() {
+        validateUser('cliente');
+    });
+
+    document.getElementById('tiendaButton').addEventListener('click', function() {
+        validateUser('tienda');
+    });
+
+    function validateUser(role) {
+        const username = document.getElementById('userTypeModal').getAttribute('data-username');
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const url = role === 'cliente' ? "{% url 'validate_cliente' %}" : "{% url 'validate_tienda' %}";
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `username=${username}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                const redirectUrl = role === 'cliente' ? "{% url 'index_cliente' %}" : "{% url 'index' %}";
+                window.location.href = redirectUrl;
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Ha habido un problema con su operación de recuperación.:', error);
+            alert('Error en la conexión. Inténtelo de nuevo más tarde.');
+        });
+    }
+
+</script>
+
+    <style>
+            /* Modal Background */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .modal-content button {
+            margin: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content #clienteButton {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .modal-content #tiendaButton {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+
+    <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="{% static 'js/login.js' %}"></script>
+{% endblock %}

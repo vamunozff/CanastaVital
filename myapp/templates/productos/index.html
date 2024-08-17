@@ -1,0 +1,168 @@
+{% extends 'administrador/base.html' %}
+{% load static %}
+{% block content %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Productos asignados{% endblock %}</title>
+  </head>
+  <body>
+  <main>
+    <section class="p-3">
+    <h2>Consulta de productos asigandos</h2><br>
+        <!-- Alert Messages -->
+        {% if messages %}
+          <div class="container mt-3">
+            {% for message in messages %}
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong class="text-dark">{{ message }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-12">
+                <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Asignar producto <i class="bi bi-people"></i></button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <table id="example" class="table table-striped" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Proveedor</th>
+                            <th>Producto</th>
+                            <th>Tienda</th>
+                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Estado</th>
+                            <th>Fecha de Registro</th>
+                            <th colspan="3">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto_tienda in productos_tiendas %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ producto_tienda.proveedor.razon_social }}</td>
+                            <td>{{ producto_tienda.producto.nombre }}</td>
+                            <td>{{ producto_tienda.usuario.first_name }}</td>
+                            <td>{{ producto_tienda.precio_unitario }}</td>
+                            <td>{{ producto_tienda.cantidad }}</td>
+                            <td>{{ producto_tienda.estado }}</td>
+                            <td>{{ producto_tienda.fecha_registro }}</td>
+                            <td>
+                                <button name="btnVer" class="btn btn-success" onclick="window.location.href='ver_producto/{{ producto_tienda.id }}'"><i class="bi bi-eye"></i></button>
+                                <button name="btnActualizar" class="btn btn-primary" onclick="window.location.href='actualizar_producto/{{ producto_tienda.id }}'"><i class="bi bi-pencil-square"></i></button>
+                                <form action="{% url 'eliminar_producto' producto_tienda.id %}" method="POST" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="button" class="btn btn-danger btnEliminacion"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnEliminacion = document.querySelectorAll(".btnEliminacion");
+
+            btnEliminacion.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const confirmacion = confirm('¿Seguro de eliminar el producto asociado?');
+                    if (confirmacion) {
+                        e.target.closest('form').submit();
+                    } else {
+                        e.preventDefault();
+                    }
+                });
+            });
+            // Ocultar el mensaje de éxito después de 3 segundo
+            setTimeout(function() {
+                const successAlert = document.querySelector('.alert-success');
+                if (successAlert) {
+                    successAlert.style.display = 'none';
+                }
+            }, 3000); // 3000 milisegundos = 1 segundo
+        });
+    </script>
+    <!--Modal Form-->
+    <div class="modal fade" id="userForm">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Completa el formulario</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/asignarProducto/" method="POST" id="myForm">
+                        {% csrf_token %}
+                        <div class="inputField">
+                            <div>
+                                <label for="name" class="form-label">Producto:</label>
+                                <select id="txtProducto_id" name="txtProducto_id" class="form-select" required>
+                                    <option value="" selected disabled>Seleccione un producto a asignar</option>
+                                    {% for producto in productos %}
+                                        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="name" class="form-label">Proveedor:</label>
+                                <select id="txtProveedor_id" name="txtProveedor_id" class="form-select" required>
+                                    <option value="" selected disabled>Seleccione un proveedor</option>
+                                    {% for proveedor in proveedores %}
+                                        <option value="{{ proveedor.id }}">{{ proveedor.razon_social }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                {% if productos_tiendas %}
+                                    {% with primer_producto=productos_tiendas.0 %}
+
+                                        <label for="txtUsuario" class="form-label">Nombre del usuario:</label>
+                                        <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ primer_producto.usuario.first_name }}" disabled>
+
+                                    {% endwith %}
+                                {% else %}
+                                    <p>No hay productos asignados.</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="city" class="form-label">Precio Unitario:</label>
+                                <input class="form-control" type="number" id="txtPrecioUnitario" name="txtPrecioUnitario" required>
+                            </div>
+                            <div>
+                                <label for="email" class="form-label">Cantidad:</label>
+                                <input class="form-control" type="number" id="txtCantidad" name="txtCantidad" min="1" value="1" required>
+                            </div>
+                            <div>
+                                <label for="phone" class="form-label">Estado:</label>
+                                <select id="txtEstado" name="txtEstado" class="form-select" required>
+                                    <option value="activo">Activo</option>
+                                    <option value="inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" form="myForm" class="btn btn-primary submit">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+  </main>
+  </body>
+</html>
+{% endblock %}

@@ -1,0 +1,135 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Base{% endblock %}</title>
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/admin_1.css' %}">
+</head>
+
+<body>
+    <div class="wrapper">
+        <aside id="sidebar">
+            <div class="d-flex">
+                <button class="toggle-btn" type="button">
+                    <i class="bi bi-house"></i>
+                </button>
+                <div class="sidebar-logo">
+                    <a href="/index/">Tu Tienda</a>
+                </div>
+            </div>
+            <ul class="sidebar-nav">
+                <li class="sidebar-item">
+                    <a href="/perfil_tienda/" class="sidebar-link">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Perfil</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/index_proveedor/" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Proveedor</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/index_producto/" class="sidebar-link">
+                        <i class="bi bi-bag-check-fill"></i>
+                        <span>Productos</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/index_producto/" class="sidebar-link">
+                        <i class="bi bi-currency-exchange"></i>
+                        <span>Promociones y ofertas</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
+                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                        <i class="bi bi-receipt"></i>
+                        <span>Historial de ventas</span>
+                    </a>
+                    <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link">A la espera</a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link">A la espera</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">
+                        <i class="lni lni-popup"></i>
+                        <span>Gestión de inventario</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/index_producto/" class="sidebar-link">
+                        <i class="bi bi-bag-check-fill"></i>
+                        <span>Análisis y reportes</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/index_producto/" class="sidebar-link">
+                        <i class="bi bi-gear-fill"></i>
+                        <span>Confi. Metodos de pago</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">
+                        <i class="lni lni-cog"></i>
+                        <span>Atención al cliente</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="{% url 'exit' %}" class="sidebar-link">
+                    <i class="lni lni-exit"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </aside>
+        <div class="main">
+            <nav class="navbar navbar-expand px-4 py-3">
+                <form action="#" class="d-none d-sm-inline-block">
+                    <label>Usuario: {{ user.username | upper }}</label>
+                </form>
+                <div class="navbar-collapse collapse">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item dropdown">
+                            <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
+
+                                <img src="{% static 'img/user_people.png' %}" class="avatar img-fluid" alt="">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end rounded">
+                                <a href="/perfil_tienda/" class="dropdown-item" >
+                                    <i class="bi bi-person-check"></i>
+                                    <span>Perfil</span>
+                                </a>
+                                <a href="{% url 'exit' %}" class="dropdown-item" >
+                                    <i class="lni lni-timer"></i>
+                                    <span>Salir</span>
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            {% block content %}
+
+            {% endblock %}
+        </div>
+    </div>
+    <script src="{% static 'js/base.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</body>
+
+</html>

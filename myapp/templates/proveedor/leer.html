@@ -1,0 +1,50 @@
+{% extends 'administrador/base.html' %}
+
+{% block title %} Ver Proveedor {% endblock %}
+
+{% block content %}
+    <main>
+    <div>
+        <br class="container">
+        <h2>Proveedor</h2>
+                    <form action="{% url 'leer_proveedor' proveedores.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="inputField">
+
+                            <div>
+                                {% if request.user.is_authenticated %}
+                                    <label for="txtUsuario" class="form-label">Usuario asignado:</label>
+                                    <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ request.user.first_name }}" disabled>
+                                {% else %}
+                                    <p>Error al mostrar el usuario logueado.</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="city" class="form-label">Razon Social:</label>
+                                <input class="form-control" type="text" id="txtRazonSocial" name="txtRazonSocial" value="{{ proveedores.razon_social }}" disabled>
+                            </div>
+                            <div>
+                                <label for="city" class="form-label">Email:</label>
+                                <input class="form-control" type="email" id="txtEmail" name="txtEmail" value="{{ proveedores.email }}" disabled>
+                            </div>
+                            <div>
+                                <label for="city" class="form-label">Télefono:</label>
+                                <input class="form-control" type="number" id="numTelefono" name="numTelefono" value="{{ proveedores.telefono }}" disabled>
+                            </div>
+                            <div>
+                                <label for="city" class="form-label">Dirección:</label>
+                                <input class="form-control" type="text" id="txtdireccion" name="txtdireccion" value="{{ proveedores.direccion }}" disabled>
+                            </div>
+                            <div>
+                                <label for="city" class="form-label">Estado:</label>
+                                <input class="form-control" type="text" id="txtEstado" name="txtEstado" value="{{ proveedores.estado }}" disabled>
+                            </div>
+                        </div>
+                    <br>
+                        <div class="form-group">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='/index_proveedor'">Volver</button>
+                        </div>
+                    </form>
+    </div>
+    </main>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'inicio/base_home.html' %}
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+</head>
+<body>
+      <div class="container">
+          <div class="img">
+              <img src="{% static  'img/ingresoDatos.png' %}" alt="">
+          </div>
+          <div class="login-container">
+              <form action="" method="post">
+                {% csrf_token %}
+                <h2>Registro de usuario</h2>
+
+                <div class="input-div one">
+                    <div class="i">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h5>Nombre de usuario</h5>
+                        <input name="username" class="input" type="text" value="{{ form.username.value|default_if_none:'' }}">
+                        <div class="error text-danger">{{ form.username.errors }}</div>
+                    </div>
+                </div>
+                <div class="input-div one">
+                  <div class="i">
+                      <i class="fa-regular fa-user"></i>
+                  </div>
+                  <div>
+                      <h5>Nombre</h5>
+                      <input name="first_name" class="input" type="text" value="{{ form.first_name.value|default_if_none:'' }}">
+                      <div class="error text-danger">{{ form.first_name.errors }}</div>
+                  </div>
+              </div>
+                <div class="input-div one">
+                  <div class="i">
+                      <i class="fa-solid fa-phone"></i>
+                  </div>
+                  <div>
+                      <h5>Apellido</h5>
+                      <input name="last_name" class="input" type="text" value="{{ form.last_name.value|default_if_none:'' }}">
+                      <div class="error text-danger">{{ form.last_name.errors }}</div>
+                  </div>
+              </div>
+{#                <div class="input-div one">#}
+{#                  <div class="i">#}
+{#                      <i class="fa-solid fa-at"></i>#}
+{#                  </div>#}
+{#                  <div>#}
+{#                      <h5>Correo Eléctronico</h5>#}
+{#                      <input name="email" class="input" type="email" value="{{ form.email.value|default_if_none:'' }}">#}
+{#                      <div class="error text-danger">{{ form.email.errors }}</div>#}
+{#                  </div>#}
+{#              </div>#}
+              <div class="input-div one">
+                  <div class="i">
+                      <i class="fa-solid fa-address-book"></i>
+                  </div>
+                  <div>
+                      <h5>Contraseña</h5>
+                      <input name="password1" class="input" type="password">
+                      <div class="error text-danger">{{ form.password1.errors }}</div>
+                  </div>
+              </div>
+              <div class="input-div one">
+                  <div class="i">
+                      <i class="fa-solid fa-address-book"></i>
+                  </div>
+                  <div>
+                      <h5>Confirmar Contraseña</h5>
+                      <input name="password2" class="input" type="password">
+                      <div class="error text-danger">{{ form.password2.errors }}</div>
+                  </div>
+              </div>
+                <button class="registrar_btn" type="submit">Registrarse</button>
+              </form>
+          </div>
+      </div>
+      <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
+      <script type="text/javascript" src="{% static  'js/login.js' %}"></script>
+  </body>
+</html>
+{% endblock %}

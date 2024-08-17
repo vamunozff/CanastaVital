@@ -1,0 +1,54 @@
+
+h2 {
+  margin-bottom: 50px;
+}
+
+.container {
+  text-align: center;
+  overflow: hidden;
+  width: 800px;
+  margin: 0 auto;
+}
+
+.container table {
+  width: 100%;
+}
+
+.container td, .container th {
+  padding: 10px;
+}
+
+.container td:first-child, .container th:first-child {
+  padding-left: 20px;
+}
+
+.container td:last-child, .container th:last-child {
+  padding-right: 20px;
+}
+
+.container th {
+  border-bottom: 1px solid #ddd;
+  position: relative;
+}
+
+input[type="button"] {
+	transition: all .3s;
+    border: 1px solid #ddd;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+	font-size: 15px;
+}
+
+input[type="button"]:not(.active) {
+	background-color:transparent;
+}
+
+.active {
+	background-color: #111111;
+	color :#fff;
+}
+
+input[type="button"]:hover:not(.active) {
+	background-color: #ddd;
+}

@@ -1,0 +1,49 @@
+table tr td{
+    vertical-align: middle;
+}
+
+td button{
+    margin: 5px;
+}
+
+td button i{
+    font-size: 20px;
+}
+
+
+.modal-header{
+    background: #0d6efd;
+    color: #fff;
+}
+
+.modal-body form {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0;
+}
+
+.modal-body form .imgholder{
+    width: 100px;
+    height: 200px;
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.upload i{
+    color: #fff;
+    font-size: 35px;
+}
+
+.imgholder:hover .upload{
+    display: flex;
+}
+
+.modal-body form .inputField{
+    flex-basis: 100%;
+    border-left: 5px groove blue;
+    padding-left: 20px;
+}
+
+

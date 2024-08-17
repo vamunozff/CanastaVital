@@ -1,0 +1,77 @@
+{% extends 'administrador/base.html' %}
+{% block content %}
+{% load static %}
+    <html>
+    <head>
+    <link rel="stylesheet" href="{% static 'css/main.min.css' %}">
+        <title>Catálogo ISC</title>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap.no-icons.min.css" rel="stylesheet">
+    </head>
+    <body>
+    <main>
+        <section class="container">
+        <br>
+	    <h2>Consulta de usuarios registrados</h2>
+            <br>
+            <select class="select-table-filter" data-table="order-table" type="search">
+    <option value="">Área temática </option>
+    <option value="Políticas públicas">Políticas públicas</option>
+    <option value="Herramientas de gestión">Herramientas de gestión</option>
+	<option value="Procedimientos">Procedimientos</option>
+	<option value="Informática">Informática</option>
+	<option value="Habilidades laborales">Habilidades laborales</option>
+	<option value="Personales">Personales</option>
+  </select>
+            <select class="select-table-filter" data-table="order-table" type="search">
+    <option value="">Agrupamiento </option>
+    <option value="AC">AC</option>
+    <option value="AAyE">AAyE</option>
+	<option value="EM">EM</option>
+	<option value="IyV">IyV</option>
+	<option value="SGyM">SGyM</option>
+	<option value="ASS">ASS</option>
+	<option value="TIC">TIC</option>
+	<option value="GG">GG</option>
+	  </select>
+            <select class="select-table-filter" data-table="order-table" type="search">
+    <option value="">Orientación </option>
+    <option value="Formación general">General</option>
+    <option value="Orientado al agrupamiento">Orientado</option>
+	<option value="Complementario al agrupamiento">Complementario</option>
+	  </select>
+            
+<input type="search" class="light-table-filter" data-table="order-table" placeholder="buscar en el catálogo" />
+        
+            <table id="myTable" class="order-table">
+            <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Correo electrónico</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Fecha de Registro</th>
+                        <th>Opciones</th>
+            </tr>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.first_name }}</td>
+                    <td>{{ user.last_name }}</td>
+                    <td>{{ user.date_joined }}</td>
+                    <td><a><i class="fa-regular fa-eye"></i></a></td>
+                    <td><a><i class="fa-regular fa-trash-can"></i></a></td>
+                    <td><a><i class="fa-regular fa-pen-to-square"></i></a></td> 
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </section>
+    <script src="{% static  'js/main.js' %}"></script>
+            <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script> 
+    </main>
+    </body>
+    </html>
+{% endblock %}

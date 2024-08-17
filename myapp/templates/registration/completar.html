@@ -1,0 +1,36 @@
+{% extends 'inicio/base_home.html' %}
+{% block title %} Completar formulario {% endblock %}
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Cliente</title>
+</head>
+<body>
+    <label>Usuario: {{ user.username|upper }}</label>
+    <h2>Registro de Cliente</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% if cliente_form.errors %}
+            <div class="errors">
+                <ul>
+                    {% for field in cliente_form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in cliente_form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        {{ cliente_form.as_p }}
+        <button type="submit">Guardar</button>
+    </form>
+</body>
+</html>
+{% endblock %}

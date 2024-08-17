@@ -1,0 +1,109 @@
+{% extends 'administrador/base.html' %}
+{% block content %}
+{% load static %}
+    <html>
+    <head>
+
+        <title>{% block title %}Productos Asignados{% endblock %}</title>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap.no-icons.min.css" rel="stylesheet">
+
+    </head>
+    <body>
+    <main>
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <h2>Gestión de productos</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <form action="/asignarProducto/" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="txtProducto_id">Seleccione un producto:</label>
+                            <select id="txtProducto_id" name="txtProducto_id" class="form-control" required>
+                                <option value="" selected disabled>Seleccione un producto a asignar</option>
+                                {% for producto in productos %}
+                                    <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            {% if productos_tiendas %}
+                                {% with primer_producto=productos_tiendas.0 %}
+                                    <label for="txtUsuario">Nombre del Usuario:</label>
+                                    <input type="text" id="txtUsuario" name="txtUsuario" class="form-control" value="{{ primer_producto.usuario.first_name }}" readonly>
+                                {% endwith %}
+                            {% else %}
+                                <p>No hay productos asignados.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="txtPrecioUnitario">Precio Unitario:</label>
+                            <input type="text" id="txtPrecioUnitario" name="txtPrecioUnitario" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="txtCantidad">Cantidad:</label>
+                            <input type="number" id="txtCantidad" name="txtCantidad" class="form-control" min="1" value="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="txtEstado">Estado:</label>
+                            <select id="txtEstado" name="txtEstado" class="form-control" required>
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12 col-md-12 col-lg-8 col-xl-8">
+            <h2>Consulta de productos asigandos</h2><br>
+                <div class="table-responsive py-2">
+                        <input type="search" class="light-table-filter" data-table="order-table" placeholder="Buscar en el catálogo" />
+                            <table id="myTable" class="order-table table table-striped">
+                            <tr>
+                                        <th>ID</th>
+                                        <th>Producto</th>
+                                        <th>Tienda</th>
+                                        <th>Precio Unitario</th>
+                                        <th>Cantidad</th>
+                                        <th>Estado</th>
+                                        <th>Fecha de Registro</th>
+                                        <th colspan="">Opciones</th>
+                            </tr>
+                            <tbody>
+                                {% for producto_tienda in productos_tiendas %}
+                                <tr>
+                                    <td>{{ producto_tienda.id }}</td>
+                                    <td>{{ producto_tienda.producto.nombre }}</td>
+                                    <td>{{ producto_tienda.usuario.first_name }}</td>
+                                    <td>{{ producto_tienda.precio_unitario }}</td>
+                                    <td>{{ producto_tienda.cantidad }}</td>
+                                    <td>{{ producto_tienda.estado }}</td>
+                                    <td>{{ producto_tienda.fecha_registro }}</td>
+                                    <td>
+                                        <a href="verPrductosTiendas/{{ producto_tienda.id }}"><i class="fa-regular fa-eye"></i></a>
+                                        <a href="eliminarPrductosTiendas/{{ producto_tienda.id }}"><i class="fa-regular fa-trash-can"></i></a>
+                                        <a href="actualizarProductosTiendas/{{ producto_tienda.id }}"><i class="fa-regular fa-pen-to-square"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="{% static  'js/main.js' %}"></script>
+    <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
+    </body>
+    </html>
+{% endblock %}
