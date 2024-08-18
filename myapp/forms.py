@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Proveedor, Cliente, Tienda
+from .models import Proveedor, Cliente, Tienda, ProductosTiendas
 
 class CustomUserCreationForm(UserCreationForm):
     
@@ -23,3 +23,11 @@ class TiendaForm(forms.ModelForm):
     class Meta:
         model = Tienda
         fields = ['nombre', 'direccion', 'horarios', 'telefono', 'descripcion', 'logo_url']
+
+class ProductosTiendasForm(forms.ModelForm):
+    class Meta:
+        model = ProductosTiendas
+        fields = ['producto', 'proveedor', 'precio_unitario', 'cantidad', 'estado', 'imagen']
+        widgets = {
+            'estado': forms.Select(choices=[('activo', 'Activo'), ('inactivo', 'Inactivo')]),
+        }

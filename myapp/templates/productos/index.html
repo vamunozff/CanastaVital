@@ -34,6 +34,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Imagen</th>
                             <th>Proveedor</th>
                             <th>Producto</th>
                             <th>Tienda</th>
@@ -48,6 +49,13 @@
                         {% for producto_tienda in productos_tiendas %}
                         <tr>
                             <td>{{ forloop.counter }}</td>
+                            <td>
+                                {% if producto_tienda.imagen %}
+                                    <img src="{{ producto_tienda.imagen.url }}" alt="{{ producto_tienda.producto.nombre }}" width="50" height="50">
+                                {% else %}
+                                    No Image
+                                {% endif %}
+                            </td>
                             <td>{{ producto_tienda.proveedor.razon_social }}</td>
                             <td>{{ producto_tienda.producto.nombre }}</td>
                             <td>{{ producto_tienda.usuario.first_name }}</td>
@@ -102,7 +110,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="/asignarProducto/" method="POST" id="myForm">
+                    <form action="/asignarProducto/" method="POST" enctype="multipart/form-data" id="myForm">
                         {% csrf_token %}
                         <div class="inputField">
                             <div>
@@ -151,6 +159,10 @@
                                     <option value="activo">Activo</option>
                                     <option value="inactivo">Inactivo</option>
                                 </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="logo_url" class="form-label">Imagen:</label>
+                                <input type="file" class="form-control" id="logo_url" name="logo_url">
                             </div>
                         </div>
                     </form>

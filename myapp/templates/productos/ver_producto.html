@@ -3,15 +3,20 @@
 {% block title %} Ver Producto {% endblock %}
 
 {% block content %}
-    <main>
-    <div>
-        <br class="container">
-        <h2>Producto en Tiendas</h2>
+<main class="d-flex justify-content-center align-items-center vh-100">
+    <div class="container col-md-6">
+
+        <h2>Producto en tienda</h2>
         <form action="{% url 'leer_proveedor' producto_tienda.id %}" method="POST">
             {% csrf_token %}
 
+         <!-- Image Display Section -->
+            <div class="text-center mb-4">
+                <img src="{{ producto_tienda.imagen.url }}" alt="Imagen del Producto" class="img-fluid" style="max-width: 300px;">
+            </div>
+
             <div class="form-group">
-                <label for="txtProductoId">Seleccione un producto:</label>
+                <label for="txtProductoId">Producto:</label>
                 <select id="txtProductoId" name="txtProductoId" class="form-select" disabled>
                     <option value="{{ producto_tienda.producto.id }}" selected>{{ producto_tienda.producto.nombre }}</option>
                     {% for producto in productos %}
@@ -19,6 +24,7 @@
                     {% endfor %}
                 </select>
             </div>
+
             <div>
                 <label for="name" class="form-label">Proveedor:</label>
                 <select id="txtProveedor_id" name="txtProveedor_id" class="form-select" disabled>
@@ -28,6 +34,7 @@
                     {% endfor %}
                 </select>
             </div>
+
             <div class="form-group">
                 <label for="txtUsuario" class="form-label">Nombre del Usuario:</label>
                 <input type="text" id="txtUsuario" name="txtUsuario" class="form-control" value="{{ producto_tienda.usuario.first_name }}" disabled>
@@ -54,5 +61,5 @@
             <button type="button" class="btn btn-secondary" onclick="window.location.href='/index_producto'">Volver</button>
         </form>
     </div>
-    </main>
+</main>
 {% endblock %}

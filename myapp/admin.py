@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, Venta, DetalleVenta, Inventario, MetodoPago, AtencionCliente
+from django.utils.html import mark_safe
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
@@ -15,14 +16,14 @@ class ProductoAdmin(admin.ModelAdmin):
 
 @admin.register(ProductosTiendas)
 class ProductosTiendasAdmin(admin.ModelAdmin):
-    list_display = ('producto', 'proveedor', 'usuario', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro')
+    list_display = ('producto', 'proveedor', 'usuario', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro', 'imagen_preview')
     list_filter = ('estado', 'fecha_registro', 'producto__categoria', 'proveedor')
     search_fields = ('producto__nombre', 'proveedor__razon_social', 'usuario__username')
     list_per_page = 20
 
     fieldsets = (
         ('Información General', {
-            'fields': ('producto', 'proveedor', 'usuario')
+            'fields': ('producto', 'proveedor', 'usuario', 'imagen')
         }),
         ('Detalles de Inventario', {
             'fields': ('precio_unitario', 'cantidad', 'estado', 'fecha_registro')
@@ -35,6 +36,13 @@ class ProductosTiendasAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         queryset = queryset.select_related('producto', 'proveedor', 'usuario')
         return queryset
+
+    def imagen_preview(self, obj):
+        if obj.imagen:
+            return mark_safe(f'<img src="{obj.imagen.url}" width="50" height="50" />')
+        return "No Image"
+
+    imagen_preview.short_description = 'Vista Previa'
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):

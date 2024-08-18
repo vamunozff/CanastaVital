@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda
 from django.contrib import messages
+from .forms import ProductosTiendasForm
 import logging
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -19,7 +20,6 @@ def hello(request):
 
 def login(request):
     return render(request, 'registration/login.html')
-
 
 def login_view(request):
     if request.method == 'POST':
@@ -122,7 +122,6 @@ def perfil(request):
         cliente_form = ClienteForm(request.POST, instance=cliente)
         if cliente_form.is_valid():
             cliente_form.save()
-            # Redirige o muestra un mensaje de éxito si es necesario
     else:
         cliente_form = ClienteForm(instance=cliente)
     return render(request, 'administrador/perfil.html',{'cliente_form': cliente_form, 'cliente': cliente, 'user': request.user})
@@ -160,7 +159,6 @@ def validate_cliente(request):
             return JsonResponse({'valid': True})
         else:
             return JsonResponse({'valid': False, 'error': 'Usuario no registrado como cliente.'})
-
 @csrf_exempt
 def validate_tienda(request):
     if request.method == 'POST':
@@ -184,7 +182,6 @@ def categoria(request):
     return render(request, 'categorias/categorias.html')
 def ver_productos(request):
     return render(request, 'productos/ver_productos.html')
-
 def vista(request):
     return render(request, 'productos/vista.html')
 @login_required
@@ -197,6 +194,13 @@ def asignarProducto(request):
             precio_unitario = request.POST.get('txtPrecioUnitario')
             cantidad = int(request.POST.get('txtCantidad'))
             estado = request.POST.get('txtEstado')
+            imagen = request.FILES.get('logo_url')  # Obtener el archivo de imagen
+
+            # Default image path
+            default_image_path = 'productos_tiendas/Default.jpg'
+            # Use default image if no image is provided
+            if not imagen:
+                imagen = default_image_path
 
             producto = Producto.objects.get(id=producto_id)
             proveedor = Proveedor.objects.get(id=proveedor_id)
@@ -207,7 +211,8 @@ def asignarProducto(request):
                 usuario=request.user,
                 precio_unitario=precio_unitario,
                 cantidad=cantidad,
-                estado=estado
+                estado=estado,
+                imagen=imagen  # Asignar el archivo de imagen o la imagen por defecto
             )
 
             nuevo_producto_tienda.full_clean()  # Validar todos los campos antes de guardar
@@ -225,14 +230,17 @@ def asignarProducto(request):
         except Exception as e:
             messages.error(request, f'Error al asignar el producto: {str(e)}')
 
+    # Recuperar proveedores y productos asignados por el usuario
     proveedores = Proveedor.objects.filter(productostiendas__usuario=request.user).distinct()
     productos_tiendas = ProductosTiendas.objects.filter(usuario=request.user)
 
+    # Renderizar la plantilla con datos
     return render(request, 'productos/index.html', {
         'productos': Producto.objects.all(),
         'proveedores': proveedores,
         'productos_tiendas': productos_tiendas
     })
+
 def actualizarProductosTiendas(request, id):
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
     if request.method == 'POST':
@@ -278,39 +286,33 @@ def index_producto(request):
 def ver_producto(request, id):
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
     return render(request, 'productos/ver_producto.html', {'producto_tienda': producto_tienda})
+
 @login_required
 def actualizar_producto(request, id):
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
 
     if request.method == 'POST':
-        try:
-            precio_unitario = request.POST.get('txtPrecioUnitario')
-            cantidad = request.POST.get('txtCantidad')
-            estado = request.POST.get('txtEstado')
+        form = ProductosTiendasForm(request.POST, request.FILES, instance=producto_tienda)
 
-            # Convertir cantidad a entero si es válido
-            if cantidad:
-                cantidad = int(cantidad)
-
-            # Actualizar los campos específicos en la instancia existente
-            producto_tienda.precio_unitario = precio_unitario
-            producto_tienda.cantidad = cantidad
-            producto_tienda.estado = estado
-
-            producto_tienda.full_clean()  # Validar todos los campos antes de guardar
-            producto_tienda.save()
-
+        if form.is_valid():
+            form.save()
             messages.success(request, '¡Producto actualizado!')
             return redirect('index_producto')
+        else:
+            # Print errors for debugging
+            for field in form:
+                print(f"Errores en el campo {field.label}: {field.errors}")
+            print("Errores generales del formulario:", form.non_field_errors())
+            messages.error(request, 'Por favor, corrija los errores en el formulario.')
 
-        except ValueError:
-            messages.error(request, 'Por favor, ingrese valores numéricos válidos para cantidad.')
-        except Exception as e:
-            messages.error(request, f'Error al actualizar el producto: {str(e)}')
+    else:
+        form = ProductosTiendasForm(instance=producto_tienda)
 
     return render(request, 'productos/actualizar_producto.html', {
+        'form': form,
         'producto_tienda': producto_tienda,
     })
+
 @login_required
 def eliminar_producto(request, id):
     productosTiendas = get_object_or_404(ProductosTiendas, id=id)

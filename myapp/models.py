@@ -66,6 +66,8 @@ class ProductosTiendas(models.Model):
     estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
+    imagen = models.ImageField(upload_to='productos_tiendas/', null=True, blank=True, verbose_name="Imagen del Producto")
+
     def __str__(self):
         return f"{self.producto.nombre} - {self.proveedor.razon_social} - {self.usuario.username}"
 

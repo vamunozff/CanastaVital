@@ -1,59 +1,99 @@
 {% extends 'administrador/base.html' %}
 
+{% load static %}  <!-- Add this line to load static files -->
+
 {% block title %} Actualizar Producto {% endblock %}
 
 {% block content %}
-    <main>
-    <br>
-    <h2>Actualizar Producto en Tiendas</h2>
-    <form action="{% url 'actualizar_producto' producto_tienda.id %}" method="POST">
-        {% csrf_token %}
+    <main class="d-flex justify-content-center align-items-center vh-100">
+        <div class="container col-md-6">
+            <h2>Actualizar Producto</h2>
+            <form action="{% url 'actualizar_producto' producto_tienda.id %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+                <div class="text-center mb-4">
+                    <br>
+                    {% if producto_tienda.imagen %}
+                        <img id="imagen-preview" src="{{ producto_tienda.imagen.url }}" alt="{{ producto_tienda.producto.nombre }}" width="100"><br>
+                        <p id="imagen-status">Imagen Actual</p><br>
+                    {% else %}
+                        <img id="imagen-preview" src="{% static 'default-image.png' %}" alt="Imagen Predeterminada" width="100"><br>
+                        <p id="imagen-status">Sin Imagen Actual</p><br>
+                    {% endif %}
 
-        <div class="form-group">
-            <label for="txtProductoId" class="form-label">Producto:</label>
-            <select id="txtProductoId" name="txtProductoId" class="form-select" disabled>
-                <option value="{{ producto_tienda.producto.id }}" selected>{{ producto_tienda.producto.nombre }}</option>
-                {% for producto in productos %}
-                    <option value="{{ producto.id }}">{{ producto.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-            <div>
-                <label for="name" class="form-label">Proveedor:</label>
-                <select id="txtProveedor_id" name="txtProveedor_id" class="form-select" disabled>
+                    <label for="imagen" class="form-label">Actualizar Imagen:</label>
+                    <input type="file" id="imagen" name="imagen" class="form-control" onchange="previewImage(event)">
+                </div>
+
+            <div class="form-group">
+                <label for="txtProductoId" class="form-label">Nombre del producto:</label>
+                <select id="txtProductoId" name="producto" class="form-select" required>
+                    <option value="{{ producto_tienda.producto.id }}" selected>{{ producto_tienda.producto.nombre }}</option>
+                    {% for producto in productos %}
+                        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="txtProveedor_id" class="form-label">Proveedor:</label>
+                <select id="txtProveedor_id" name="proveedor" class="form-select" required>
                     <option value="{{ producto_tienda.proveedor.id }}" selected>{{ producto_tienda.proveedor.razon_social }}</option>
                     {% for proveedor in proveedores %}
                         <option value="{{ proveedor.id }}">{{ proveedor.razon_social }}</option>
                     {% endfor %}
                 </select>
             </div>
-        <div class="form-group">
-            <label for="txtUsuario" class="form-label">Nombre del Usuario:</label>
-            <input type="text" id="txtUsuario" name="txtUsuario" class="form-control" value="{{ producto_tienda.usuario.first_name }}" readonly>
+
+            <div class="form-group">
+                <label for="txtPrecioUnitario" class="form-label">Precio Unitario:</label>
+                <input type="text" id="txtPrecioUnitario" name="precio_unitario" class="form-control" value="{{ producto_tienda.precio_unitario }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="txtCantidad" class="form-label">Cantidad:</label>
+                <input type="number" id="txtCantidad" name="cantidad" class="form-control" min="1" value="{{ producto_tienda.cantidad }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="txtEstado" class="form-label">Estado:</label>
+                <select id="txtEstado" name="estado" class="form-select" required>
+                    <option value="activo" {% if producto_tienda.estado == 'activo' %} selected {% endif %}>Activo</option>
+                    <option value="inactivo" {% if producto_tienda.estado == 'inactivo' %} selected {% endif %}>Inactivo</option>
+                </select>
+            </div>
+
+            <br>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'index_producto' %}'">Volver</button>
+            </div>
+        </form>
         </div>
 
-        <div class="form-group">
-            <label for="txtPrecioUnitario" class="form-label">Precio Unitario:</label>
-            <input type="text" id="txtPrecioUnitario" name="txtPrecioUnitario" class="form-control" value="{{ producto_tienda.precio_unitario }}" required>
-        </div>
+<script>
+function previewImage(event) {
+    var reader = new FileReader();
+    var imagePreview = document.getElementById('imagen-preview');
+    var imageStatus = document.getElementById('imagen-status');
 
-        <div class="form-group">
-            <label for="txtCantidad" class="form-label">Cantidad:</label>
-            <input type="number" id="txtCantidad" name="txtCantidad" class="form-control" min="1" value="{{ producto_tienda.cantidad }}" required>
-        </div>
+    if (event.target.files && event.target.files[0]) {
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.alt = 'Nueva Imagen Seleccionada';
+            imageStatus.textContent = 'Imagen a Modificar';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    } else {
+        // When no file is selected, keep the existing image or show a default image
+        var currentImageSrc = "{{ producto_tienda.imagen.url }}";
+        imagePreview.src = currentImageSrc ? currentImageSrc : "{% static 'default-image.png' %}";
+        imageStatus.textContent = currentImageSrc ? 'Imagen Actual' : 'Sin Imagen Actual';
+    }
+}
 
-        <div class="form-group">
-            <label for="txtEstado" class="form-label">Estado:</label>
-            <select id="txtEstado" name="txtEstado" class="form-select" required>
-                <option value="activo" {% if producto_tienda.estado == 'activo' %} selected {% endif %}>Activo</option>
-                <option value="inactivo" {% if producto_tienda.estado == 'inactivo' %} selected {% endif %}>Inactivo</option>
-            </select>
-        </div>
-<br>
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='/index_producto'">Volver</button>
-        </div>
-    </form>
+document.getElementById('imagen').addEventListener('change', previewImage);
+</script>
+
+
     </main>
 {% endblock %}
