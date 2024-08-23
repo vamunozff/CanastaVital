@@ -7,50 +7,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'myapp/css/principalStyle.css' %}">
 </head>
 <body>
-    <img class="wave" src="https://raw.githubusercontent.com/Jhonierpc/WebDevelopment/master/Login%20Responsive/img/wave.png" alt="">
-    <div class="container">
-        <div class="img">
-            <img src="{% static 'img/10711566_2085.jpg' %}" alt="">
-        </div>
-        <div class="login-container">
-            <form id="loginForm" method="post">
-                {% csrf_token %}
-                <h2>Inicio de sesión</h2>
-                <div class="input-div one">
-                    <div class="i">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <h5>Usuario</h5>
-                        <input name="username" class="input" type="text" required>
-                    </div>
+
+    <div class="login-page">
+        <img class="wave" src="https://img.freepik.com/vector-gratis/carro-tienda-edificio-tienda-dibujos-animados_138676-2085.jpg?t=st=1724441264~exp=1724444864~hmac=27f3dd86101bff287d15023b094d4d9edb98aa449e5d344625eaccb93c533b6b&w=740" alt="">
+            <div class="container">
+                <div class="img">
+                    <img src="{% static 'img/10711566_2085.jpg' %}" alt="">
                 </div>
-                <div class="input-div two">
-                    <div class="i">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div>
-                        <h5>Contraseña</h5>
-                        <input name="password" class="input" type="password" required>
-                    </div>
+                <div class="login-container">
+                    <form id="loginForm" method="post">
+                        {% csrf_token %}
+                        <h2>Inicio de sesión</h2>
+                        <div class="input-div one">
+                            <div class="i">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <h5>Usuario</h5>
+                                <input name="username" class="input" type="text" required>
+                            </div>
+                        </div>
+                        <div class="input-div two">
+                            <div class="i">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div>
+                                <h5>Contraseña</h5>
+                                <input name="password" class="input" type="password" required>
+                            </div>
+                        </div>
+                        <button class="iniciar_btn" type="submit">Ingresar</button>
+                    </form>
                 </div>
-                <button class="iniciar_btn" type="submit">Ingresar</button>
-            </form>
-        </div>
+            </div>
     </div>
 
     <!-- Modal -->
     <div id="userTypeModal" class="modal" style="display:none;">
         <div class="modal-content">
             <p>¿Desea continuar como cliente o tienda?</p>
-            <button id="clienteButton">Cliente</button>
-            <button id="tiendaButton">Tienda</button>
+            <div class="button-container">
+                <button id="clienteButton" class="btn btn-primary">Cliente</button>
+                <button id="tiendaButton" class="btn btn-secondary">Tienda</button>
+            </div>
         </div>
     </div>
-
+</body>
 <script>
     document.getElementById('loginForm').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -133,48 +138,48 @@
 </script>
 
     <style>
-            /* Modal Background */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
+/* Modal Background */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
 
-        /* Modal Content */
-        .modal-content {
-            background: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            text-align: center;
-        }
+/* Modal Content */
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    margin: auto;
+}
 
-        .modal-content button {
-            margin: 10px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+/* Flex container for buttons */
+.modal-content .button-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
 
-        .modal-content #clienteButton {
-            background-color: #5081e7;
-            color: white;
-        }
-
-        .modal-content #tiendaButton {
-            background-color: #df7f76;
-            color: white;
-        }
+/* Bootstrap Button Styles */
+.modal-content .btn {
+    flex: 1;
+    margin: 0 5px;
+}
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="{% static 'js/login.js' %}"></script>
+    <script type="text/javascript" src="{% static 'myapp/js/login.js' %}"></script>
+    <script type="text/javascript" src="{% static 'myapp/js/sweetalert2.mi.js' %}"></script>
 {% endblock %}

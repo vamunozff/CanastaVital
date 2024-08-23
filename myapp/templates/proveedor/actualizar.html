@@ -1,11 +1,11 @@
-{% extends 'administrador/base.html' %}
+{% extends 'administrador/../tiendas/base.html' %}
 
 {% block title %} Actualizar Proveesor {% endblock %}
 
 {% block content %}
     <main>
     <br>
-    <h2>Actualizar Proveedor</h2>
+            <h2>Actualizar Proveedor</h2>
                     <form action="{% url 'actualizar_proveedor' proveedores.id %}" method="POST">
                         {% csrf_token %}
                         <div class="inputField">

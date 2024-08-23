@@ -30,9 +30,7 @@ def login_view(request):
         if user is not None:
             auth_login(request, user)
 
-            # Verificar si el usuario tiene un registro como cliente
             es_cliente = Cliente.objects.filter(user=user).exists()
-            # Verificar si el usuario tiene un registro como tienda
             es_tienda = Tienda.objects.filter(user=user).exists()
 
             if es_cliente and es_tienda:
@@ -49,11 +47,11 @@ def login_view(request):
     return render(request, 'registration/login.html')
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'inicio/home.html')
 
 @login_required
 def index(request):
-    return render(request, 'administrador/index.html')
+    return render(request, 'tiendas/index.html')
 @login_required
 def confirmar_completar(request):
     if request.method == 'POST':
@@ -87,7 +85,6 @@ def confirmar_completar(request):
                     'cliente_form': ClienteForm()
                 })
 
-        # Si no es POST, se muestran los formularios vacíos
     cliente_form = ClienteForm()
     tienda_form = TiendaForm()
     return render(request, 'registration/confirmar_completar.html', {
@@ -124,7 +121,7 @@ def perfil(request):
             cliente_form.save()
     else:
         cliente_form = ClienteForm(instance=cliente)
-    return render(request, 'administrador/perfil.html',{'cliente_form': cliente_form, 'cliente': cliente, 'user': request.user})
+    return render(request, 'clientes/perfil.html',{'cliente_form': cliente_form, 'cliente': cliente, 'user': request.user})
 @login_required
 def perfil_tienda(request):
     tienda = get_object_or_404(Tienda, user=request.user)
@@ -141,13 +138,6 @@ def perfil_tienda(request):
 def index_cliente(request):
     cliente = get_object_or_404(Cliente, user=request.user)
     return render(request, 'clientes/index.html', {'cliente': cliente, 'user': request.user})
-
-def tienda(request):
-    return render(request, 'tiendas/tiendas.html')
-
-def cliente(request):
-    users = User.objects.all()
-    return render(request, 'clientes/clientes.html', {'users': users})
 
 @csrf_exempt
 def validate_cliente(request):
@@ -169,24 +159,13 @@ def validate_tienda(request):
             return JsonResponse({'valid': True})
         else:
             return JsonResponse({'valid': False, 'error': 'Usuario no registrado como tienda.'})
-def lista_productos(request):
-    productos = Producto.objects.all()
 
-    if request.user.is_authenticated:
-        productos_tiendas = ProductosTiendas.objects.filter(usuario=request.user)
-        return render(request, 'productos/productos.html', {'productos': productos, 'productos_tiendas': productos_tiendas})
-    else:
-        messages.warning(request, 'Debe iniciar sesión para visualizar los productos asignados.')
-        return render(request, 'productos/productos.html', {'productos': productos})
 def categoria(request):
     return render(request, 'categorias/categorias.html')
-def ver_productos(request):
-    return render(request, 'productos/ver_productos.html')
-def vista(request):
-    return render(request, 'productos/vista.html')
+
 @login_required
 def asignarProducto(request):
-    print("Vista asignarProducto accedida")  # Punto de depuración
+    print("Vista asignarProducto accedida")
     if request.method == 'POST':
         try:
             producto_id = int(request.POST.get('txtProducto_id'))
@@ -194,11 +173,10 @@ def asignarProducto(request):
             precio_unitario = request.POST.get('txtPrecioUnitario')
             cantidad = int(request.POST.get('txtCantidad'))
             estado = request.POST.get('txtEstado')
-            imagen = request.FILES.get('logo_url')  # Obtener el archivo de imagen
+            imagen = request.FILES.get('logo_url')
 
-            # Default image path
             default_image_path = 'productos_tiendas/Default.jpg'
-            # Use default image if no image is provided
+
             if not imagen:
                 imagen = default_image_path
 
@@ -212,10 +190,10 @@ def asignarProducto(request):
                 precio_unitario=precio_unitario,
                 cantidad=cantidad,
                 estado=estado,
-                imagen=imagen  # Asignar el archivo de imagen o la imagen por defecto
+                imagen=imagen
             )
 
-            nuevo_producto_tienda.full_clean()  # Validar todos los campos antes de guardar
+            nuevo_producto_tienda.full_clean()
             nuevo_producto_tienda.save()
 
             messages.success(request, 'Producto asignado correctamente.')
@@ -230,36 +208,16 @@ def asignarProducto(request):
         except Exception as e:
             messages.error(request, f'Error al asignar el producto: {str(e)}')
 
-    # Recuperar proveedores y productos asignados por el usuario
     proveedores = Proveedor.objects.filter(productostiendas__usuario=request.user).distinct()
     productos_tiendas = ProductosTiendas.objects.filter(usuario=request.user)
 
-    # Renderizar la plantilla con datos
     return render(request, 'productos/index.html', {
         'productos': Producto.objects.all(),
         'proveedores': proveedores,
         'productos_tiendas': productos_tiendas
     })
 
-def actualizarProductosTiendas(request, id):
-    producto_tienda = get_object_or_404(ProductosTiendas, id=id)
-    if request.method == 'POST':
-        producto_id = request.POST.get('txtProductoId')
-        precio_unitario = request.POST.get('txtPrecioUnitario')
-        cantidad = request.POST.get('txtCantidad')
-        estado = request.POST.get('txtEstado')
 
-        producto_tienda.producto_id = producto_id
-        producto_tienda.precio_unitario = precio_unitario
-        producto_tienda.cantidad = cantidad
-        producto_tienda.estado = estado
-        producto_tienda.save()
-
-        messages.success(request, 'Producto actualizado.')
-        return redirect('productos')
-
-    productos = Producto.objects.all()
-    return render(request, 'productos/actualizarProductosTiendas.html', {'producto_tienda': producto_tienda})
 def actualizarProductosTiendas_list(request):
     pass
 def eliminarPrductosTiendas(request, id):

@@ -7,12 +7,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+    <link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
 </head>
 <body>
-      <div class="container">
+      <div class="registration-page">
+          <div class="container">
           <div class="img">
-              <img src="{% static  'img/ingresoDatos.png' %}" alt="">
+              <img src="{% static  'myapp/img/principalStyle.png' %}" alt="">
           </div>
           <div class="login-container">
               <form action="" method="post">
@@ -83,8 +84,9 @@
               </form>
           </div>
       </div>
+      </div>
       <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
-      <script type="text/javascript" src="{% static  'js/login.js' %}"></script>
+      <script type="text/javascript" src="{% static  'myapp/js/login.js' %}"></script>
   </body>
 </html>
 {% endblock %}

@@ -5,17 +5,18 @@
 <head runat="server">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Home</title>
-    <link href="{% static 'css/style.css' %}" rel="stylesheet" />
+    <link href="{% static 'myapp/css/principalStyle.css' %}" rel="stylesheet" />
 
 </head>
 <body>
-    <section class="contenedor">
-        <div class="contenedor-imag">
-            <p>Las mejores ofertas</p>
-            <h2>Todo lo relacionado a la Canasta Familiar</h2>
-            <a href="{% url 'ver_productos' %}">Ver productos</a>
-        </div>
-    </section>
+    <div class="mi-clase">
+        <section class="contenedor">
+            <div class="contenedor-imag">
+                <p>Las mejores ofertas</p>
+                <h2>Todo lo relacionado a la Canasta Familiar</h2>
+                <a href="">Ver productos</a>
+            </div>
+        </section>
 
     <main class="main-contenedor">
         <section class="contenedor-facturas">
@@ -25,7 +26,6 @@
                         <span>Envío gratuito a nivel nacional</span>
                         <p>En pedido superior a $100.000.00</p>
                     </div>
-                </div>
             </div>
             <div class="carrito-factura">
                 <i class="fa-solid fa-square-poll-horizontal"></i>
@@ -33,7 +33,6 @@
                         <span>Pago contra entrega</span>
                         <p>100% garantizado</p>
                     </div>
-                </div>
             </div>
             <div class="carrito-factura">
                 <i class="fa-solid fa-bell-concierge"></i>
@@ -41,19 +40,17 @@
                         <span>Servicio al cliente</span>
                         <p>Llámenos al +57 3008181855</p>
                     </div>
-                </div>
             </div>
         </section>
     </main>
 
-    <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script> 
     <!--::::Pie de Pagina::::::-->
     <footer class="pie-pagina">
         <div class="grupo-1">
             <div class="box">
                 <figure>
                     <a href="#">
-                        <img src="{% static  'img/ingresoDatos.png' %}" alt="Logo de SLee Dw">
+                        <img src="{% static  'myapp/img/ingresoDatos.png' %}" alt="Logo de SLee Dw">
                     </a>
                 </figure>
             </div>
@@ -76,6 +73,9 @@
             <small>&copy; 2023 <b>Tienda Virtual</b> - Todos los Derechos Reservados.</small>
         </div>
     </footer>
+    </div>
+
+    <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
 </body>
 
 {% endblock %}

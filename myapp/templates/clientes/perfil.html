@@ -1,0 +1,122 @@
+{% extends 'clientes/base.html' %}
+{% block content %}
+{% load static %}
+<html>
+<head runat="server">
+    <link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
+</head>
+<body>
+    <div class="custom-profile-section">
+            <i class="fa-solid fa-bars" id="MenuBtn"></i>
+        <main>
+            <section class="seccion-perfil-usuario">
+                <label>Perfil de Cliente</label>
+                <div class="perfil-usuario-header">
+                    <div class="perfil-usuario-portada">
+                        <div class="perfil-usuario-avatar">
+                            <img src="https://res.cloudinary.com/dykjms9kz/image/upload/v1693974173/UserVictual.png" alt="img-avatar">
+                            <button type="button" class="boton-avatar">
+                                <i class="far fa-image"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="perfil-usuario-body">
+                    <div class="perfil-usuario-bio">
+                        <h3 class="titulo">{{ user.first_name | upper }} {{ user.last_name | upper }}</h3>
+                        <p class="texto">Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.</p>
+                    </div>
+                    <div class="perfil-usuario-footer">
+                        <ul class="lista-datos">
+                            <li>
+                                <label><i class="icono bi bi-card-text"></i> Tipo de Documento:</label>
+                                <span>{{ cliente.get_tipo_documento_display }}</span>
+                            </li>
+                            <li>
+                                <label><i class="icono bi bi-calendar"></i> Fecha de Nacimiento:</label>
+                                <span>{{ cliente.fecha_nacimiento }}</span>
+                            </li>
+                            <li>
+                                <label><i class="bi bi-telephone"></i> Teléfono:</label>
+                                <span>{{ cliente.telefono }}</span>
+                            </li>
+                            <li>
+                                <label><i class="icono bi bi-envelope"></i> Email:</label>
+                                <span>{{ user.email }}</span>
+                            </li>
+                        </ul>
+                        <ul class="lista-datos">
+                            <li>
+                                <label><i class="icono bi bi-list-ol"></i> Número de Documento:</label>
+                                <span>{{ cliente.numero_documento }}</span>
+                            </li>
+                            <li>
+                                <label><i class="icono bi bi-house"></i> Dirección:</label>
+                                <span>{{ cliente.direccion }}</span>
+                            </li>
+                            <li>
+                                <label><i class="icono bi bi-calendar3"></i> Fecha de Registro:</label>
+                                <span>{{ cliente.fecha_registro }}</span>
+                            </li>
+                            <li>
+                                <label><i class="icono fas bi bi-person"></i> Usuario:</label>
+                                <span>{{ user.username }}</span>
+                            </li>
+                        </ul>
+                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#userForm">Actualizar perfil</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+     <!-- Modal for updating data -->
+        <div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userFormLabel">Actualizar Datos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form for updating data -->
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <!-- Add your form fields here -->
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ user.first_name }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ user.last_name }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="horarios" class="form-label">Tipo de Documento</label>
+                            <input type="text" class="form-control" id="horarios" name="horarios" value="{{ cliente.tipo_documento }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">N° Documento</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ cliente.numero_documento }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Teléfono</label>
+                            <input type="number"  class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Dirección</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion">{{ cliente.direccion }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="logo_url" class="form-label">Logo</label>
+                            <input type="file" class="form-control" id="logo_url" name="logo_url">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
+{% endblock %}

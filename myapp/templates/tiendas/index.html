@@ -1,0 +1,7 @@
+{% extends 'tiendas/base.html' %}
+{% block content %}
+
+                <h1>Bienvenido <br>{{ user.first_name | upper }} {{ user.last_name | upper }}<span></span></h1>
+                <p>Todo lo relacionado a la <span class="auto-input">canasta familiar.</span></p>
+
+{% endblock %}

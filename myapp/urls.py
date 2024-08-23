@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import login, hello, index, exit, register, home, perfil, tienda, cliente, lista_productos, categoria, ver_productos, vista, index_producto, index_proveedor, asignar_proveedor, register_cliente, perfil_tienda, index_cliente, login_view
+from .views import login, hello, index, exit, register, home, perfil, categoria, index_producto, index_proveedor, asignar_proveedor, register_cliente, perfil_tienda, index_cliente, login_view
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -12,16 +12,10 @@ urlpatterns = [
     path('register/', register, name='register'),
     path('perfil/', perfil, name='perfil'),
     path('perfil_tienda/', perfil_tienda, name='perfil_tienda'),
-    path('tiendas/', tienda, name='tiendas'),
-    path('clientes/', cliente, name='clientes'),
     path('index_cliente/', index_cliente, name='index_cliente'),
     path('categorias/', categoria, name='categorias'),
-    path('productos/', lista_productos, name='productos'),
-    path('ver_productos/', ver_productos, name='ver_productos'),
-    path('vista/', vista, name='vista'),
     path('asignarProducto/', views.asignarProducto),
     path('productos/eliminarPrductosTiendas/<int:id>', views.eliminarPrductosTiendas),
-    path('productos/actualizarProductosTiendas/<int:id>/', views.actualizarProductosTiendas, name='actualizarProductosTiendas'),
     path('productos/actualizarProductosTiendas/', views.actualizarProductosTiendas_list, name='actualizarProductosTiendas_list'),
     path('index_producto/', index_producto, name='index_producto'),
     path('index_producto/ver_producto/<int:id>/', views.ver_producto, name='ver_producto'),
@@ -33,7 +27,6 @@ urlpatterns = [
     path('index_proveedor/eliminar_proveedor/<int:id>/', views.eliminar_proveedor, name='eliminar_proveedor'),
     path('index_proveedor/actualizar_proveedor/<int:id>/', views.actualizar_proveedor, name='actualizar_proveedor'),
     path('index_proveedor/leer_proveedor/<int:id>/', views.leer_proveedor, name='leer_proveedor'),
-
     path('register_cliente/', views.register_cliente, name='register_cliente'),
     path('confirmar_completar/', views.confirmar_completar, name='confirmar_completar'),
     path('accounts/login/', login_view, name='login'),

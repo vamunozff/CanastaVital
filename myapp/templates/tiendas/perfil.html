@@ -1,99 +1,102 @@
-{% extends 'administrador/base.html' %}
+{% extends 'tiendas/base.html' %}
 {% block content %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/datos.css' %}">
+<link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
 
-<main>
-    <i class="fa-solid fa-bars" id="MenuBtn"></i>
-    <section class="seccion-perfil-usuario">
-        <label>Perfil de tienda</label>
-        <div class="perfil-usuario-header">
-            <div class="perfil-usuario-portada">
-                <div class="perfil-usuario-avatar">
-                    <img src="{{ tienda.logo_url.url }}" alt="Logo de {{ tienda.nombre }}">
-                    <button type="button" class="boton-avatar">
-                        <i class="far fa-image"></i>
-                    </button>
+    <div class="custom-profile-section">
+    <main>
+        <i class="fa-solid fa-bars" id="MenuBtn"></i>
+        <section class="seccion-perfil-usuario">
+            <label>Perfil de tienda</label>
+            <div class="perfil-usuario-header">
+                <div class="perfil-usuario-portada">
+                    <div class="perfil-usuario-avatar">
+                        <img src="{{ tienda.logo_url.url }}" alt="Logo de {{ tienda.nombre }}">
+                        <button type="button" class="boton-avatar">
+                            <i class="far fa-image"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="perfil-usuario-body">
+                <div class="perfil-usuario-bio">
+                    <h3 class="titulo">{{ tienda.nombre|upper }}</h3>
+                    <p class="texto">Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.</p>
+                </div>
+                <div class="perfil-usuario-footer">
+                    <ul class="">
+                        <li>
+                            <label><i class="bi bi-geo-alt-fill"></i> Dirección:</label>
+                            <span>{{ tienda.direccion }}</span>
+                        </li>
+                        <li>
+                            <br>
+                            <label><i class="icono bi bi-calendar"></i> Horario de atención:</label>
+                            <span>{{ tienda.horarios }}</span>
+                        </li>
+                        <li>
+                            <br>
+                            <label><i class="bi bi-stopwatch"></i> Teléfono:</label>
+                            <span>{{ tienda.telefono }}</span>
+                        </li>
+                        <li>
+                            <br>
+                            <label><i class="bi bi-info-circle"></i> Descripción:</label>
+                            <span>{{ tienda.descripcion }}</span>
+                        </li>
+                        <br>
+                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#userForm">Actualizar Datos</button>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for updating data -->
+    <div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userFormLabel">Actualizar Datos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form for updating data -->
+                    <form method="post" enctype="multipart/form-data" action="{% url 'perfil_tienda' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ tienda.nombre }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ tienda.direccion }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="horarios" class="form-label">Horarios</label>
+                            <input type="text" class="form-control" id="horarios" name="horarios" value="{{ tienda.horarios }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ tienda.telefono }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion">{{ tienda.descripcion }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="logo_url" class="form-label">Logo</label>
+                            <input type="file" class="form-control" id="logo_url" name="logo_url">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
                 </div>
             </div>
         </div>
-        <div class="perfil-usuario-body">
-            <div class="perfil-usuario-bio">
-                <h3 class="titulo">{{ tienda.nombre|upper }}</h3>
-                <p class="texto">Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.</p>
-            </div>
-            <div class="perfil-usuario-footer">
-                <ul class="">
-                    <li>
-                        <label><i class="bi bi-geo-alt-fill"></i> Dirección:</label>
-                        <span>{{ tienda.direccion }}</span>
-                    </li>
-                    <li>
-                        <br>
-                        <label><i class="icono bi bi-calendar"></i> Horario de atención:</label>
-                        <span>{{ tienda.horarios }}</span>
-                    </li>
-                    <li>
-                        <br>
-                        <label><i class="bi bi-stopwatch"></i> Teléfono:</label>
-                        <span>{{ tienda.telefono }}</span>
-                    </li>
-                    <li>
-                        <br>
-                        <label><i class="bi bi-info-circle"></i> Descripción:</label>
-                        <span>{{ tienda.descripcion }}</span>
-                    </li>
-                    <br>
-                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#userForm">Actualizar Datos</button>
-                </ul>
-            </div>
-
-        </div>
-    </section>
-</main>
-
-<!-- Modal for updating data -->
-<div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="userFormLabel">Actualizar Datos</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Form for updating data -->
-                <form method="post" enctype="multipart/form-data" action="{% url 'perfil_tienda' %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ tienda.nombre }}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="direccion" class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="direccion" name="direccion" value="{{ tienda.direccion }}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="horarios" class="form-label">Horarios</label>
-                        <input type="text" class="form-control" id="horarios" name="horarios" value="{{ tienda.horarios }}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="telefono" class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ tienda.telefono }}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="descripcion" class="form-label">Descripción</label>
-                        <textarea class="form-control" id="descripcion" name="descripcion">{{ tienda.descripcion }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="logo_url" class="form-label">Logo</label>
-                        <input type="file" class="form-control" id="logo_url" name="logo_url">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                </form>
-            </div>
-        </div>
     </div>
-</div>
+
+    </div>
 
 {% endblock %}
