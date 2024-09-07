@@ -85,12 +85,12 @@ class Cliente(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cliente')
-    direccion = models.TextField(null=True, blank=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
-    tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, null=True, blank=True)
-    numero_documento = models.CharField(max_length=50, null=True, blank=True)
+    tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, default='CC')
+    numero_documento = models.CharField(max_length=50, default='Sin número')
     fecha_registro = models.DateTimeField(auto_now_add=True)
+    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', null=True, blank=True)
 
     def __str__(self):
         return f'{self.user.username} - {self.numero_documento}'
@@ -113,6 +113,28 @@ class Tienda(models.Model):
 
     class Meta:
         db_table = 'Tienda'
+        verbose_name = 'Tienda'
+        verbose_name_plural = 'Tiendas'
+
+class Direccion(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
+    direccion = models.TextField()
+    ciudad = models.CharField(max_length=100)
+    departamento = models.CharField(max_length=100)
+    codigo_postal = models.CharField(max_length=10, null=True, blank=True)
+    principal = models.BooleanField(default=False)
+
+    def __str__(self):
+        if self.cliente:
+            return f'{self.cliente.user.username} - {self.direccion}'
+        elif self.tienda:
+            return f'{self.tienda.nombre} - {self.direccion}'
+        else:
+            return self.direccion
+    class Meta:
+        db_table = 'Direccion'
+
 class Promocion(models.Model):
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100)

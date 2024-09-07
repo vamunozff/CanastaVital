@@ -105,7 +105,7 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item dropdown">
                             <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-                                <img src="{% static 'img/user_people.png' %}" class="avatar img-fluid" alt="">
+                                <img src="{{ tienda.logo_url.url }}" class="avatar img-fluid"  alt="Logo de {{ tienda.nombre }}">
                             </a>
                             <div class="dropdown-menu dropdown-menu-end rounded">
                                 <a href="/perfil_tienda/" class="dropdown-item">

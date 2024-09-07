@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, Venta, DetalleVenta, Inventario, MetodoPago, AtencionCliente
+from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, Venta, DetalleVenta, Inventario, MetodoPago, AtencionCliente, Direccion
 from django.utils.html import mark_safe
 
 @admin.register(Categoria)
@@ -53,14 +53,26 @@ class ProveedorAdmin(admin.ModelAdmin):
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'tipo_documento', 'numero_documento', 'direccion', 'telefono', 'fecha_nacimiento', 'fecha_registro')
+    list_display = ('user', 'tipo_documento', 'numero_documento', 'telefono', 'fecha_nacimiento', 'fecha_registro', 'imagen_perfil')
     list_filter = ('tipo_documento', 'fecha_nacimiento')
     search_fields = ('user__username', 'numero_documento')
     ordering = ('-fecha_registro',)
 
-    # Personaliza los campos del formulario de edición en el admin
-    fields = ('user', 'direccion', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento')
+    fields = ('user', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil')
     readonly_fields = ('fecha_registro',)
+
+@admin.register(Direccion)
+class DireccionAdmin(admin.ModelAdmin):
+    list_display = ('cliente', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
+    search_fields = ('direccion', 'ciudad', 'departamento', 'codigo_postal')
+    list_filter = ('ciudad', 'departamento', 'principal')
+    ordering = ('-cliente',)
+
+    fieldsets = (
+        (None, {
+            'fields': ('cliente', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
+        }),
+    )
 
 @admin.register(Tienda)
 class TiendaAdmin(admin.ModelAdmin):

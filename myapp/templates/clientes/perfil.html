@@ -10,11 +10,10 @@
             <i class="fa-solid fa-bars" id="MenuBtn"></i>
         <main>
             <section class="seccion-perfil-usuario">
-                <label>Perfil de Cliente</label>
                 <div class="perfil-usuario-header">
                     <div class="perfil-usuario-portada">
                         <div class="perfil-usuario-avatar">
-                            <img src="https://res.cloudinary.com/dykjms9kz/image/upload/v1693974173/UserVictual.png" alt="img-avatar">
+                            <img src="{{ cliente.imagen_perfil.url }}" alt="Logo de {{ cliente.nombre }}">
                             <button type="button" class="boton-avatar">
                                 <i class="far fa-image"></i>
                             </button>
@@ -51,10 +50,6 @@
                                 <span>{{ cliente.numero_documento }}</span>
                             </li>
                             <li>
-                                <label><i class="icono bi bi-house"></i> Dirección:</label>
-                                <span>{{ cliente.direccion }}</span>
-                            </li>
-                            <li>
                                 <label><i class="icono bi bi-calendar3"></i> Fecha de Registro:</label>
                                 <span>{{ cliente.fecha_registro }}</span>
                             </li>
@@ -79,7 +74,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Form for updating data -->
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'perfil' %}">
                         {% csrf_token %}
                         <!-- Add your form fields here -->
                         <div class="mb-3">
@@ -103,12 +98,8 @@
                             <input type="number"  class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono }}">
                         </div>
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">Dirección</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion">{{ cliente.direccion }}</textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="logo_url" class="form-label">Logo</label>
-                            <input type="file" class="form-control" id="logo_url" name="logo_url">
+                            <label for="imagen_perfil" class="form-label">Logo</label>
+                            <input type="file" class="form-control" id="imagen_perfil" name="imagen_perfil">
                         </div>
                         <button type="submit" class="btn btn-primary">Guardar cambios</button>
                     </form>

@@ -33,21 +33,39 @@
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
+                    <a href="/busqueda_tiendas/" class="sidebar-link">
                         <i class="bi bi-people-fill"></i>
                         <span>Tiendas</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
                     <a href="" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Historial de pedidos</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link">
                         <i class="bi bi-bag-check-fill"></i>
-                        <span>Carrito</span>
+                        <span>Carrito de compras</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
                     <a href="" class="sidebar-link">
                         <i class="bi bi-currency-exchange"></i>
-                        <span>Historial de compra</span>
+                        <span>Ofertas y promociones</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link">
+                        <i class="bi bi-currency-exchange"></i>
+                        <span>Seguimiento de pedidos</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link">
+                        <i class="bi bi-currency-exchange"></i>
+                        <span>Direcciones guardadas</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
@@ -73,8 +91,7 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item dropdown">
                             <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-
-                                <img src="{% static 'img/user_people.png' %}" class="avatar img-fluid" alt="">
+                                <img src="{{ cliente.imagen_perfil.url }}" class="avatar img-fluid" alt="Logo de {{ cliente.nombre }}">
                             </a>
                             <div class="dropdown-menu dropdown-menu-end rounded">
                                 <a href="/perfil/" class="dropdown-item" >

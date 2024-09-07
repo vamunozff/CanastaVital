@@ -116,11 +116,14 @@ def perfil(request):
     cliente = get_object_or_404(Cliente, user=request.user)
 
     if request.method == 'POST':
-        cliente_form = ClienteForm(request.POST, instance=cliente)
+        cliente_form = ClienteForm(request.POST, request.FILES, instance=cliente)
         if cliente_form.is_valid():
             cliente_form.save()
+            messages.success(request, 'Perfil actualizado exitosamente.')
+            return redirect('perfil')
     else:
         cliente_form = ClienteForm(instance=cliente)
+
     return render(request, 'clientes/perfil.html',{'cliente_form': cliente_form, 'cliente': cliente, 'user': request.user})
 @login_required
 def perfil_tienda(request):
@@ -165,7 +168,6 @@ def categoria(request):
 
 @login_required
 def asignarProducto(request):
-    print("Vista asignarProducto accedida")
     if request.method == 'POST':
         try:
             producto_id = int(request.POST.get('txtProducto_id'))
@@ -216,7 +218,6 @@ def asignarProducto(request):
         'proveedores': proveedores,
         'productos_tiendas': productos_tiendas
     })
-
 
 def actualizarProductosTiendas_list(request):
     pass
@@ -313,7 +314,6 @@ def asignar_proveedor(request):
         except Exception as e:
             messages.error(request, f'Error al asignar el proveedor: {str(e)}')
 
-            # Obtener todos los proveedores para el usuario actual
     proveedores = Proveedor.objects.filter(usuario=request.user)
 
     return render(request, 'proveedor/index.html', {'proveedores': proveedores})
@@ -326,7 +326,6 @@ def eliminar_proveedor(request, id):
         messages.success(request, '¡Proveedor eliminado correctamente!')
         return redirect('index_proveedor')
 
-    # En caso de que no sea método POST, podrías considerar manejarlo de otra forma.
     return redirect('index_proveedor')
 @login_required
 def actualizar_proveedor(request, id):
@@ -340,8 +339,6 @@ def actualizar_proveedor(request, id):
             direccion = request.POST.get('txtdireccion')
             estado = request.POST.get('txtEstado')
 
-
-            # Actualizar los campos específicos en la instancia existente
             proveedores.razon_social = razon_social
             proveedores.email = email
             proveedores.telefono = telefono
@@ -379,3 +376,7 @@ def register_cliente(request):
     else:
             cliente_form = ClienteForm()
             return render(request, 'registration/completar.html',  {'cliente_form': cliente_form})
+
+def busqueda_tiendas(request):
+    tiendas = Tienda.objects.all()
+    return render(request, 'tiendas/busqueda.html', {'tiendas': tiendas})
