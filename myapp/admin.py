@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, Venta, DetalleVenta, Inventario, MetodoPago, AtencionCliente, Direccion
-from django.utils.html import mark_safe
+from django.utils.html import mark_safe, format_html
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
@@ -14,16 +14,18 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter = ('categoria', 'fecha_registro')
     ordering = ('nombre',)
 
+
 @admin.register(ProductosTiendas)
 class ProductosTiendasAdmin(admin.ModelAdmin):
-    list_display = ('producto', 'proveedor', 'usuario', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro', 'imagen_preview')
+    list_display = (
+    'producto', 'proveedor', 'tienda', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro', 'imagen_preview')
     list_filter = ('estado', 'fecha_registro', 'producto__categoria', 'proveedor')
-    search_fields = ('producto__nombre', 'proveedor__razon_social', 'usuario__username')
+    search_fields = ('producto__nombre', 'proveedor__razon_social', 'tienda__nombre')
     list_per_page = 20
 
     fieldsets = (
         ('Información General', {
-            'fields': ('producto', 'proveedor', 'usuario', 'imagen')
+            'fields': ('producto', 'proveedor', 'tienda', 'imagen')
         }),
         ('Detalles de Inventario', {
             'fields': ('precio_unitario', 'cantidad', 'estado', 'fecha_registro')
@@ -32,17 +34,12 @@ class ProductosTiendasAdmin(admin.ModelAdmin):
 
     readonly_fields = ('fecha_registro',)
 
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        queryset = queryset.select_related('producto', 'proveedor', 'usuario')
-        return queryset
-
     def imagen_preview(self, obj):
         if obj.imagen:
-            return mark_safe(f'<img src="{obj.imagen.url}" width="50" height="50" />')
-        return "No Image"
+            return format_html('<img src="{}" style="width: 100px; height: auto;">', obj.imagen.url)
+        return 'No Image'
 
-    imagen_preview.short_description = 'Vista Previa'
+    imagen_preview.short_description = 'Vista Previa de Imagen'
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):

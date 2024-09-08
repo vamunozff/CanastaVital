@@ -1,67 +1,53 @@
 {% extends 'clientes/base.html' %}
-{% block content %}
-{% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <meta name="description" content="Explora y busca tiendas por ciudad. Encuentra tiendas cercanas y descubre nuevas opciones.">
-  <title>Tiendas</title>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'myapp/css/prueba.css' %}">
-</head>
-<body>
-  <div class="container_busqueda">
-    <header>
-      <div class="logo">
-        <h1>Tiendas<span> Puedes realizar búsquedas por ciudad </span></h1>
-      </div>
-      <form action="{% url 'busqueda_tiendas' %}" method="GET">
-        <input type="text" class="search-bar" id="search-bar" name="search" placeholder="Buscar tiendas">
-          <button type="submit" class="btn btn-light">Buscar</button>
-      </form>
-      <nav class="categories" id="categories">
-        <a href="#" class="active">Todas</a>
-        <a href="#">Ciudad</a>
-        <a href="#">Tiendas cercanas</a>
-      </nav>
-    </header>
+{% block content %}{% load static %}
+<div class="container_busqueda">
+   <header>
+     <div class="logo">
+       <h1>Tiendas<span> Puedes realizar búsquedas por ciudad </span></h1>
+     </div>
+     <form action="{% url 'busqueda_tiendas' %}" method="GET">
+       <input type="text" class="search-bar" id="search-bar" name="search" placeholder="Buscar tiendas">
+         <button type="submit" class="btn btn-light">Buscar</button>
+     </form>
+     <nav class="categories" id="categories">
+       <a href="#" class="active">Todas</a>
+       <a href="#">Ciudad</a>
+       <a href="#">Tiendas cercanas</a>
+     </nav>
+   </header>
 
-        <section class="grid" id="grid">
-          {% if tiendas %}
-            {% for tienda in tiendas %}
-            <div class="item" data-categoria="Tienda" data-etiquetas="{{ tienda.nombre }}" data-descripcion="{{ tienda.descripcion }}">
-              <div class="item-content">
-                {% if tienda.logo_url %}
-                <img src="{{ tienda.logo_url.url }}" alt="{{ tienda.nombre }}" title="{{ tienda.nombre }}">
-                {% else %}
-                <img src="{% static 'myapp/img/Default.jpg' %}" alt="Logo por defecto" title="Logo por defecto">
-                {% endif %}
-              </div>
-              <h2>{{ tienda.nombre }}</h2>
-              <p>{{ tienda.direccion }}</p>
-              <p>Tel: {{ tienda.telefono }}</p>
-              <p>Horario: {{ tienda.horarios }}</p>
-            </div>
-            {% endfor %}
-          {% else %}
-            <p>No se encontraron tiendas que coincidan con tu búsqueda.</p>
-          {% endif %}
-        </section>
-
-    <section class="overlay" id="overlay">
-      <div class="container-img">
-        <button id="btn-close-popup">
-          <i class="fas fa-times"></i>
-        </button>
-        <img src="" alt="">
+   <section class="grid" id="grid">
+   {% if tiendas %}
+   {% for tienda in tiendas %}
+      <div class="item" data-categoria="Tienda" data-etiquetas="{{ tienda.nombre }}" data-descripcion="{{ tienda.descripcion }}">
+        <div class="item-content">
+          <a href="{% url 'busqueda_productos' tienda.id %}">
+            {% if tienda.logo_url %}
+              <img src="{{ tienda.logo_url.url }}" alt="{{ tienda.nombre }}" title="{{ tienda.nombre }}">
+            {% else %}
+              <img src="{% static 'myapp/img/Default.jpg' %}" alt="Logo por defecto" title="Logo por defecto">
+            {% endif %}
+          </a>
+        </div>
+        <h2>{{ tienda.nombre }}</h2>
+        <p>{{ tienda.direccion }}</p>
+        <p>Tel: {{ tienda.telefono }}</p>
+        <p>Horario: {{ tienda.horarios }}</p>
       </div>
-      <p class="description"></p>
-    </section>
-  </div>
-  <script src="{% static 'myapp/js/busqueda.js' %}"></script>
-</body>
-</html>
+   {% endfor %}
+     {% else %}
+       <p>No se encontraron tiendas que coincidan con tu búsqueda.</p>
+    {% endif %}
+   </section>
+
+   <section class="overlay" id="overlay">
+     <div class="container-img">
+       <button id="btn-close-popup">
+         <i class="fas fa-times"></i>
+       </button>
+       <img src="" alt="">
+     </div>
+     <p class="description"></p>
+   </section>
+</div>
 {% endblock %}

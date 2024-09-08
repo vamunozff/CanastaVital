@@ -1,0 +1,92 @@
+{% extends 'clientes/base.html' %}
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Productos de la tienda</title>
+    <link rel="stylesheet" href="{% static 'myapp/css/prueba.css' %}">
+</head>
+<body>
+    <div>
+       <div class="logo">
+           <h1>{{ tienda.nombre }}<span> Compra con facilidad cada uno de los productos </span></h1>
+       </div>
+        <button id='boton-carrito' class="trigger estilo-boton-carrito">Mostrar carrito</button>
+
+       <div id="tienda">
+           {% for producto_tienda in productosTiendas %}
+               <div class="producto">
+                   {% if producto_tienda.imagen %}
+                       <img src="{{ producto_tienda.imagen.url }}" alt="{{ producto_tienda.producto.nombre }}">
+                   {% else %}
+                       <img src="{% static 'myapp/img/Default.jpg' %}" alt="Imagen por defecto">
+                   {% endif %}
+                   <p class="nombre-producto">{{ producto_tienda.producto.nombre }}</p>
+                   <p class="descripcion-producto">{{ producto_tienda.producto.descripcion }}</p>
+                   <p class="precio-producto">${{ producto_tienda.precio_unitario }}</p>
+                   <button class="agregar-al-carrito" data-product-id="{{ producto_tienda.producto.id }}">Agregar al carrito</button>
+               </div>
+           {% empty %}
+               <p>No hay productos disponibles.</p>
+           {% endfor %}
+       </div>
+
+    </div>
+
+    <!-- Sección del carrito (modal) -->
+    <div id='contenedor-carrito' class="deslizador cerrar">
+        <button id="cerrar-carrito">Cerrar</button>
+        <div id='carrito'>
+            <div id="contenedor-productos-carrito">
+                <table id="tabla-carrito">
+                    <thead id="encabezado-tabla-carrito">
+                        <th class="columna-nombre">Nombre del producto</th>
+                        <th class="columna-cantidad">Cantidad</th>
+                        <th class="columna-precio">Precio</th>
+                        <th class="columna-precio-actualizado">Precio actualizado</th>
+                        <th class="columna-actualizar">Actualizar</th>
+                        <th class="columna-eliminar">Eliminar</th>
+                    </thead>
+                    <tbody id="cuerpo-tabla-carrito"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id='controles-monto'>
+            <table>
+                <tbody>
+                    <tr id='fila-subtotal'>
+                        <td id="subtotal-label">Subtotal:</td>
+                        <td id="subtotal-carrito">0.00</td>
+                    </tr>
+                    <tr id='fila-iva'>
+                        <td id="iva-label">IVA (19%):</td>
+                        <td id="iva-carrito">0.00</td>
+                    </tr>
+                    <tr id='fila-total'>
+                        <td id="total-label">Total:</td>
+                        <td id="total-carrito">0.00</td>
+                    </tr>
+                    <tr id="fila-promocion-pago">
+                        <td id="contenedor-promocion">
+                            <input id="codigo-promocional" placeholder="Ingrese el código promocional">
+                            <button id="aplicar-promocion" class="btn btn-primary">Aplicar promoción</button>
+                        </td>
+                        <td>
+                            <button id="pagar" class="btn btn-success">Pagar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div id="superposicion-carrito"></div>
+
+    <script src="{% static 'myapp/js/busqueda.js' %}"></script>
+</body>
+</html>
+{% endblock %}

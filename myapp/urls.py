@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import login, hello, index, exit, register, home, perfil, categoria, index_producto, index_proveedor, asignar_proveedor, register_cliente, perfil_tienda, index_cliente, login_view, busqueda_tiendas
+from .views import login, hello, index_tienda, exit, register, home, perfil, categoria, index_producto, index_proveedor, asignar_proveedor, register_cliente, perfil_tienda, index_cliente, login_view, busqueda_tiendas, busqueda_productos
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('', home, name='home'),
     path('login/', login, name='login'),
-    path('index/', index, name='index'),
+    path('index_tienda/', index_tienda, name='index_tienda'),
     path('logout/', exit, name='exit'),
     path('register/', register, name='register'),
     path('perfil/', perfil, name='perfil'),
@@ -33,4 +33,5 @@ urlpatterns = [
     path('validate_cliente/', views.validate_cliente, name='validate_cliente'),
     path('validate_tienda/', views.validate_tienda, name='validate_tienda'),
     path('busqueda_tiendas/', busqueda_tiendas, name='busqueda_tiendas'),
+    path('productos/busqueda_productos/<int:tienda_id>/', busqueda_productos, name='busqueda_productos'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

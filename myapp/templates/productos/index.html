@@ -39,7 +39,6 @@
                             <th>Imagen</th>
                             <th>Proveedor</th>
                             <th>Producto</th>
-                            <th>Tienda</th>
                             <th>Precio Unitario</th>
                             <th>Cantidad</th>
                             <th>Estado</th>
@@ -60,7 +59,6 @@
                             </td>
                             <td>{{ producto_tienda.proveedor.razon_social }}</td>
                             <td>{{ producto_tienda.producto.nombre }}</td>
-                            <td>{{ producto_tienda.usuario.first_name }}</td>
                             <td>{{ producto_tienda.precio_unitario }}</td>
                             <td>{{ producto_tienda.cantidad }}</td>
                             <td>{{ producto_tienda.estado }}</td>
@@ -81,7 +79,6 @@
                             <th>Imagen</th>
                             <th>Proveedor</th>
                             <th>Producto</th>
-                            <th>Tienda</th>
                             <th>Precio Unitario</th>
                             <th>Cantidad</th>
                             <th>Estado</th>
@@ -151,8 +148,8 @@
                                 {% if productos_tiendas %}
                                     {% with primer_producto=productos_tiendas.0 %}
 
-                                        <label for="txtUsuario" class="form-label">Nombre del usuario:</label>
-                                        <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ primer_producto.usuario.first_name }}" disabled>
+                                        <label for="txtUsuario" class="form-label">Nombre de la tienda:</label>
+                                        <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ primer_producto.tienda.nombre }}" disabled>
 
                                     {% endwith %}
                                 {% else %}

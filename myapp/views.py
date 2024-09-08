@@ -50,7 +50,7 @@ def home(request):
     return render(request, 'inicio/home.html')
 
 @login_required
-def index(request):
+def index_tienda(request):
     return render(request, 'tiendas/index.html')
 @login_required
 def confirmar_completar(request):
@@ -180,6 +180,7 @@ def asignarProducto(request):
             imagen = request.FILES.get('logo_url')
 
             default_image_path = 'productos_tiendas/Default.jpg'
+            tienda = get_object_or_404(Tienda, user=request.user)
 
             if not imagen:
                 imagen = default_image_path
@@ -190,7 +191,7 @@ def asignarProducto(request):
             nuevo_producto_tienda = ProductosTiendas(
                 producto=producto,
                 proveedor=proveedor,
-                usuario=request.user,
+                tienda=tienda,
                 precio_unitario=precio_unitario,
                 cantidad=cantidad,
                 estado=estado,
@@ -212,8 +213,9 @@ def asignarProducto(request):
         except Exception as e:
             messages.error(request, f'Error al asignar el producto: {str(e)}')
 
+    tienda = get_object_or_404(Tienda, user=request.user)
     proveedores = Proveedor.objects.filter(productostiendas__usuario=request.user).distinct()
-    productos_tiendas = ProductosTiendas.objects.filter(usuario=request.user)
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
     return render(request, 'productos/index.html', {
         'productos': Producto.objects.all(),
@@ -231,19 +233,12 @@ def eliminarPrductosTiendas(request, id):
 @login_required
 def index_producto(request):
     productos = Producto.objects.all()
-    if request.user.is_authenticated:
-        productos_tiendas = ProductosTiendas.objects.filter(usuario=request.user)
-        proveedores = Proveedor.objects.filter(usuario=request.user)
+    tienda = get_object_or_404(Tienda, user=request.user)
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
+    proveedores = Proveedor.objects.filter(usuario=request.user)
 
-        print(f"Proveedores para el usuario {request.user.username}:")
-        for proveedor in proveedores:
-            print(proveedor.razon_social)
-
-        return render(request, 'productos/index.html',
-                      {'productos': productos, 'productos_tiendas': productos_tiendas, 'proveedores': proveedores})
-    else:
-        messages.warning(request, 'Debe iniciar sesión para visualizar los productos asignados.')
-        return render(request, 'productos/index.html', {'productos': productos})
+    return render(request, 'productos/index.html',
+                  {'productos': productos, 'productos_tiendas': productos_tiendas, 'proveedores': proveedores})
 def ver_producto(request, id):
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
     return render(request, 'productos/ver_producto.html', {'producto_tienda': producto_tienda})
@@ -387,3 +382,12 @@ def busqueda_tiendas(request):
         tiendas = Tienda.objects.all()
 
     return render(request, 'tiendas/busqueda.html', {'tiendas': tiendas})
+
+def busqueda_productos(request, tienda_id):
+    tienda = get_object_or_404(Tienda, id=tienda_id)
+    productosTiendas = ProductosTiendas.objects.filter(tienda=tienda)  # Filtra por la tienda
+    context = {
+        'tienda': tienda,
+        'productosTiendas': productosTiendas
+    }
+    return render(request, 'productos/busqueda.html', context)

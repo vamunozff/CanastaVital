@@ -52,29 +52,6 @@ class Producto(models.Model):
             models.Index(fields=['codigo']),
             models.Index(fields=['nombre']),
         ]
-class ProductosTiendas(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='productos_tiendas')
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor", related_name='productos_tiendas')
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos_tiendas')
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    cantidad = models.IntegerField()
-
-    ESTADO_CHOICES = [
-        ('activo', 'Activo'),
-        ('inactivo', 'Inactivo'),
-    ]
-    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-
-    imagen = models.ImageField(upload_to='productos_tiendas/', null=True, blank=True, verbose_name="Imagen del Producto")
-
-    def __str__(self):
-        return f"{self.producto.nombre} - {self.proveedor.razon_social} - {self.usuario.username}"
-
-    class Meta:
-        db_table = 'ProductosTiendas'
-        verbose_name = 'Producto en Tienda'
-        verbose_name_plural = 'Productos en Tiendas'
 
 class Cliente(models.Model):
     DOCUMENTO_CHOICES = [
@@ -115,6 +92,29 @@ class Tienda(models.Model):
         db_table = 'Tienda'
         verbose_name = 'Tienda'
         verbose_name_plural = 'Tiendas'
+
+class ProductosTiendas(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='productos_tiendas')
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor", related_name='productos_tiendas')
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='productos_tiendas')
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    cantidad = models.IntegerField()
+
+    ESTADO_CHOICES = [
+        ('activo', 'Activo'),
+        ('inactivo', 'Inactivo'),
+    ]
+    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    imagen = models.ImageField(upload_to='productos_tiendas/', null=True, blank=True, verbose_name="Imagen del Producto")
+
+    def __str__(self):
+        return f"{self.producto.nombre} - {self.proveedor.razon_social} - {self.tienda.nombre}"
+
+    class Meta:
+        db_table = 'ProductosTiendas'
+        verbose_name = 'Producto en Tienda'
+        verbose_name_plural = 'Productos en Tiendas'
 
 class Direccion(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)

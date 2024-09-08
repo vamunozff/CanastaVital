@@ -1,148 +1,297 @@
-.container_busqueda * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import url('https://fonts.googleapis.com/css?family=Montserrat');
+
+* {
+    font-family: 'Montserrat', sans-serif;
+    outline: 0;
+    transition: .3s;
 }
 
-.container_busqueda {
-  width: 90%;
-  max-width: 1200px; /* Aumentado para adaptarse a más contenido */
-  margin: auto;
-  background-color: #FBFDFD;
-  font-family: 'Open Sans', sans-serif;
+body {
+    display: block; /* Cambia flex a block para evitar el centrado forzado */
+    margin: 0; /* Asegúrate de que no haya márgenes que desplacen el contenido */
+    padding: 0;
+}
+h2 {
+    font-weight: bolder;
+    text-align: center;
 }
 
-.container_busqueda a {
-  text-decoration: none;
+.estilo-boton-carrito {
+    border-style: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 10em;
+    padding: 1em 1em;
+    margin: 0.5em;
+    background: #7762ff;
+    color: white;
+    transition: background .5s;
+    border-radius: 4px;
 }
 
-.container_busqueda header {
-  padding: 48px 0;
+.boton-carrito-dos {
+    border-style: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 10em;
+    padding: 1em 1em;
+    margin: 0.5em;
+    background: white;
+    color: #7762ff;
+    transition: background .5s;
+    border-radius: 4px;
 }
 
-.container_busqueda header .logo {
+.estilo-boton-carrito:hover, #pagar:hover, #aplicar-promocion:hover, .seguir-comprando:hover {
+    background: #515fbb;
+    color: white;
+}
+
+.estilo-boton-carrito:active, #pagar:active, #aplicar-promocion:active, .seguir-comprando:active {
+    background: #460e8a;
+    color: white;
+}
+
+.producto {
+    float: left;
+    width: 23%;
+    margin: 3% 1%;
+    text-align: center;
+    padding: 0 0 1% 0;
+}
+
+.producto img {
+    width: 100%;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+@media screen and (max-width: 980px) {
+    .producto {
+        width: 30%;
+        text-align: center;
+        margin: 1.66%;
+    }
+}
+
+@media screen and (max-width: 790px) {
+    .producto {
+        width: 47%;
+        margin: 1% 1%;
+    }
+
+    #tienda {
+        margin: 5% 1%;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .producto {
+        width: 100%;
+    }
+
+    #tienda {
+        margin: 2% 0;
+    }
+}
+
+#tienda::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+.agregar-al-carrito {
+    display: block;
+    margin: 1% auto;
+    border-style: none;
+    width: 10em;
+    height: 3em;
+    background: #515fbb;
+    color: white;
+    font-weight: bold;
+    border-radius: 20px;
+}
+
+.agregar-al-carrito:hover {
+    background: #7762ff;
+}
+
+.deslizador {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    overflow: hidden;
+    background: white;
+    transition: all 1s;
+}
+
+.deslizador.cerrar {
+    top: 100vh;
+    height: 0;
+}
+
+#controles-monto {
+    background: white;
+    top: 90;
+    right: 0;
+}
+
+#contenedor-amount {
+    background: white;
+    padding: 1.5% 0 .5% 35%;
+    border-radius: 10px;
+}
+
+#carrito {
+    text-align: left;
+    margin: 3.5em 0.5em;
+    padding: 0.5% 1.5%;
+    overflow-y: scroll;
+}
+
+#total::before, #subtotal::before, .precio-producto::before, .precio-producto-carrito::before, .precio-actualizado-producto-carrito::before, #monto-descuento::before {
+    content: '$';
+}
+
+#carrito #valor-cantidad {
+    width: 45%;
+}
+
+.columna-nombre {
+  width: 40%;
+}
+.columna-cantidad {
+  width: 5%;
+}
+.columna-precio {
+  width: 15%;
+}
+
+.columna-precio-actualizado {
+    width: 25%;
+}
+
+.columna-actualizar {
+    width: 10%;
+}
+
+.columna-eliminar {
+  width: 5%;
+}
+
+
+
+#actualizar:hover {
+    background: #f0ffe6;
+    color: #515fbb;
+}
+
+#actualizar:active {
+    background: #515fbb;
+    color: white;
+}
+
+.eliminar {
+    border-style: none;
+    font-weight: bolder;
+    padding: 2% 2.5%;
+    width: 100%;
+    height: 30px;
+    background: #ff7b67;
+    color: #fff1e7;
+    border-radius: 10px;
+}
+
+.eliminar:hover {
+    background: #fff1e7;
+    color: #ff7b67;
+}
+
+.eliminar:active {
+    background: #ff7b67;
+    color: #f5f1e7;
+}
+
+#contenedor-productos-carrito {
+    overflow-y: auto;
+}
+
+#contenedor-amount {
+    overflow-x: auto;
+}
+
+#codigo-promocional {
+    width: 10em;
+    padding: 1em 1em;
+    transition: background .5s;
+    border-radius: 4px;
+}
+
+#aplicar-promocion, #pagar, .seguir-comprando {
+    border-style: none;
+    width: 10em;
+    padding: 1em 1em;
+    background: #7762ff;
+    color: white;
+    transition: background .5s;
+    border-radius: 4px;
+}
+
+/* Estilos para la ventana emergente */
+#contenedor-carrito {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    height: 60%;
+    background-color: white;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    padding: 20px;
+    display: none; /* Inicialmente oculto */
+    border-radius: 10px;
+    overflow-y: auto; /* Para que el contenido pueda desplazarse si es muy largo */
+}
+
+#superposicion-carrito {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none; /* Inicialmente oculto */
+    z-index: 999;
+}
+
+/* Estilo para el botón de cerrar el carrito */
+#cerrar-carrito {
+    float: right;
+    cursor: pointer;
+    padding: 5px 10px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+#cerrar-carrito:hover {
+    background-color: darkred;
+}
+
+.logo {
   text-align: center;
   margin-bottom: 40px;
 }
-
-.container_busqueda header .logo span {
+.logo span {
   color: #494B4D;
   display: block;
   letter-spacing: 0.8px;
   font-size: 16px;
   font-weight: normal;
-}
-
-.container_busqueda header form {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-  width: 100%;
-}
-
-.container_busqueda header .search-bar {
-  background: #FFF;
-  border: 1px solid rgba(155,155,155,0.3);
-  border-radius: 100px;
-  font-size: 16px;
-  height: 40px;
-  text-align: center;
-  width: 70%;
-  line-height: 40px;
-  padding: 0 20px;
-}
-
-.container_busqueda header .categories {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.container_busqueda header .categories a {
-  color: #8A8A8C;
-  font-size: 16px;
-  font-weight: 700;
-  margin: 10px 18px;
-}
-
-.container_busqueda header .categories a.active {
-  color: #000;
-}
-
-.container_busqueda .grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px; /* Espaciado entre elementos */
-  justify-content: center; /* Centra los elementos en la fila */
-  width: 100%;
-}
-
-.container_busqueda .grid .item {
-  flex: 1 1 calc(25% - 20px); /* Cuatro columnas con un espacio de 20px entre ellos */
-  box-sizing: border-box;
-  margin: 10px;
-  background: #FFF; /* Fondo blanco para los elementos */
-  border: 1px solid rgba(155,155,155,0.15);
-  border-radius: 10px;
-  overflow: hidden; /* Oculta cualquier contenido que desborde el contenedor */
-}
-
-.container_busqueda .grid .item-content {
-  width: 100%;
-  height: 200px; /* Altura fija para las imágenes */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.container_busqueda .grid .item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ajusta la imagen para que cubra el contenedor sin distorsionarse */
-}
-
-/* Media query para pantallas de tamaño pequeño (móviles) */
-@media (max-width: 767px) {
-  .container_busqueda .grid .item {
-    flex: 1 1 calc(50% - 20px); /* Dos columnas con un espacio de 20px entre ellos */
-  }
-}
-
-.container_busqueda .overlay {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0,0,0,.9);
-  width: 100%;
-  height: 100vh;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.container_busqueda .overlay.active {
-  display: flex;
-}
-
-.container_busqueda .overlay img {
-  max-width: 90%; /* Ajusta el tamaño de la imagen en el overlay */
-  height: auto; /* Mantiene la relación de aspecto */
-}
-
-.container_busqueda .container-img {
-  position: relative;
-}
-
-.container_busqueda .overlay #btn-close-popup {
-  background: none;
-  border: none;
-  color: #FFF;
-  cursor: pointer;
-  font-size: 20px;
-  position: absolute;
-  right: 20px;
-  top: 20px;
 }
