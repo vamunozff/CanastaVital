@@ -121,6 +121,8 @@ def perfil(request):
             cliente_form.save()
             messages.success(request, 'Perfil actualizado exitosamente.')
             return redirect('perfil')
+        else:
+            messages.error(request, 'Error al actualizar el perfil.')
     else:
         cliente_form = ClienteForm(instance=cliente)
 
@@ -378,5 +380,10 @@ def register_cliente(request):
             return render(request, 'registration/completar.html',  {'cliente_form': cliente_form})
 
 def busqueda_tiendas(request):
-    tiendas = Tienda.objects.all()
+    query = request.GET.get('search', '')
+    if query:
+        tiendas = Tienda.objects.filter(nombre__icontains=query)
+    else:
+        tiendas = Tienda.objects.all()
+
     return render(request, 'tiendas/busqueda.html', {'tiendas': tiendas})

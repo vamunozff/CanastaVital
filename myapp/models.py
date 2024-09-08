@@ -90,7 +90,7 @@ class Cliente(models.Model):
     tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, default='CC')
     numero_documento = models.CharField(max_length=50, default='Sin número')
     fecha_registro = models.DateTimeField(auto_now_add=True)
-    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', null=True, blank=True)
+    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Defaul.jpg')
 
     def __str__(self):
         return f'{self.user.username} - {self.numero_documento}'

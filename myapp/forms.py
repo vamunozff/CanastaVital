@@ -19,13 +19,24 @@ class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
         fields = ['telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil']
+        widgets = {
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def clean_fecha_nacimiento(self):
+        fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
+        # Validar si la fecha de nacimiento es válida y no está en el futuro
+        if fecha_nacimiento and fecha_nacimiento > date.today():
+            raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
+        return fecha_nacimiento
+
     def clean(self):
         cleaned_data = super().clean()
         tipo_documento = cleaned_data.get('tipo_documento')
         numero_documento = cleaned_data.get('numero_documento')
         fecha_nacimiento = cleaned_data.get('fecha_nacimiento')
 
-        # Verificar si los campos fueron dejados en blanco y mantener el valor anterior
+        # Verificar si los campos son opcionales o no
         if not tipo_documento:
             cleaned_data['tipo_documento'] = self.instance.tipo_documento
         if not numero_documento:
@@ -33,6 +44,7 @@ class ClienteForm(forms.ModelForm):
         if not fecha_nacimiento:
             cleaned_data['fecha_nacimiento'] = self.instance.fecha_nacimiento
 
+        # Si es necesario, puedes agregar más validaciones aquí
         return cleaned_data
 
 class DireccionForm(forms.ModelForm):

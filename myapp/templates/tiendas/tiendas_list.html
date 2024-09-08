@@ -1,0 +1,16 @@
+{% load static %}
+{% for tienda in tiendas %}
+<div class="item" data-categoria="Tienda" data-etiquetas="{{ tienda.nombre }}" data-descripcion="{{ tienda.descripcion }}">
+  <div class="item-content">
+    {% if tienda.logo_url %}
+    <img src="{{ tienda.logo_url.url }}" alt="{{ tienda.nombre }}" title="{{ tienda.nombre }}">
+    {% else %}
+    <img src="{% static 'myapp/img/Default.jpg' %}" alt="Logo por defecto" title="Logo por defecto">
+    {% endif %}
+  </div>
+  <h2>{{ tienda.nombre }}</h2>
+  <p>{{ tienda.direccion }}</p>
+  <p>Tel: {{ tienda.telefono }}</p>
+  <p>Horario: {{ tienda.horarios }}</p>
+</div>
+{% endfor %}
