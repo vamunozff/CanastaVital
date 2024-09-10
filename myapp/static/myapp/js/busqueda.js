@@ -64,8 +64,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${item.cantidad}</td>
                 <td>$${item.precio.toFixed(2)}</td>
                 <td>$${(item.precio * item.cantidad).toFixed(2)}</td>
-                <td><button class="actualizar-btn">Actualizar</button></td>
-                <td><button class="eliminar-btn" data-product-id="${item.id}">Eliminar</button></td>
+                <td><button class="actualizar-btn btn btn-primary">Actualizar</button></td>
+                <td><button class="eliminar-btn btn btn-danger" data-product-id="${item.id}">Eliminar</button></td>
             `;
             cuerpoTablaCarrito.appendChild(fila);
         });

@@ -1,4 +1,5 @@
 /*CSS del Login*/
+ @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 .login-page * {
     padding: 0;
@@ -732,7 +733,7 @@
 
 /*CSS DE LA BASE CLIENTE - TIENDA*/
 
- @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 
 .custom-sidebar-layout ::after,
 .custom-sidebar-layout ::before {
@@ -1097,4 +1098,287 @@
   position: absolute;
   right: 20px;
   top: 20px;
+}
+
+/*CCS DE BUSQUEDA DE PRODUCTOS POR TIENDA PRODUCTOS/BUSQUEDA*/
+
+
+
+.busquedadeproductostienda * {
+    font-family: 'Montserrat', sans-serif;
+    outline: 0;
+    transition: .3s;
+}
+
+.busquedadeproductostienda body {
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+.busquedadeproductostienda h2 {
+    font-weight: bolder;
+    text-align: center;
+}
+
+.busquedadeproductostienda .estilo-boton-carrito,
+.busquedadeproductostienda #aplicar-promocion,
+.busquedadeproductostienda #pagar,
+.busquedadeproductostienda .seguir-comprando {
+    border: none;
+    width: 10em;
+    padding: 1em;
+    background: #7762ff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .5s;
+}
+
+.busquedadeproductostienda .estilo-boton-carrito:hover,
+.busquedadeproductostienda #pagar:hover,
+.busquedadeproductostienda #aplicar-promocion:hover,
+.busquedadeproductostienda .seguir-comprando:hover {
+    background: #515fbb;
+}
+
+.busquedadeproductostienda .estilo-boton-carrito:active,
+.busquedadeproductostienda #pagar:active,
+.busquedadeproductostienda #aplicar-promocion:active,
+.busquedadeproductostienda .seguir-comprando:active {
+    background: #460e8a;
+}
+
+.busquedadeproductostienda .producto {
+    float: left;
+    width: 20%;
+    margin: 3% 1%;
+    text-align: center;
+    padding: 0 0 1% 0;
+}
+
+.busquedadeproductostienda .producto img {
+    width: 100%;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+@media screen and (max-width: 980px) {
+    .busquedadeproductostienda .producto {
+        width: 30%;
+        margin: 1.66%;
+    }
+}
+
+@media screen and (max-width: 790px) {
+    .busquedadeproductostienda .producto {
+        width: 47%;
+        margin: 1% 1%;
+    }
+
+    .busquedadeproductostienda #tienda {
+        margin: 5% 1%;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .busquedadeproductostienda .producto {
+        width: 100%;
+    }
+
+    .busquedadeproductostienda #tienda {
+        margin: 2% 0;
+    }
+}
+
+.busquedadeproductostienda #tienda::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+.busquedadeproductostienda .agregar-al-carrito {
+    display: block;
+    margin: 1% auto;
+    border: none;
+    width: 10em;
+    height: 3em;
+    background: #515fbb;
+    color: white;
+    font-weight: bold;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.busquedadeproductostienda .agregar-al-carrito:hover {
+    background: #7762ff;
+}
+
+/* Modal (carrito) */
+.busquedadeproductostienda #contenedor-carrito {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 700px;
+    height: 70%;
+    background-color: #fff;
+    box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    padding: 20px;
+    border-radius: 10px;
+    display: none;
+    overflow-y: auto;
+    animation: abrirModal 0.5s ease-out forwards;
+}
+
+/* Animación para el modal */
+@keyframes abrirModal {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -55%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* Superposición oscura detrás del modal */
+.busquedadeproductostienda #superposicion-carrito {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Botón para cerrar el carrito */
+.busquedadeproductostienda #cerrar-carrito {
+    float: right;
+    background-color: #ff4b4b;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 30px;
+    text-align: center;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.busquedadeproductostienda #cerrar-carrito:hover {
+    background-color: #e03d3d;
+}
+
+.busquedadeproductostienda #cerrar-carrito:active {
+    background-color: #c32b2b;
+}
+
+/* Contenido del carrito */
+.busquedadeproductostienda #carrito {
+    text-align: left;
+    margin-top: 1.5em;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.busquedadeproductostienda table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.busquedadeproductostienda thead {
+    background-color: #f0f0f0;
+}
+
+.busquedadeproductostienda th, .busquedadeproductostienda td {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.busquedadeproductostienda th {
+    text-align: left;
+}
+
+.busquedadeproductostienda #controles-monto {
+    background-color: white;
+    margin-top: 20px;
+}
+
+.busquedadeproductostienda #controles-monto table {
+    width: 100%;
+}
+
+.busquedadeproductostienda #controles-monto td {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.busquedadeproductostienda #subtotal-carrito,
+.busquedadeproductostienda #iva-carrito,
+.busquedadeproductostienda #total-carrito {
+    font-weight: bold;
+}
+
+.busquedadeproductostienda .eliminar {
+    background-color: #ff7b67;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.busquedadeproductostienda .eliminar:hover {
+    background-color: #ff4b4b;
+}
+
+.busquedadeproductostienda .eliminar:active {
+    background-color: #c32b2b;
+}
+
+.busquedadeproductostienda .logo {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.busquedadeproductostienda .logo span {
+    color: #494B4D;
+    display: block;
+    letter-spacing: 0.8px;
+    font-size: 16px;
+    font-weight: normal;
+}
+
+/* Mejoras generales */
+.busquedadeproductostienda #contenedor-productos-carrito {
+    overflow-y: auto;
+}
+
+.busquedadeproductostienda #controles-monto td {
+    padding: 15px 10px;
+    font-size: 1.2em;
+    text-align: right;
+}
+
+.busquedadeproductostienda #controles-monto td:first-child {
+    text-align: left;
+}
+
+/* Título del modal */
+.busquedadeproductostienda .titulo-modal {
+    font-size: 1.8em;
+    text-align: center;
+    margin-top: 10px;
+    color: #494B4D;
+    font-weight: bold;
 }

@@ -87,7 +87,7 @@
                 } else if (data.role === 'cliente') {
                     window.location.href = "{% url 'index_cliente' %}";
                 } else if (data.role === 'tienda') {
-                    window.location.href = "{% url 'index' %}";
+                    window.location.href = "{% url 'index_tienda' %}";
                 }
             } else {
                 alert(data.error);
@@ -123,7 +123,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.valid) {
-                const redirectUrl = role === 'cliente' ? "{% url 'index_cliente' %}" : "{% url 'index' %}";
+                const redirectUrl = role === 'cliente' ? "{% url 'index_cliente' %}" : "{% url 'index_tienda' %}";
                 window.location.href = redirectUrl;
             } else {
                 alert(data.error);

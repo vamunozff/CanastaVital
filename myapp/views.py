@@ -40,6 +40,7 @@ def login_view(request):
             elif es_tienda:
                 return JsonResponse({'success': True, 'role': 'tienda'})
             else:
+                logout(request)
                 return JsonResponse({'success': False, 'error': 'Usuario no registrado como cliente o tienda.'})
         else:
             return JsonResponse({'success': False, 'error': 'Usuario o contraseña incorrectos.'})
@@ -58,13 +59,14 @@ def confirmar_completar(request):
         form_type = request.POST.get('form_type')
 
         if form_type == 'cliente':
-            cliente_form = ClienteForm(request.POST)
+            cliente_form = ClienteForm(request.POST, request.FILES)
             if cliente_form.is_valid():
                 cliente = cliente_form.save(commit=False)
                 cliente.user = request.user
                 cliente.save()
                 return redirect('index_cliente')
             else:
+                print("Errores del formulario cliente:", cliente_form.errors)
                 return render(request, 'registration/confirmar_completar.html', {
                     'cliente_form': cliente_form,
                     'tienda_form': TiendaForm()
@@ -73,13 +75,12 @@ def confirmar_completar(request):
         elif form_type == 'tienda':
             tienda_form = TiendaForm(request.POST, request.FILES)
             if tienda_form.is_valid():
-                print("Formulario válido")
                 tienda = tienda_form.save(commit=False)
                 tienda.user = request.user
                 tienda.save()
-                return redirect('index')
+                return redirect('index_tienda')
             else:
-                print("Errores del formulario:", tienda_form.errors)
+                print("Errores del formulario tienda:", tienda_form.errors)
                 return render(request, 'registration/confirmar_completar.html', {
                     'tienda_form': tienda_form,
                     'cliente_form': ClienteForm()
@@ -222,9 +223,10 @@ def asignarProducto(request):
         'proveedores': proveedores,
         'productos_tiendas': productos_tiendas
     })
-
+@login_required
 def actualizarProductosTiendas_list(request):
     pass
+@login_required
 def eliminarPrductosTiendas(request, id):
     productosTiendas = ProductosTiendas.objects.get(id=id)
     productosTiendas.delete()
@@ -373,7 +375,7 @@ def register_cliente(request):
     else:
             cliente_form = ClienteForm()
             return render(request, 'registration/completar.html',  {'cliente_form': cliente_form})
-
+@login_required
 def busqueda_tiendas(request):
     query = request.GET.get('search', '')
     if query:
@@ -382,7 +384,7 @@ def busqueda_tiendas(request):
         tiendas = Tienda.objects.all()
 
     return render(request, 'tiendas/busqueda.html', {'tiendas': tiendas})
-
+@login_required
 def busqueda_productos(request, tienda_id):
     tienda = get_object_or_404(Tienda, id=tienda_id)
     productosTiendas = ProductosTiendas.objects.filter(tienda=tienda)  # Filtra por la tienda
