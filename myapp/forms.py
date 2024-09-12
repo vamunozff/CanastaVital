@@ -25,7 +25,6 @@ class ClienteForm(forms.ModelForm):
 
     def clean_fecha_nacimiento(self):
         fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
-        # Validar si la fecha de nacimiento es válida y no está en el futuro
         if fecha_nacimiento and fecha_nacimiento > date.today():
             raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
         return fecha_nacimiento
@@ -36,7 +35,6 @@ class ClienteForm(forms.ModelForm):
         numero_documento = cleaned_data.get('numero_documento')
         fecha_nacimiento = cleaned_data.get('fecha_nacimiento')
 
-        # Verificar si los campos son opcionales o no
         if not tipo_documento:
             cleaned_data['tipo_documento'] = self.instance.tipo_documento
         if not numero_documento:
@@ -44,18 +42,50 @@ class ClienteForm(forms.ModelForm):
         if not fecha_nacimiento:
             cleaned_data['fecha_nacimiento'] = self.instance.fecha_nacimiento
 
-        # Si es necesario, puedes agregar más validaciones aquí
         return cleaned_data
 
+DEPARTAMENTOS = [
+    ('ANT', 'Antioquia'),
+    ('BOL', 'Bolívar'),
+    # Agrega aquí todos los departamentos de Colombia
+]
+
+CIUDADES = [
+    ('BOG', 'Bogotá'),
+    ('MED', 'Medellín'),
+    # Agrega aquí todas las ciudades o municipios relevantes
+]
+
 class DireccionForm(forms.ModelForm):
+    departamento = forms.ChoiceField(choices=DEPARTAMENTOS)
+    ciudad = forms.ChoiceField(choices=CIUDADES)
+
     class Meta:
         model = Direccion
         fields = ['direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal']
 
+    def clean(self):
+        cleaned_data = super().clean()
+        principal = cleaned_data.get("principal")
+        cliente = self.instance.cliente  # El cliente asociado a la dirección
+        tienda = self.instance.tienda    # La tienda asociada a la dirección
+
+        # Si la dirección es marcada como principal
+        if principal:
+            # Verificar si ya hay una dirección principal para ese cliente
+            if cliente and Direccion.objects.filter(cliente=cliente, principal=True).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError("Este cliente ya tiene una dirección principal.")
+
+            # Verificar si ya hay una dirección principal para esa tienda
+            if tienda and Direccion.objects.filter(tienda=tienda, principal=True).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError("Esta tienda ya tiene una dirección principal.")
+
+        return cleaned_data
+
 class TiendaForm(forms.ModelForm):
     class Meta:
         model = Tienda
-        fields = ['nombre', 'direccion', 'horarios', 'telefono', 'descripcion', 'logo_url']
+        fields = ['nombre', 'horarios', 'telefono', 'descripcion', 'logo_url']
 
 class ProductosTiendasForm(forms.ModelForm):
     class Meta:

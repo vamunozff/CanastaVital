@@ -107,7 +107,7 @@
                             <div>
                                 {% if request.user.is_authenticated %}
                                     <label for="txtUsuario" class="form-label">Usuario asignado:</label>
-                                    <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ request.user.first_name }}" disabled>
+                                    <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ request.user.username }}" disabled>
                                 {% else %}
                                     <p>Error al mostrar el usuario logueado.</p>
                                 {% endif %}

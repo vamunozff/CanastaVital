@@ -1,58 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-class Categoria(models.Model):
-    nombre = models.CharField(max_length=100, verbose_name="Nombre")
-    descripcion = models.TextField(max_length=150, verbose_name="Descripción")
-
-    def __str__(self):
-        return self.nombre
-
-    class Meta:
-        db_table = 'Categoria'
-        verbose_name = "Categoría"
-        verbose_name_plural = "Categorías"
-
-class Proveedor(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proveedores')
-    razon_social = models.CharField(max_length=150, verbose_name="Razón Social")
-    email = models.EmailField(max_length=100, verbose_name="Email", blank=True, null=True)
-    telefono = models.CharField(max_length=20, verbose_name="Teléfono", blank=True, null=True)
-    direccion = models.TextField(verbose_name="Dirección", blank=True, null=True)
-
-    ESTADO_CHOICES = [
-        ('activo', 'Activo'),
-        ('inactivo', 'Inactivo'),
-    ]
-    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
-    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
-
-    def __str__(self):
-        return self.razon_social
-
-    class Meta:
-        db_table = 'Proveedor'
-        verbose_name = "Proveedor"
-        verbose_name_plural = "Proveedores"
-
-class Producto(models.Model):
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, verbose_name="Categoría")
-    codigo = models.CharField(max_length=100, verbose_name="Código", unique=True)
-    nombre = models.CharField(max_length=100, verbose_name="Nombre")
-    descripcion = models.TextField(max_length=255, verbose_name="Descripción")
-    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
-
-    def __str__(self):
-        return self.nombre
-
-    class Meta:
-        db_table = 'Producto'
-        verbose_name = 'Producto'
-        verbose_name_plural = 'Productos'
-        indexes = [
-            models.Index(fields=['codigo']),
-            models.Index(fields=['nombre']),
-        ]
-
+from datetime import date
 class Cliente(models.Model):
     DOCUMENTO_CHOICES = [
         ('CC', 'Cédula de Ciudadanía'),
@@ -74,11 +22,9 @@ class Cliente(models.Model):
 
     class Meta:
         db_table = 'Cliente'
-
 class Tienda(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='tienda')
     nombre = models.CharField(max_length=100)
-    direccion = models.TextField()
     horarios = models.TextField(null=True, blank=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
     descripcion = models.TextField(null=True, blank=True)
@@ -87,12 +33,90 @@ class Tienda(models.Model):
 
     def __str__(self):
         return self.nombre
-
     class Meta:
         db_table = 'Tienda'
         verbose_name = 'Tienda'
         verbose_name_plural = 'Tiendas'
 
+class Direccion(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
+    direccion = models.TextField()
+    ciudad = models.CharField(max_length=100)
+    departamento = models.CharField(max_length=100)
+    codigo_postal = models.CharField(max_length=10, null=True, blank=True)
+    principal = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.principal:
+            if self.cliente:
+                Direccion.objects.filter(cliente=self.cliente, principal=True).update(principal=False)
+            if self.tienda:
+                Direccion.objects.filter(tienda=self.tienda, principal=True).update(principal=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        if self.cliente:
+            return f'{self.cliente.user.username} - {self.direccion}'
+        elif self.tienda:
+            return f'{self.tienda.nombre} - {self.direccion}'
+        else:
+            return self.direccion
+
+    class Meta:
+        db_table = 'Direccion'
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    descripcion = models.TextField(max_length=150, verbose_name="Descripción")
+
+    def __str__(self):
+        return self.nombre
+
+    class Meta:
+        db_table = 'Categoria'
+        verbose_name = "Categoría"
+        verbose_name_plural = "Categorías"
+
+class Producto(models.Model):
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, verbose_name="Categoría")
+    codigo = models.CharField(max_length=100, verbose_name="Código", unique=True)
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    descripcion = models.TextField(max_length=255, verbose_name="Descripción")
+    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
+
+    def __str__(self):
+        return self.nombre
+
+    class Meta:
+        db_table = 'Producto'
+        verbose_name = 'Producto'
+        verbose_name_plural = 'Productos'
+        indexes = [
+            models.Index(fields=['codigo']),
+            models.Index(fields=['nombre']),
+        ]
+class Proveedor(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proveedores')
+    razon_social = models.CharField(max_length=150, verbose_name="Razón Social")
+    email = models.EmailField(max_length=100, verbose_name="Email", blank=True, null=True)
+    telefono = models.CharField(max_length=20, verbose_name="Teléfono", blank=True, null=True)
+    direccion = models.TextField(verbose_name="Dirección", blank=True, null=True)
+
+    ESTADO_CHOICES = [
+        ('activo', 'Activo'),
+        ('inactivo', 'Inactivo'),
+    ]
+    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
+    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
+
+    def __str__(self):
+        return self.razon_social
+
+    class Meta:
+        db_table = 'Proveedor'
+        verbose_name = "Proveedor"
+        verbose_name_plural = "Proveedores"
 class ProductosTiendas(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='productos_tiendas')
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor", related_name='productos_tiendas')
@@ -116,40 +140,38 @@ class ProductosTiendas(models.Model):
         verbose_name = 'Producto en Tienda'
         verbose_name_plural = 'Productos en Tiendas'
 
-class Direccion(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
-    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
-    direccion = models.TextField()
-    ciudad = models.CharField(max_length=100)
-    departamento = models.CharField(max_length=100)
-    codigo_postal = models.CharField(max_length=10, null=True, blank=True)
-    principal = models.BooleanField(default=False)
-
-    def __str__(self):
-        if self.cliente:
-            return f'{self.cliente.user.username} - {self.direccion}'
-        elif self.tienda:
-            return f'{self.tienda.nombre} - {self.direccion}'
-        else:
-            return self.direccion
-    class Meta:
-        db_table = 'Direccion'
+class PromocionManager(models.Manager):
+    def activas(self):
+        return self.filter(activo=True, fecha_inicio__lte=date.today(), fecha_fin__gte=date.today())
 
 class Promocion(models.Model):
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
-    descuento = models.DecimalField(max_digits=5, decimal_places=2)
-    tipo_descuento = models.CharField(max_length=50, null=True, blank=True)
+    descuento = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     activo = models.BooleanField(default=True)
+
+    objects = PromocionManager()
+
+    def save(self, *args, **kwargs):
+        if self.fecha_inicio > self.fecha_fin:
+            raise ValueError("La fecha de inicio no puede ser posterior a la fecha de fin.")
+        if self.fecha_fin < date.today():
+            self.activo = False
+        super(Promocion, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.nombre
 
     class Meta:
         db_table = 'Promocion'
+        constraints = [
+            models.UniqueConstraint(fields=['tienda'], condition=models.Q(activo=True),
+                                    name='unique_active_promotion_per_store')
+        ]
+
 class Venta(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     fecha = models.DateTimeField(auto_now_add=True)

@@ -7,7 +7,7 @@ from .forms import CustomUserCreationForm, ClienteForm, TiendaForm
 from django.contrib.auth import authenticate, login as auth_login
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda
+from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion
 from django.contrib import messages
 from .forms import ProductosTiendasForm
 import logging
@@ -237,7 +237,7 @@ def index_producto(request):
     productos = Producto.objects.all()
     tienda = get_object_or_404(Tienda, user=request.user)
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
-    proveedores = Proveedor.objects.filter(usuario=request.user)
+    proveedores = Proveedor.objects.filter(usuario=request.user, estado='activo')
 
     return render(request, 'productos/index.html',
                   {'productos': productos, 'productos_tiendas': productos_tiendas, 'proveedores': proveedores})
@@ -387,9 +387,20 @@ def busqueda_tiendas(request):
 @login_required
 def busqueda_productos(request, tienda_id):
     tienda = get_object_or_404(Tienda, id=tienda_id)
-    productosTiendas = ProductosTiendas.objects.filter(tienda=tienda)  # Filtra por la tienda
+    productosTiendas = ProductosTiendas.objects.filter(tienda=tienda, estado='activo').select_related('producto', 'proveedor')
     context = {
         'tienda': tienda,
         'productosTiendas': productosTiendas
     }
     return render(request, 'productos/busqueda.html', context)
+
+
+def promociones_activas(request, tienda_id):
+    tienda = get_object_or_404(Tienda, id=tienda_id)
+    promociones = Promocion.objects.activas().filter(tienda=tienda)
+
+    context = {
+        'tienda': tienda,
+        'promociones': promociones,
+    }
+    return render(request, 'promociones/activas.html', context)

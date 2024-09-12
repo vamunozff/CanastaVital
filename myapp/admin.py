@@ -60,28 +60,28 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Direccion)
 class DireccionAdmin(admin.ModelAdmin):
-    list_display = ('cliente', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
+    list_display = ('cliente', 'tienda', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
     search_fields = ('direccion', 'ciudad', 'departamento', 'codigo_postal')
-    list_filter = ('ciudad', 'departamento', 'principal')
+    list_filter = ('ciudad', 'departamento', 'principal', 'cliente', 'tienda')
     ordering = ('-cliente',)
 
     fieldsets = (
         (None, {
-            'fields': ('cliente', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
+            'fields': ('cliente', 'tienda', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
         }),
     )
 
 @admin.register(Tienda)
 class TiendaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'user', 'direccion', 'telefono', 'fecha_registro')
+    list_display = ('nombre', 'user', 'telefono', 'descripcion', 'logo_url', 'fecha_registro')
     search_fields = ('nombre', 'user__username', 'direccion')
     list_filter = ('fecha_registro',)
 
 @admin.register(Promocion)
 class PromocionAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'tienda', 'descuento', 'tipo_descuento', 'fecha_inicio', 'fecha_fin', 'activo')
-    search_fields = ('nombre', 'tienda__nombre')
+    list_display = ('nombre', 'descripcion', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo')
     list_filter = ('activo', 'fecha_inicio', 'fecha_fin')
+    search_fields = ('nombre', 'descripcion')
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
