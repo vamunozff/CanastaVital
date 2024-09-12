@@ -6,9 +6,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const superposicionCarrito = document.getElementById('superposicion-carrito');
     const cuerpoTablaCarrito = document.getElementById('cuerpo-tabla-carrito');
     const botonesAgregarCarrito = document.querySelectorAll('.agregar-al-carrito');
+    const botonPagar = document.getElementById('pagar');
 
     // Variable para almacenar los productos en el carrito
-    let itemsCarrito = [];
+    let itemsCarrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
     // Función para mostrar el carrito
     function mostrarCarrito() {
@@ -25,8 +26,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Función para agregar productos al carrito
     function agregarAlCarrito(evento) {
         const productoElemento = evento.target.closest('.producto');
-        const nombreProducto = productoElemento.querySelector('p').textContent;
-        const precioProducto = productoElemento.querySelector('p:nth-child(4)').textContent;
+        const nombreProducto = productoElemento.querySelector('.nombre-producto').textContent;
+        const precioProducto = productoElemento.querySelector('.precio-producto').textContent;
         const idProducto = evento.target.getAttribute('data-product-id');
 
         // Verificar si el producto ya está en el carrito
@@ -44,6 +45,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 cantidad: 1
             });
         }
+
+        // Guardar el carrito en localStorage
+        localStorage.setItem('carrito', JSON.stringify(itemsCarrito));
 
         // Actualizar el carrito en la interfaz
         actualizarTablaCarrito();
@@ -87,7 +91,18 @@ document.addEventListener("DOMContentLoaded", function () {
     function eliminarDelCarrito(evento) {
         const idProducto = evento.target.getAttribute('data-product-id');
         itemsCarrito = itemsCarrito.filter(item => item.id !== idProducto);
+
+        // Guardar el carrito actualizado en localStorage
+        localStorage.setItem('carrito', JSON.stringify(itemsCarrito));
+
         actualizarTablaCarrito();
+    }
+
+    // Cargar carrito desde localStorage al iniciar la página
+    function cargarCarritoDesdeLocalStorage() {
+        if (itemsCarrito.length > 0) {
+            actualizarTablaCarrito();
+        }
     }
 
     // Eventos para mostrar y cerrar el carrito
@@ -97,4 +112,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Asignar evento a cada botón de "Agregar al carrito"
     botonesAgregarCarrito.forEach(boton => boton.addEventListener('click', agregarAlCarrito));
+
+    // Cargar el carrito almacenado cuando se carga la página
+    cargarCarritoDesdeLocalStorage();
+
+    // Evento para el botón "Pagar"
+    botonPagar.addEventListener('click', function () {
+    if (itemsCarrito.length === 0) {
+        alert('El carrito está vacío. Por favor, agregue productos.');
+        return;
+    }
+
+    // Guardar los datos del carrito en localStorage
+    localStorage.setItem('carrito', JSON.stringify(itemsCarrito));
+    localStorage.setItem('subtotal', document.getElementById('subtotal-carrito').textContent);
+    localStorage.setItem('iva', document.getElementById('iva-carrito').textContent);
+    localStorage.setItem('total', document.getElementById('total-carrito').textContent);
+
+    // Redirigir a la página de confirmación de pago
+    window.location.href = '/confirmar_pago/';
+});
+});
+
+// Evento para cerrar el modal de confirmación de dirección
+document.getElementById('cerrar-modal-direccion')?.addEventListener('click', function () {
+    document.getElementById('modal-direccion').style.display = 'none';
 });

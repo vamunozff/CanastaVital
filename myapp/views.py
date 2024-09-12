@@ -7,7 +7,7 @@ from .forms import CustomUserCreationForm, ClienteForm, TiendaForm
 from django.contrib.auth import authenticate, login as auth_login
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion
+from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion
 from django.contrib import messages
 from .forms import ProductosTiendasForm
 import logging
@@ -404,3 +404,34 @@ def promociones_activas(request, tienda_id):
         'promociones': promociones,
     }
     return render(request, 'promociones/activas.html', context)
+
+
+@login_required
+def confirmar_pago(request):
+    # Obtener el cliente asociado al usuario autenticado
+    cliente = request.user.cliente
+
+    # Consultar las direcciones asociadas al cliente
+    direcciones = Direccion.objects.filter(cliente=cliente)
+
+    if request.method == 'POST':
+        # Si el cliente envía una nueva dirección
+        nueva_direccion = request.POST.get('direccion')
+        nueva_ciudad = request.POST.get('ciudad')
+        nuevo_codigo_postal = request.POST.get('codigo_postal')
+
+        # Crear y guardar la nueva dirección para el cliente
+        if nueva_direccion and nueva_ciudad and nuevo_codigo_postal:
+            Direccion.objects.create(
+                cliente=cliente,
+                direccion=nueva_direccion,
+                ciudad=nueva_ciudad,
+                codigo_postal=nuevo_codigo_postal,
+                principal=True  # Asignar como principal
+            )
+            return redirect('confirmar_pago')  # Redirigir de nuevo a la página de confirmación de pago
+
+    # Renderizar la plantilla de confirmación de pago con las direcciones disponibles
+    return render(request, 'otros/confirmar_pago.html', {
+        'direcciones': direcciones
+    })

@@ -34,4 +34,5 @@ urlpatterns = [
     path('validate_tienda/', views.validate_tienda, name='validate_tienda'),
     path('busqueda_tiendas/', busqueda_tiendas, name='busqueda_tiendas'),
     path('productos/busqueda_productos/<int:tienda_id>/', busqueda_productos, name='busqueda_productos'),
+    path('confirmar_pago/', views.confirmar_pago, name='confirmar_pago'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
