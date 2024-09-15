@@ -1,15 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.contrib.auth import logout
-from .forms import CustomUserCreationForm, ClienteForm, TiendaForm
+from .forms import CustomUserCreationForm, ClienteForm, TiendaForm, DireccionForm
 from django.contrib.auth import authenticate, login as auth_login
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion
+from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden
 from django.contrib import messages
 from .forms import ProductosTiendasForm
+from django.db import transaction
+import json
+from django.http import JsonResponse
+from django.utils import timezone
 import logging
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -408,30 +412,238 @@ def promociones_activas(request, tienda_id):
 
 @login_required
 def confirmar_pago(request):
-    # Obtener el cliente asociado al usuario autenticado
     cliente = request.user.cliente
-
-    # Consultar las direcciones asociadas al cliente
     direcciones = Direccion.objects.filter(cliente=cliente)
+    direccion_principal = Direccion.objects.filter(cliente=cliente, principal=True).first()
 
     if request.method == 'POST':
-        # Si el cliente envía una nueva dirección
-        nueva_direccion = request.POST.get('direccion')
-        nueva_ciudad = request.POST.get('ciudad')
-        nuevo_codigo_postal = request.POST.get('codigo_postal')
+        carrito = request.session.get('carrito', [])  # Suponiendo que el carrito se guarda en la sesión
 
-        # Crear y guardar la nueva dirección para el cliente
-        if nueva_direccion and nueva_ciudad and nuevo_codigo_postal:
-            Direccion.objects.create(
-                cliente=cliente,
-                direccion=nueva_direccion,
-                ciudad=nueva_ciudad,
-                codigo_postal=nuevo_codigo_postal,
-                principal=True  # Asignar como principal
-            )
-            return redirect('confirmar_pago')  # Redirigir de nuevo a la página de confirmación de pago
+        productos_en_tienda = []
+        error = None
 
-    # Renderizar la plantilla de confirmación de pago con las direcciones disponibles
+        for item in carrito:
+            try:
+                # Buscamos en la tabla ProductosTiendas usando producto_tienda_id
+                producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
+
+                productos_en_tienda.append({
+                    'producto': producto_tienda,  # Producto en tienda relacionado
+                    'nombre': producto_tienda.producto.nombre,  # Nombre del producto
+                    'cantidad': item['cantidad'],  # Cantidad seleccionada
+                    'precio_unitario': producto_tienda.precio_unitario,  # Precio unitario de ProductosTiendas
+                    'subtotal': producto_tienda.precio_unitario * item['cantidad']  # Cálculo subtotal
+                })
+            except ProductosTiendas.DoesNotExist:
+                error = f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'
+                break
+
+        if error:
+            return JsonResponse({'error': error})
+
+        total = sum(item['subtotal'] for item in productos_en_tienda)
+
+        context = {
+            'direcciones': direcciones,
+            'direccion_principal': direccion_principal,
+            'productos_en_tienda': productos_en_tienda,
+            'total': total,
+        }
+
+        return render(request, 'otros/confirmar_pago.html', context)
+
+    # Renderizar la página de confirmación de pago en GET
     return render(request, 'otros/confirmar_pago.html', {
-        'direcciones': direcciones
+        'direcciones': direcciones,
+        'direccion_principal': direccion_principal
     })
+
+
+@csrf_exempt
+@login_required
+def crear_direccion(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Crear un formulario con los datos recibidos
+            form = DireccionForm(data)
+
+            if form.is_valid():
+                nueva_direccion = form.save(commit=False)
+                # Asignar el cliente o tienda según corresponda
+                if request.user.is_cliente:
+                    nueva_direccion.cliente = request.user.cliente
+                elif request.user.is_tienda:
+                    nueva_direccion.tienda = request.user.tienda
+                nueva_direccion.save()
+
+                return JsonResponse({'success': True, 'direccion_id': nueva_direccion.id})
+            else:
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Datos JSON no válidos'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@csrf_exempt
+@login_required
+def crear_orden(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            cliente = request.user.cliente
+            direccion_envio_id = data.get('direccion_envio_id')
+            subtotal = float(data.get('subtotal', 0))
+            iva = float(data.get('iva', 0))
+            total = float(data.get('total', 0))
+            productos = data.get('productos', [])
+
+            if not productos:
+                return JsonResponse({'success': False, 'error': 'El carrito está vacío.'})
+
+            direccion_envio = Direccion.objects.get(id=direccion_envio_id, cliente=cliente)
+
+            tienda_ids = set()
+            for item in productos:
+                try:
+                    producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'])
+                    tienda_ids.add(producto_tienda.tienda.id)
+                except ProductosTiendas.DoesNotExist:
+                    return JsonResponse({'success': False, 'error': f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado.'})
+
+            if len(tienda_ids) != 1:
+                return JsonResponse({'success': False, 'error': 'Todos los productos deben pertenecer a la misma tienda.'})
+            tienda_id = tienda_ids.pop()
+            tienda = Tienda.objects.get(id=tienda_id)
+
+            with transaction.atomic():
+                orden = Orden.objects.create(
+                    cliente=cliente,
+                    tienda=tienda,
+                    direccion_envio=direccion_envio,
+                    subtotal=subtotal,
+                    iva=iva,
+                    total=total,
+                    estado='pendiente'
+                )
+
+                for item in productos:
+                    try:
+                        producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
+                        cantidad = int(item['cantidad'])
+                        precio_unitario = float(item['precio_unitario'])
+                        subtotal_producto = cantidad * precio_unitario
+
+                        if producto_tienda.cantidad < cantidad:
+                            raise ValueError(f"Producto {producto_tienda.producto.nombre} no tiene suficiente stock.")
+
+                        ProductoOrden.objects.create(
+                            orden=orden,
+                            producto_tienda=producto_tienda,
+                            cantidad=cantidad,
+                            precio_unitario=precio_unitario,
+                            subtotal=subtotal_producto
+                        )
+
+                        producto_tienda.cantidad -= cantidad
+                        producto_tienda.save()
+
+                    except ProductosTiendas.DoesNotExist:
+                        return JsonResponse({'success': False, 'error': f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'})
+
+            return JsonResponse({'success': True, 'orden_id': orden.id})
+        except Direccion.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Dirección de envío no encontrada.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@login_required  # Asegura que solo los usuarios autenticados puedan registrar una dirección
+def direccion_cliente(request):
+    # Obtener el cliente autenticado
+    cliente = Cliente.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        # Obtener los datos del formulario
+        direccion = request.POST.get('direccion')
+        ciudad = request.POST.get('ciudad')
+        departamento = request.POST.get('departamento')
+        codigo_postal = request.POST.get('codigo_postal')
+        principal = request.POST.get('principal', False)  # Si no se selecciona, se define como False
+
+        # Si el checkbox "principal" está seleccionado, desmarcar otras direcciones como principales
+        if principal:
+            Direccion.objects.filter(cliente=cliente, principal=True).update(principal=False)
+
+        # Crear y guardar la nueva dirección
+        nueva_direccion = Direccion(
+            direccion=direccion,
+            ciudad=ciudad,
+            departamento=departamento,
+            codigo_postal=codigo_postal,
+            principal=principal,
+            cliente=cliente  # Relacionar la dirección con el cliente
+        )
+
+        nueva_direccion.save()
+
+        # Enviar un mensaje de éxito y redirigir a la página de direcciones
+        messages.success(request, 'Dirección registrada correctamente.')
+        return redirect('direccion_cliente')  # Asegúrate de que este nombre coincida con tu URL
+
+    # Obtener todas las direcciones del cliente para mostrarlas en la página
+    direcciones = Direccion.objects.filter(cliente=cliente)
+
+    context = {
+        'direcciones': direcciones
+    }
+    return render(request, 'clientes/direccion.html', context)
+
+@login_required
+def eliminar_direccion(request, direccion_id):
+    direccion = get_object_or_404(Direccion, id=direccion_id, cliente__user=request.user)
+
+    if request.method == 'POST':
+        direccion.delete()
+        messages.success(request, 'Dirección eliminada correctamente.')
+        return redirect('direccion_cliente')  # Asegúrate de que 'direccion_cliente' es la URL donde se muestran las direcciones
+
+    return redirect('direccion_cliente')
+
+
+@login_required
+def actualizar_direccion(request, direccion_id):
+    direccion = get_object_or_404(Direccion, id=direccion_id, cliente__user=request.user)
+
+    if request.method == 'POST':
+        form = DireccionForm(request.POST, instance=direccion)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Dirección actualizada correctamente.')
+            return redirect(
+                'direccion_cliente')  # Asegúrate de que 'direccion_cliente' es la URL de la vista de direcciones
+    else:
+        form = DireccionForm(instance=direccion)
+
+    return render(request, 'clientes/actualizar_direccion.html', {'form': form, 'direccion': direccion})
+
+
+@login_required
+def registrar_direccion(request):
+    if request.method == 'POST':
+        form = DireccionForm(request.POST)
+        if form.is_valid():
+            direccion = form.save(commit=False)
+            direccion.cliente = Cliente.objects.get(user=request.user)
+            if direccion.principal:
+                Direccion.objects.filter(cliente=direccion.cliente, principal=True).update(principal=False)
+            direccion.save()
+            messages.success(request, 'Dirección registrada correctamente.')
+            return redirect('direccion_cliente')
+        else:
+            messages.error(request, 'Error al registrar la dirección. Verifica los campos del formulario.')
+    else:
+        form = DireccionForm()
+
+    return render(request, 'clientes/direccion.html', {'form': form})

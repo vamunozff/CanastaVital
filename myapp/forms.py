@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion
+from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden
 
 class CustomUserCreationForm(UserCreationForm):
     
@@ -47,13 +47,11 @@ class ClienteForm(forms.ModelForm):
 DEPARTAMENTOS = [
     ('ANT', 'Antioquia'),
     ('BOL', 'Bolívar'),
-    # Agrega aquí todos los departamentos de Colombia
 ]
 
 CIUDADES = [
     ('BOG', 'Bogotá'),
     ('MED', 'Medellín'),
-    # Agrega aquí todas las ciudades o municipios relevantes
 ]
 
 class DireccionForm(forms.ModelForm):
@@ -67,12 +65,11 @@ class DireccionForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         principal = cleaned_data.get("principal")
-        cliente = self.instance.cliente  # El cliente asociado a la dirección
-        tienda = self.instance.tienda    # La tienda asociada a la dirección
+        cliente = self.instance.cliente
+        tienda = self.instance.tienda
 
-        # Si la dirección es marcada como principal
         if principal:
-            # Verificar si ya hay una dirección principal para ese cliente
+
             if cliente and Direccion.objects.filter(cliente=cliente, principal=True).exclude(pk=self.instance.pk).exists():
                 raise forms.ValidationError("Este cliente ya tiene una dirección principal.")
 
@@ -94,3 +91,26 @@ class ProductosTiendasForm(forms.ModelForm):
         widgets = {
             'estado': forms.Select(choices=[('activo', 'Activo'), ('inactivo', 'Inactivo')]),
         }
+
+class OrdenForm(forms.ModelForm):
+    class Meta:
+        model = Orden
+        fields = ['cliente', 'tienda', 'direccion_envio', 'fecha_creacion', 'total', 'estado']
+        widgets = {
+            'fecha_creacion': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'total': forms.NumberInput(attrs={'step': '0.01'}),
+            'estado': forms.Select(choices=Orden.Estado.choices),
+        }
+
+    def clean_total(self):
+        total = self.cleaned_data.get('total')
+        if total < 0:
+            raise forms.ValidationError('El total no puede ser negativo.')
+        return total
+
+    def save(self, commit=True):
+        # Personaliza el método save si necesitas realizar acciones adicionales
+        instance = super().save(commit=False)
+        if commit:
+            instance.save()
+        return instance

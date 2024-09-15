@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, Venta, DetalleVenta, Inventario, MetodoPago, AtencionCliente, Direccion
+from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Orden, ProductoOrden
 from django.utils.html import mark_safe, format_html
 
 @admin.register(Categoria)
@@ -14,11 +14,9 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter = ('categoria', 'fecha_registro')
     ordering = ('nombre',)
 
-
 @admin.register(ProductosTiendas)
 class ProductosTiendasAdmin(admin.ModelAdmin):
-    list_display = (
-    'producto', 'proveedor', 'tienda', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro', 'imagen_preview')
+    list_display = ('producto', 'proveedor', 'tienda', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro', 'imagen_preview')
     list_filter = ('estado', 'fecha_registro', 'producto__categoria', 'proveedor')
     search_fields = ('producto__nombre', 'proveedor__razon_social', 'tienda__nombre')
     list_per_page = 20
@@ -54,7 +52,6 @@ class ClienteAdmin(admin.ModelAdmin):
     list_filter = ('tipo_documento', 'fecha_nacimiento')
     search_fields = ('user__username', 'numero_documento')
     ordering = ('-fecha_registro',)
-
     fields = ('user', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil')
     readonly_fields = ('fecha_registro',)
 
@@ -79,35 +76,63 @@ class TiendaAdmin(admin.ModelAdmin):
 
 @admin.register(Promocion)
 class PromocionAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'descripcion', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo')
-    list_filter = ('activo', 'fecha_inicio', 'fecha_fin')
-    search_fields = ('nombre', 'descripcion')
+    list_display = ('tienda', 'nombre', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo')
+    search_fields = ('nombre', 'tienda__nombre')
+    list_filter = ('activo', 'fecha_inicio', 'fecha_fin', 'tienda')
+    ordering = ('-fecha_inicio', 'tienda')
 
-@admin.register(Venta)
-class VentaAdmin(admin.ModelAdmin):
-    list_display = ('cliente', 'fecha', 'total')
-    search_fields = ('cliente__user__username', 'fecha')
-    list_filter = ('fecha',)
-
-@admin.register(DetalleVenta)
-class DetalleVentaAdmin(admin.ModelAdmin):
-    list_display = ('venta', 'producto_tienda', 'cantidad', 'precio')
-    search_fields = ('venta__id', 'producto_tienda__producto__nombre')
-    list_filter = ('venta__fecha',)
-
-@admin.register(Inventario)
-class InventarioAdmin(admin.ModelAdmin):
-    list_display = ('producto_tienda', 'tienda', 'cantidad')
-    search_fields = ('producto_tienda__producto__nombre', 'tienda__nombre')
-    list_filter = ('tienda',)
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('descuento',)
+        return self.readonly_fields
 
 @admin.register(MetodoPago)
 class MetodoPagoAdmin(admin.ModelAdmin):
-    list_display = ('tipo', 'descripcion')
-    search_fields = ('tipo',)
+    list_display = ('cliente', 'tipo', 'metodo_pago', 'detalles')
+    search_fields = ('cliente__user__username', 'tipo', 'detalles', 'metodo_pago')
+    list_filter = ('metodo_pago', 'cliente')
+    ordering = ('cliente', 'tipo')
 
 @admin.register(AtencionCliente)
 class AtencionClienteAdmin(admin.ModelAdmin):
-    list_display = ('cliente', 'asunto', 'estado', 'fecha_creacion')
-    search_fields = ('cliente__user__username', 'asunto')
-    list_filter = ('estado', 'fecha_creacion')
+    list_display = ('cliente', 'tienda', 'estado_atencion', 'fecha_creacion', 'mensaje', 'respuesta')
+    search_fields = ('cliente__user__username', 'tienda__nombre', 'mensaje')
+    list_filter = ('estado_atencion', 'fecha_creacion', 'tienda')
+    ordering = ('-fecha_creacion',)
+
+    actions = ['marcar_como_leido', 'marcar_como_respondido']
+
+    def marcar_como_leido(self, request, queryset):
+        rows_updated = queryset.update(estado_atencion=AtencionCliente.Estado.LEIDO)
+        self.message_user(request, f'{rows_updated} consultas marcadas como leídas.')
+    marcar_como_leido.short_description = 'Marcar seleccionadas como leídas'
+
+    def marcar_como_respondido(self, request, queryset):
+        rows_updated = queryset.update(estado_atencion=AtencionCliente.Estado.RESPONDIDO)
+        self.message_user(request, f'{rows_updated} consultas marcadas como respondidas.')
+    marcar_como_respondido.short_description = 'Marcar seleccionadas como respondidas'
+
+@admin.register(Orden)
+class OrdenAdmin(admin.ModelAdmin):
+    list_display = ('id', 'cliente', 'tienda', 'direccion_envio', 'fecha_creacion', 'total', 'estado')
+    list_filter = ('estado', 'tienda', 'fecha_creacion')
+    search_fields = ('cliente__user__username', 'tienda__nombre', 'estado')
+    date_hierarchy = 'fecha_creacion'
+    ordering = ('-fecha_creacion',)
+    readonly_fields = ('fecha_creacion',)
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('cliente', 'tienda')
+        return self.readonly_fields
+
+@admin.register(ProductoOrden)
+class ProductoOrdenAdmin(admin.ModelAdmin):
+    list_display = ('orden', 'producto_tienda', 'cantidad', 'precio_unitario')
+    list_filter = ('orden', 'producto_tienda')
+    search_fields = ('orden__id', 'producto_tienda__producto__nombre')
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('precio_unitario',)
+        return self.readonly_fields

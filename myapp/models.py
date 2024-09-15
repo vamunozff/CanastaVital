@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 class Cliente(models.Model):
     DOCUMENTO_CHOICES = [
         ('CC', 'Cédula de Ciudadanía'),
@@ -8,18 +10,16 @@ class Cliente(models.Model):
         ('CE', 'Cédula de Extranjería'),
         ('PA', 'Pasaporte'),
     ]
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cliente')
     telefono = models.CharField(max_length=20, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, default='CC')
     numero_documento = models.CharField(max_length=50, default='Sin número')
     fecha_registro = models.DateTimeField(auto_now_add=True)
-    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Defaul.jpg')
+    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Defaut.jpg')
 
     def __str__(self):
         return f'{self.user.username} - {self.numero_documento}'
-
     class Meta:
         db_table = 'Cliente'
 class Tienda(models.Model):
@@ -50,9 +50,10 @@ class Direccion(models.Model):
     def save(self, *args, **kwargs):
         if self.principal:
             if self.cliente:
-                Direccion.objects.filter(cliente=self.cliente, principal=True).update(principal=False)
+                Direccion.objects.filter(cliente=self.cliente, principal=True).exclude(id=self.id).update(
+                    principal=False)
             if self.tienda:
-                Direccion.objects.filter(tienda=self.tienda, principal=True).update(principal=False)
+                Direccion.objects.filter(tienda=self.tienda, principal=True).exclude(id=self.id).update(principal=False)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -72,7 +73,6 @@ class Categoria(models.Model):
 
     def __str__(self):
         return self.nombre
-
     class Meta:
         db_table = 'Categoria'
         verbose_name = "Categoría"
@@ -109,14 +109,14 @@ class Proveedor(models.Model):
     ]
     estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
-
     def __str__(self):
         return self.razon_social
-
     class Meta:
         db_table = 'Proveedor'
         verbose_name = "Proveedor"
         verbose_name_plural = "Proveedores"
+
+# esta tabla tambien va ser usada para el inventario
 class ProductosTiendas(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='productos_tiendas')
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor", related_name='productos_tiendas')
@@ -171,61 +171,84 @@ class Promocion(models.Model):
             models.UniqueConstraint(fields=['tienda'], condition=models.Q(activo=True),
                                     name='unique_active_promotion_per_store')
         ]
-
-class Venta(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    fecha = models.DateTimeField(auto_now_add=True)
+class Orden(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ordenes')
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='ordenes')
+    direccion_envio = models.ForeignKey(Direccion, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordenes')
+    fecha_creacion = models.DateTimeField(default=timezone.now)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    iva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'pendiente', 'Pendiente'
+        PROCESANDO = 'procesando', 'Procesando'
+        COMPLETADA = 'completada', 'Completada'
+        CANCELADA = 'cancelada', 'Cancelada'
+
+    estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.PENDIENTE)
 
     def __str__(self):
-        return f'Venta {self.id} - {self.cliente.user.username}'
-
+        return f"Orden {self.id} - Cliente: {self.cliente.user.username} - Tienda: {self.tienda.nombre} - Fecha: {self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')}"
+    def clean(self):
+        if self.total < 0:
+            raise ValidationError('El total no puede ser negativo.')
     class Meta:
-        db_table = 'Venta'
-class DetalleVenta(models.Model):
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
-    producto_tienda = models.ForeignKey('ProductosTiendas', on_delete=models.CASCADE)
-    cantidad = models.IntegerField()
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
+        db_table = 'ordenes'
+        verbose_name = 'Orden'
+        verbose_name_plural = 'Órdenes'
+
+class ProductoOrden(models.Model):
+    orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='productos_orden')
+    producto_tienda = models.ForeignKey(ProductosTiendas, on_delete=models.CASCADE, related_name='productos_orden')
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f'Detalle {self.id} - Venta {self.venta.id}'
+        return f"{self.producto_tienda.producto.nombre} - Orden {self.orden.id}"
 
     class Meta:
-        db_table = 'DetalleVenta'
+        db_table = 'productos_orden'
+        verbose_name = 'Producto en Orden'
+        verbose_name_plural = 'Productos en Órdenes'
 
-class Inventario(models.Model):
-    producto_tienda = models.ForeignKey('ProductosTiendas', on_delete=models.CASCADE)
-    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE)
-    cantidad = models.IntegerField()
-
-    def __str__(self):
-        return f'Inventario {self.id} - {self.producto_tienda.producto.nombre}'
-
-    class Meta:
-        db_table = 'Inventario'
 class MetodoPago(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='metodos_pago')
     tipo = models.CharField(max_length=50)
-    descripcion = models.TextField(null=True, blank=True)
+    detalles = models.TextField()
+
+    class Metodo(models.TextChoices):
+        TARJETA_CREDITO = 'tarjeta_credito', 'Tarjeta de Crédito'
+        TARJETA_DEBITO = 'tarjeta_debito', 'Tarjeta de Débito'
+        TRANSFERENCIA_BANCARIA = 'transferencia_bancaria', 'Transferencia Bancaria'
+        PAYPAL = 'paypal', 'PayPal'
+
+    metodo_pago = models.CharField(max_length=50, choices=Metodo.choices)
 
     def __str__(self):
-        return self.tipo
+        return f"{self.tipo} - Cliente: {self.cliente.user.username}"
 
     class Meta:
-        db_table = 'MetodoPago'
+        db_table = 'metodo_pago'
 class AtencionCliente(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    asunto = models.CharField(max_length=100)
-    descripcion = models.TextField()
-    estado = models.CharField(max_length=50, choices=[
-        ('abierto', 'Abierto'),
-        ('en progreso', 'En Progreso'),
-        ('cerrado', 'Cerrado')
-    ])
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='atencion_cliente')
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='atencion_cliente')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    mensaje = models.TextField()
+    respuesta = models.TextField(null=True, blank=True)
+    estado = models.BooleanField(default=False)
+
+    class Estado(models.TextChoices):
+        NO_LEIDO = 'no_leido', 'No Leído'
+        LEIDO = 'leido', 'Leído'
+        RESPONDIDO = 'respondido', 'Respondido'
+
+    estado_atencion = models.CharField(max_length=50, choices=Estado.choices, default=Estado.NO_LEIDO)
 
     def __str__(self):
-        return f'{self.asunto} - {self.cliente.user.username}'
+        return f"Consulta {self.id} - Cliente: {self.cliente.user.username} - Tienda: {self.tienda.nombre}"
 
     class Meta:
-        db_table = 'AtencionCliente'
+        db_table = 'atencion_cliente'
+        verbose_name = 'Atención al Cliente'
+        verbose_name_plural = 'Atención al Cliente'

@@ -1,86 +1,50 @@
 {% extends 'clientes/base.html' %}
 {% block content %}
     {% load static %}
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Confirmar Pago</title>
-        <link rel="stylesheet" href="{% static 'myapp/css/prueba.css' %}">
-    </head>
-    <body>
-        <div class="container">
-            <h1>Carrito de Compras</h1>
-            <table id="tabla-carrito" class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Subtotal</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpo-tabla-carrito">
-                    <!-- Los productos del carrito se insertarán dinámicamente aquí -->
-                </tbody>
-            </table>
+    <link rel="stylesheet" href="{% static 'myapp/css/prueba.css' %}">
 
-            <p><strong>Subtotal:</strong> $<span id="subtotal-carrito">0.00</span></p>
-            <p><strong>IVA (19%):</strong> $<span id="iva-carrito">0.00</span></p>
-            <p><strong>Total:</strong> $<span id="total-carrito">0.00</span></p>
+    <div class="container">
+        <h1>Carrito de Compras</h1>
+        <table id="tabla-carrito" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-carrito">
+                <!-- Los productos del carrito se insertarán dinámicamente aquí -->
+            </tbody>
+        </table>
 
-            <button id="boton-carrito" class="btn btn-primary">Proceder al Pago</button>
+        <p><strong>Subtotal:</strong> $<span id="subtotal-carrito">0.00</span></p>
+        <p><strong>IVA (19%):</strong> $<span id="iva-carrito">0.00</span></p>
+        <p><strong>Total:</strong> $<span id="total-carrito">0.00</span></p>
 
-            <!-- Mostrar dirección seleccionada -->
-            <div id="direccion-seleccionada-container">
-                <p><strong>Dirección de Envío Seleccionada:</strong></p>
-                <div id="direccion-seleccionada">
-                    Ninguna dirección seleccionada
+        <button id="boton-carrito" class="btn btn-primary">Proceder al Pago</button>
+
+        <!-- Mostrar direcciones registradas -->
+        <div id="direcciones-container">
+            <p><strong>Selecciona una dirección de envío:</strong></p>
+            {% for direccion in direcciones %}
+                <div>
+                    <input type="radio" id="direccion_{{ direccion.id }}" name="direccion" value="{{ direccion.id }}"
+                        {% if direccion.id == direccion_principal.id %} checked {% endif %}>
+                    <label for="direccion_{{ direccion.id }}">
+                        <span>Dirección: {{ direccion.direccion }} Ciudad: {{ direccion.ciudad }} Departamento: {{ direccion.departamento }}</span>
+                        {% if direccion.codigo_postal %}
+{#                            <span>{{ direccion.codigo_postal }}</span>#}
+                        {% else %}
+                            <span>No especificado</span>
+                        {% endif %}
+                    </label>
                 </div>
-            </div>
+            {% endfor %}
         </div>
 
-        <!-- Modal de confirmación de dirección -->
-        <div id="modal-direccion" class="modal" style="display: none;">
-            <div class="modal-content">
-                <span id="cerrar-modal-direccion" class="cerrar">&times;</span>
-                <h2>Confirmar Dirección de Envío</h2>
-
-                <!-- Mostrar las direcciones registradas si existen -->
-                {% if direcciones %}
-                    <p>Selecciona una dirección registrada:</p>
-                    <select id="select-direccion">
-                        {% for direccion in direcciones %}
-                            <option value="{{ direccion.id }}">
-                                {{ direccion.direccion }}<br>
-                                {{ direccion.ciudad }}<br>
-                                {{ direccion.departamento }}<br>
-                                {{ direccion.codigo_postal }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                {% else %}
-                    <p>No tienes direcciones registradas. Por favor, ingresa una nueva:</p>
-                    <form id="form-confirmar-direccion">
-                        <label for="direccion">Dirección:</label>
-                        <input type="text" id="direccion" name="direccion" required>
-                        <label for="ciudad">Ciudad:</label>
-                        <input type="text" id="ciudad" name="ciudad" required>
-                        <label for="codigo-postal">Código Postal:</label>
-                        <input type="text" id="codigo-postal" name="codigo-postal" required>
-                        <button type="submit" class="btn btn-success">Confirmar Dirección</button>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Superposición del carrito -->
-        <div id="superposicion-carrito" style="display: none;"></div>
-
-        <!-- Incluir el script JavaScript -->
-        <script src="{% static 'myapp/js/confirmar_pago.js' %}"></script>
-    </body>
-    </html>
+    </div>
+    <script src="{% static 'myapp/js/confirmar_pago.js' %}"></script>
 {% endblock %}

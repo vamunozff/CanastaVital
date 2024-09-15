@@ -1,0 +1,174 @@
+{% extends 'clientes/base.html' %}
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direcciones del Cliente</title>
+    <!-- Incluir Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Incluir Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+    <h2>Direcciones Registradas</h2>
+
+<!-- Botón para abrir el modal de registro de dirección -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registrarModal">
+    Registrar Dirección
+</button>
+
+<!-- Tabla de direcciones -->
+<table class="table">
+    <thead>
+        <tr>
+            <th>Dirección</th>
+            <th>Ciudad</th>
+            <th>Departamento</th>
+            <th>Código Postal</th>
+            <th>Principal</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for direccion in direcciones %}
+        <tr>
+            <td>{{ direccion.direccion }}</td>
+            <td>{{ direccion.ciudad }}</td>
+            <td>{{ direccion.departamento }}</td>
+            <td>{{ direccion.codigo_postal }}</td>
+            <td>{{ direccion.principal }}</td>
+            <td>
+                <!-- Ver -->
+                <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#verModal{{ direccion.id }}" title="Ver">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <!-- Actualizar -->
+                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#actualizarModal{{ direccion.id }}" title="Actualizar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <!-- Eliminar -->
+                <form action="{% url 'eliminar_direccion' direccion.id %}" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de eliminar esta dirección?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </td>
+        </tr>
+        <!-- Modal de Ver -->
+        <div class="modal fade" id="verModal{{ direccion.id }}" tabindex="-1" aria-labelledby="verModalLabel{{ direccion.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="verModalLabel{{ direccion.id }}">Detalles de Dirección</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Dirección:</strong> {{ direccion.direccion }}</p>
+                        <p><strong>Ciudad:</strong> {{ direccion.ciudad }}</p>
+                        <p><strong>Departamento:</strong> {{ direccion.departamento }}</p>
+                        <p><strong>Código Postal:</strong> {{ direccion.codigo_postal }}</p>
+                        <p><strong>Principal:</strong> {{ direccion.principal }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal para actualizar dirección -->
+        <div class="modal fade" id="actualizarModal{{ direccion.id }}" tabindex="-1" aria-labelledby="actualizarModalLabel{{ direccion.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="actualizarModalLabel{{ direccion.id }}">Actualizar Dirección</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'actualizar_direccion' direccion.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="direccion{{ direccion.id }}" class="form-label">Dirección</label>
+                                <input type="text" class="form-control" id="direccion{{ direccion.id }}" name="direccion" value="{{ direccion.direccion }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ciudad{{ direccion.id }}" class="form-label">Ciudad</label>
+                                <input type="text" class="form-control" id="ciudad{{ direccion.id }}" name="ciudad" value="{{ direccion.ciudad }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="departamento{{ direccion.id }}" class="form-label">Departamento</label>
+                                <input type="text" class="form-control" id="departamento{{ direccion.id }}" name="departamento" value="{{ direccion.departamento }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="codigo_postal{{ direccion.id }}" class="form-label">Código Postal</label>
+                                <input type="text" class="form-control" id="codigo_postal{{ direccion.id }}" name="codigo_postal" value="{{ direccion.codigo_postal }}" required>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="principal{{ direccion.id }}" name="principal" {% if direccion.principal %}checked{% endif %}>
+                                <label class="form-check-label" for="principal{{ direccion.id }}">
+                                    ¿Hacer esta dirección principal?
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+        <!-- Modal para registrar nueva dirección -->
+        <div class="modal fade" id="registrarModal" tabindex="-1" aria-labelledby="registrarModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="registrarModalLabel">Registrar Nueva Dirección</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'registro_direccion' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="direccion" class="form-label">Dirección</label>
+                                <input type="text" class="form-control" id="direccion" name="direccion" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ciudad" class="form-label">Ciudad</label>
+                                <input type="text" class="form-control" id="ciudad" name="ciudad" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="departamento" class="form-label">Departamento</label>
+                                <input type="text" class="form-control" id="departamento" name="departamento" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="codigo_postal" class="form-label">Código Postal</label>
+                                <input type="text" class="form-control" id="codigo_postal" name="codigo_postal" required>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="principal" name="principal">
+                                <label class="form-check-label" for="principal">
+                                    ¿Hacer esta dirección principal?
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Registrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!-- Incluir el JS de Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
+
+{% endblock %}
