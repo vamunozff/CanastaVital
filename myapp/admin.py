@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Orden, ProductoOrden
+from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Departamento, Ciudad, Orden, ProductoOrden
 from django.utils.html import mark_safe, format_html
 
 @admin.register(Categoria)
@@ -67,6 +67,16 @@ class DireccionAdmin(admin.ModelAdmin):
             'fields': ('cliente', 'tienda', 'direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal')
         }),
     )
+@admin.register(Departamento)
+class DepartamentoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre')
+    search_fields = ('nombre',)
+
+@admin.register(Ciudad)
+class CiudadAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'departamento')
+    search_fields = ('nombre',)
+    list_filter = ('departamento',)
 
 @admin.register(Tienda)
 class TiendaAdmin(admin.ModelAdmin):

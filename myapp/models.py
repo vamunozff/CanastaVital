@@ -38,20 +38,39 @@ class Tienda(models.Model):
         verbose_name = 'Tienda'
         verbose_name_plural = 'Tiendas'
 
+class Departamento(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
+    class Meta:
+        db_table = 'Departamento'
+        verbose_name = 'Departamento'
+        verbose_name_plural = 'Departamentos'
+class Ciudad(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE, related_name='ciudades')
+
+    def __str__(self):
+        return self.nombre
+    class Meta:
+        db_table = 'Ciudad'
+        verbose_name = 'Ciudad'
+        verbose_name_plural = 'Ciudades'
+
 class Direccion(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
     direccion = models.TextField()
-    ciudad = models.CharField(max_length=100)
-    departamento = models.CharField(max_length=100)
+    ciudad = models.ForeignKey(Ciudad, on_delete=models.PROTECT)
+    departamento = models.ForeignKey(Departamento, on_delete=models.PROTECT)
     codigo_postal = models.CharField(max_length=10, null=True, blank=True)
     principal = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.principal:
             if self.cliente:
-                Direccion.objects.filter(cliente=self.cliente, principal=True).exclude(id=self.id).update(
-                    principal=False)
+                Direccion.objects.filter(cliente=self.cliente, principal=True).exclude(id=self.id).update(principal=False)
             if self.tienda:
                 Direccion.objects.filter(tienda=self.tienda, principal=True).exclude(id=self.id).update(principal=False)
         super().save(*args, **kwargs)

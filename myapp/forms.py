@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden
+from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden, Departamento, Ciudad
 
 class CustomUserCreationForm(UserCreationForm):
     
@@ -44,19 +44,10 @@ class ClienteForm(forms.ModelForm):
 
         return cleaned_data
 
-DEPARTAMENTOS = [
-    ('ANT', 'Antioquia'),
-    ('BOL', 'Bolívar'),
-]
-
-CIUDADES = [
-    ('BOG', 'Bogotá'),
-    ('MED', 'Medellín'),
-]
 
 class DireccionForm(forms.ModelForm):
-    departamento = forms.ChoiceField(choices=DEPARTAMENTOS)
-    ciudad = forms.ChoiceField(choices=CIUDADES)
+    departamento = forms.ModelChoiceField(queryset=Departamento.objects.all())
+    ciudad = forms.ModelChoiceField(queryset=Ciudad.objects.all())
 
     class Meta:
         model = Direccion

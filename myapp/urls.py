@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import login, hello, index_tienda, exit, register, home, perfil, categoria, index_producto, index_proveedor, asignar_proveedor, register_cliente, perfil_tienda, index_cliente, login_view, busqueda_tiendas, busqueda_productos, direccion_cliente
+from .views import login, hello, index_tienda, exit, register, home, perfil, categoria, index_producto, index_proveedor, asignar_proveedor, register_cliente, perfil_tienda, index_cliente, login_view, busqueda_tiendas, busqueda_productos, direccion_cliente, get_ciudades
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -38,7 +38,8 @@ urlpatterns = [
     path('api/crear_direccion/', views.crear_direccion, name='crear_direccion'),
     path('api/crear_orden/', views.crear_orden, name='crear_orden'),
     path('direccion_cliente/', views.direccion_cliente, name='direccion_cliente'),
-    path('registrar_direccion/', views.registrar_direccion, name='registro_direccion'),
+    path('registrar_direccion/', views.registrar_direccion, name='registrar_direccion'),
     path('eliminar_direccion/<int:direccion_id>/', views.eliminar_direccion, name='eliminar_direccion'),
     path('actualizar_direccion/<int:direccion_id>/', views.actualizar_direccion, name='actualizar_direccion'),
+    path('get-ciudades/', get_ciudades, name='get_ciudades'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

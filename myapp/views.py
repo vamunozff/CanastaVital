@@ -1,18 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.contrib.auth import logout
 from .forms import CustomUserCreationForm, ClienteForm, TiendaForm, DireccionForm
 from django.contrib.auth import authenticate, login as auth_login
-from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden
+from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden, Ciudad, Departamento
 from django.contrib import messages
 from .forms import ProductosTiendasForm
 from django.db import transaction
 import json
-from django.http import JsonResponse
 from django.utils import timezone
 import logging
 from django.core.exceptions import ValidationError
@@ -559,46 +557,37 @@ def crear_orden(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
-@login_required  # Asegura que solo los usuarios autenticados puedan registrar una dirección
+@login_required
 def direccion_cliente(request):
-    # Obtener el cliente autenticado
-    cliente = Cliente.objects.get(user=request.user)
+    direcciones = Direccion.objects.filter(cliente__user=request.user)
+    form = DireccionForm()
 
+    return render(request, 'clientes/direccion.html', {
+        'form': form,
+        'direcciones': direcciones,
+    })
+
+@login_required
+def registrar_direccion(request):
     if request.method == 'POST':
-        # Obtener los datos del formulario
-        direccion = request.POST.get('direccion')
-        ciudad = request.POST.get('ciudad')
-        departamento = request.POST.get('departamento')
-        codigo_postal = request.POST.get('codigo_postal')
-        principal = request.POST.get('principal', False)  # Si no se selecciona, se define como False
+        form = DireccionForm(request.POST)
+        if form.is_valid():
+            direccion = form.save(commit=False)
+            direccion.cliente = Cliente.objects.get(user=request.user)
+            if direccion.principal:
+                Direccion.objects.filter(cliente=direccion.cliente, principal=True).update(principal=False)
+            direccion.save()
+            messages.success(request, 'Dirección registrada correctamente.')
+            return redirect('direccion_cliente')
+        else:
+            messages.error(request, 'Error al registrar la dirección. Verifica los campos del formulario.')
+            print(form.errors)  # Imprime los errores del formulario
+    else:
+        form = DireccionForm()
 
-        # Si el checkbox "principal" está seleccionado, desmarcar otras direcciones como principales
-        if principal:
-            Direccion.objects.filter(cliente=cliente, principal=True).update(principal=False)
+    direcciones = Direccion.objects.filter(cliente=Cliente.objects.get(user=request.user))
+    return render(request, 'clientes/direccion.html', {'form': form, 'direcciones': direcciones})
 
-        # Crear y guardar la nueva dirección
-        nueva_direccion = Direccion(
-            direccion=direccion,
-            ciudad=ciudad,
-            departamento=departamento,
-            codigo_postal=codigo_postal,
-            principal=principal,
-            cliente=cliente  # Relacionar la dirección con el cliente
-        )
-
-        nueva_direccion.save()
-
-        # Enviar un mensaje de éxito y redirigir a la página de direcciones
-        messages.success(request, 'Dirección registrada correctamente.')
-        return redirect('direccion_cliente')  # Asegúrate de que este nombre coincida con tu URL
-
-    # Obtener todas las direcciones del cliente para mostrarlas en la página
-    direcciones = Direccion.objects.filter(cliente=cliente)
-
-    context = {
-        'direcciones': direcciones
-    }
-    return render(request, 'clientes/direccion.html', context)
 
 @login_required
 def eliminar_direccion(request, direccion_id):
@@ -619,31 +608,31 @@ def actualizar_direccion(request, direccion_id):
     if request.method == 'POST':
         form = DireccionForm(request.POST, instance=direccion)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Dirección actualizada correctamente.')
-            return redirect(
-                'direccion_cliente')  # Asegúrate de que 'direccion_cliente' es la URL de la vista de direcciones
+            direccion = form.save(commit=False)
+            cliente = Cliente.objects.get(user=request.user)
+            if direccion.principal:
+                Direccion.objects.filter(cliente=cliente, principal=True).update(principal=False)
+            direccion.save()
+            messages.success(request, 'La dirección ha sido actualizada correctamente.')
+            return redirect('direccion_cliente')
+        else:
+            messages.error(request, 'Ha ocurrido un error al actualizar la dirección.')
     else:
         form = DireccionForm(instance=direccion)
 
-    return render(request, 'clientes/actualizar_direccion.html', {'form': form, 'direccion': direccion})
+    departamentos = Departamento.objects.all()  # Obtener todos los departamentos
+    ciudades = Ciudad.objects.filter(departamento=direccion.departamento)  # Filtrar ciudades por departamento
+    return render(request, 'clientes/direccion.html',
+                  {'form': form, 'direccion': direccion, 'departamentos': departamentos, 'ciudades': ciudades})
 
 
-@login_required
-def registrar_direccion(request):
-    if request.method == 'POST':
-        form = DireccionForm(request.POST)
-        if form.is_valid():
-            direccion = form.save(commit=False)
-            direccion.cliente = Cliente.objects.get(user=request.user)
-            if direccion.principal:
-                Direccion.objects.filter(cliente=direccion.cliente, principal=True).update(principal=False)
-            direccion.save()
-            messages.success(request, 'Dirección registrada correctamente.')
-            return redirect('direccion_cliente')
-        else:
-            messages.error(request, 'Error al registrar la dirección. Verifica los campos del formulario.')
+def get_ciudades(request):
+    departamento_id = request.GET.get('departamento')
+    if departamento_id:
+        ciudades = Ciudad.objects.filter(departamento_id=departamento_id)
+        ciudad_list = list(ciudades.values('id', 'nombre'))
     else:
-        form = DireccionForm()
+        ciudad_list = []
 
-    return render(request, 'clientes/direccion.html', {'form': form})
+    return JsonResponse({'ciudades': ciudad_list})
+

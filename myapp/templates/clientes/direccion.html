@@ -15,8 +15,17 @@
 <body>
 
 <div class="container mt-4">
-    <h2>Direcciones Registradas</h2>
-
+    <h2>Direcciones</h2>
+    <!-- Mensajes de feedback -->
+    {% if messages %}
+        <div class="mt-3">
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 <!-- Botón para abrir el modal de registro de dirección -->
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registrarModal">
     Registrar Dirección
@@ -87,37 +96,48 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form method="POST" action="{% url 'actualizar_direccion' direccion.id %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="direccion{{ direccion.id }}" class="form-label">Dirección</label>
-                                <input type="text" class="form-control" id="direccion{{ direccion.id }}" name="direccion" value="{{ direccion.direccion }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="ciudad{{ direccion.id }}" class="form-label">Ciudad</label>
-                                <input type="text" class="form-control" id="ciudad{{ direccion.id }}" name="ciudad" value="{{ direccion.ciudad }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="departamento{{ direccion.id }}" class="form-label">Departamento</label>
-                                <input type="text" class="form-control" id="departamento{{ direccion.id }}" name="departamento" value="{{ direccion.departamento }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="codigo_postal{{ direccion.id }}" class="form-label">Código Postal</label>
-                                <input type="text" class="form-control" id="codigo_postal{{ direccion.id }}" name="codigo_postal" value="{{ direccion.codigo_postal }}" required>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="principal{{ direccion.id }}" name="principal" {% if direccion.principal %}checked{% endif %}>
-                                <label class="form-check-label" for="principal{{ direccion.id }}">
-                                    ¿Hacer esta dirección principal?
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Actualizar</button>
-                        </form>
+<form method="POST" action="{% url 'actualizar_direccion' direccion.id %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="direccion{{ direccion.id }}" class="form-label">Dirección</label>
+        <input type="text" class="form-control" id="direccion{{ direccion.id }}" name="direccion" value="{{ direccion.direccion }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="departamento{{ direccion.id }}" class="form-label">Departamento</label>
+        <select class="form-control" id="departamento{{ direccion.id }}" name="departamento" required>
+            <option value="">Seleccione un departamento</option>
+            {% for dept in departamentos %}
+                <option value="{{ dept.id }}" {% if dept.id == direccion.departamento_id %}selected{% endif %}>{{ dept.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="ciudad{{ direccion.id }}" class="form-label">Ciudad</label>
+        <select class="form-control" id="ciudad{{ direccion.id }}" name="ciudad" required>
+            <option value="">Seleccione una ciudad</option>
+            {% for ciudad in ciudades %}
+                <option value="{{ ciudad.id }}" {% if ciudad.id == direccion.ciudad_id %}selected{% endif %}>{{ ciudad.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="codigo_postal{{ direccion.id }}" class="form-label">Código Postal</label>
+        <input type="text" class="form-control" id="codigo_postal{{ direccion.id }}" name="codigo_postal" value="{{ direccion.codigo_postal }}" required>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="principal{{ direccion.id }}" name="principal" {% if direccion.principal %}checked{% endif %}>
+        <label class="form-check-label" for="principal{{ direccion.id }}">
+            ¿Hacer esta dirección principal?
+        </label>
+    </div>
+    <button type="submit" class="btn btn-primary">Actualizar</button>
+</form>
+
+
                     </div>
                 </div>
             </div>
         </div>
-
 
         {% endfor %}
     </tbody>
@@ -134,32 +154,43 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form method="POST" action="{% url 'registro_direccion' %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="direccion" class="form-label">Dirección</label>
-                                <input type="text" class="form-control" id="direccion" name="direccion" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="ciudad" class="form-label">Ciudad</label>
-                                <input type="text" class="form-control" id="ciudad" name="ciudad" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="departamento" class="form-label">Departamento</label>
-                                <input type="text" class="form-control" id="departamento" name="departamento" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="codigo_postal" class="form-label">Código Postal</label>
-                                <input type="text" class="form-control" id="codigo_postal" name="codigo_postal" required>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="principal" name="principal">
-                                <label class="form-check-label" for="principal">
-                                    ¿Hacer esta dirección principal?
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Registrar</button>
-                        </form>
+        <form method="POST" action="{% url 'registrar_direccion' %}">
+            {% csrf_token %}
+            <p id="modalDescription">Por favor, complete la información de la nueva dirección.</p>
+            <div class="mb-3">
+                <label for="id_direccion" class="form-label">Dirección</label>
+                <input type="text" class="form-control" id="id_direccion" name="direccion" required>
+            </div>
+            <div class="mb-3">
+                <label for="id_departamento" class="form-label">Departamento</label>
+                <select class="form-control" id="id_departamento" name="departamento" required>
+                    <option value="">Seleccione un departamento</option>
+                    {% for value, label in form.departamento.field.choices %}
+                        <option value="{{ value }}" {% if value == form.departamento.value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="id_ciudad" class="form-label">Ciudad</label>
+                <select class="form-control" id="id_ciudad" name="ciudad" required>
+                    <option value="">Seleccione una ciudad</option>
+                    <!-- Las opciones se llenarán dinámicamente -->
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="id_codigo_postal" class="form-label">Código Postal</label>
+                <input type="text" class="form-control" id="id_codigo_postal" name="codigo_postal">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="id_principal" name="principal" value="on">
+                <label class="form-check-label" for="id_principal">
+                    ¿Hacer esta dirección principal?
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary me-2">Registrar</button>
+        </form>
+
+
                     </div>
                 </div>
             </div>
@@ -167,6 +198,64 @@
 
 <!-- Incluir el JS de Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Script para el formulario de creación
+    var deptCreate = document.getElementById('id_departamento');
+    var ciudadCreate = document.getElementById('id_ciudad');
+
+    if (deptCreate) {
+        deptCreate.addEventListener('change', function() {
+            var departamentoId = this.value;
+            ciudadCreate.innerHTML = '<option value="">Seleccione una ciudad</option>';
+
+            if (departamentoId) {
+                fetch(`/get-ciudades/?departamento=${departamentoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.ciudades.forEach(function(ciudad) {
+                            var option = document.createElement('option');
+                            option.value = ciudad.id;
+                            option.text = ciudad.nombre;
+                            ciudadCreate.add(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cities:', error);
+                    });
+            }
+        });
+    }
+
+    // Script para el formulario de actualización
+    var deptUpdate = document.getElementById('departamento{{ direccion.id }}');
+    var ciudadUpdate = document.getElementById('ciudad{{ direccion.id }}');
+
+    if (deptUpdate) {
+        deptUpdate.addEventListener('change', function() {
+            var departamentoId = this.value;
+            ciudadUpdate.innerHTML = '<option value="">Seleccione una ciudad</option>';
+
+            if (departamentoId) {
+                fetch(`/get-ciudades/?departamento=${departamentoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.ciudades.forEach(function(ciudad) {
+                            var option = document.createElement('option');
+                            option.value = ciudad.id;
+                            option.text = ciudad.nombre;
+                            ciudadUpdate.add(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cities:', error);
+                    });
+            }
+        });
+    }
+});
+</script>
+
 
 </body>
 </html>
