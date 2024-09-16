@@ -62,7 +62,7 @@ CREATE INDEX idx_producto_nombre ON Producto(nombre);
 
 CREATE TABLE Proveedor (
     id SERIAL PRIMARY KEY,
-    usuario_id INTEGER NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+    tienda_id INTEGER NOT NULL REFERENCES Tienda(id) ON DELETE CASCADE,
     razon_social VARCHAR(150) NOT NULL,
     email VARCHAR(100),
     telefono VARCHAR(20),
@@ -155,6 +155,18 @@ select * from "ordenes"
 select * from "Promocion"
 
 SELECT username, password FROM auth_user WHERE username = 'vamunozf';
+SELECT * FROM "Tienda" WHERE id = 3;
+DELETE FROM "Proveedor" WHERE tienda_id = 2;
+SELECT * FROM "Tienda" WHERE user_id = 2;
+SELECT user_id FROM "Tienda";
+SELECT id FROM auth_user;
+
+-- Ejemplo para insertar una nueva tienda con user_id existente
+INSERT INTO "Tienda" (user_id, nombre, horarios, telefono, descripcion, logo_url, fecha_registro)
+VALUES (4, 'Nueva Tienda', 'Lunes a Sábado, 8:00 AM - 8:00 PM', '555-1234', 'Descripción de la nueva tienda.', 'nuevo_logo.jpg', NOW());
+DELETE FROM "Tienda" WHERE user_id = 4;
+TRUNCATE TABLE "Tienda" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE "Proveedor" RESTART IDENTITY CASCADE;
 
 -- Insertar datos en Departamento
 INSERT INTO "Departamento" (nombre) VALUES
