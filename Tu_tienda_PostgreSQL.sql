@@ -1,181 +1,144 @@
--- Tabla Cliente
-CREATE TABLE "Cliente" (
+CREATE TABLE Cliente (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
     telefono VARCHAR(20),
     fecha_nacimiento DATE,
-    tipo_documento VARCHAR(20) DEFAULT 'CC',
-    numero_documento VARCHAR(50) DEFAULT 'Sin número',
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    imagen_perfil VARCHAR(255) DEFAULT 'default/Defaul.jpg'
+    tipo_documento VARCHAR(20) NOT NULL DEFAULT 'CC',
+    numero_documento VARCHAR(50) NOT NULL DEFAULT 'Sin número',
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    imagen_perfil VARCHAR(100) DEFAULT 'default/Defaut.jpg',
+    CONSTRAINT ck_tipo_documento CHECK (tipo_documento IN ('CC', 'TI', 'CE', 'PA'))
 );
 
--- Tabla Tienda
-CREATE TABLE "Tienda" (
+CREATE TABLE Tienda (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
     nombre VARCHAR(100) NOT NULL,
     horarios TEXT,
     telefono VARCHAR(20),
     descripcion TEXT,
-    logo_url VARCHAR(255),
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    logo_url VARCHAR(100),
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Crear la tabla Departamento
-CREATE TABLE "Departamento" (
+CREATE TABLE Departamento (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) UNIQUE NOT NULL
 );
 
--- Crear la tabla Ciudad
-CREATE TABLE "Ciudad" (
+CREATE TABLE Ciudad (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) UNIQUE NOT NULL,
-    departamento_id INTEGER NOT NULL,
-    FOREIGN KEY (departamento_id) REFERENCES "Departamento" (id) ON DELETE CASCADE
+    departamento_id INTEGER NOT NULL REFERENCES Departamento(id) ON DELETE CASCADE
 );
 
--- Tabla Direccion
-CREATE TABLE "Direccion" (
+CREATE TABLE Direccion (
     id SERIAL PRIMARY KEY,
-    cliente_id INTEGER REFERENCES "Cliente"(id) ON DELETE CASCADE,
-    tienda_id INTEGER REFERENCES "Tienda"(id) ON DELETE CASCADE,
+    cliente_id INTEGER REFERENCES Cliente(id) ON DELETE CASCADE,
+    tienda_id INTEGER REFERENCES Tienda(id) ON DELETE CASCADE,
     direccion TEXT NOT NULL,
-    ciudad VARCHAR(100) REFERENCES "Ciudad"(id) ON DELETE CASCADE,
-    departamento VARCHAR(100) REFERENCES "Departamento"(id) ON DELETE CASCADE,
+    ciudad_id INTEGER NOT NULL REFERENCES Ciudad(id) ON DELETE PROTECT,
+    departamento_id INTEGER NOT NULL REFERENCES Departamento(id) ON DELETE PROTECT,
     codigo_postal VARCHAR(10),
     principal BOOLEAN DEFAULT FALSE
 );
 
--- Tabla Categoria
-CREATE TABLE "Categoria" (
+CREATE TABLE Categoria (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT CHECK (length(descripcion) <= 150)
+    descripcion TEXT
 );
 
--- Tabla Producto
-CREATE TABLE "Producto" (
+CREATE TABLE Producto (
     id SERIAL PRIMARY KEY,
-    categoria_id INTEGER REFERENCES "Categoria"(id) ON DELETE CASCADE,
+    categoria_id INTEGER NOT NULL REFERENCES Categoria(id) ON DELETE CASCADE,
     codigo VARCHAR(100) UNIQUE NOT NULL,
     nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT CHECK (length(descripcion) <= 255),
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    descripcion TEXT,
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_producto_codigo ON Producto(codigo);
+CREATE INDEX idx_producto_nombre ON Producto(nombre);
 
--- Tabla Proveedor
-CREATE TABLE "Proveedor" (
+CREATE TABLE Proveedor (
     id SERIAL PRIMARY KEY,
-    usuario_id INTEGER REFERENCES auth_user(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
     razon_social VARCHAR(150) NOT NULL,
     email VARCHAR(100),
     telefono VARCHAR(20),
     direccion TEXT,
-    estado VARCHAR(50) CHECK (estado IN ('activo', 'inactivo')) NOT NULL,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    estado VARCHAR(50) NOT NULL,
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_estado CHECK (estado IN ('activo', 'inactivo'))
 );
 
--- Tabla ProductosTiendas
-CREATE TABLE "ProductosTiendas" (
+CREATE TABLE ProductosTiendas (
     id SERIAL PRIMARY KEY,
-    producto_id INTEGER REFERENCES "Producto"(id) ON DELETE CASCADE,
-    proveedor_id INTEGER REFERENCES "Proveedor"(id) ON DELETE CASCADE,
-    tienda_id INTEGER REFERENCES "Tienda"(id) ON DELETE CASCADE,
-    precio_unitario DECIMAL(10, 2) DEFAULT 0,
+    producto_id INTEGER NOT NULL REFERENCES Producto(id) ON DELETE CASCADE,
+    proveedor_id INTEGER NOT NULL REFERENCES Proveedor(id) ON DELETE CASCADE,
+    tienda_id INTEGER NOT NULL REFERENCES Tienda(id) ON DELETE CASCADE,
+    precio_unitario DECIMAL(10,2) DEFAULT 0,
     cantidad INTEGER NOT NULL,
-    estado VARCHAR(50) CHECK (estado IN ('activo', 'inactivo')) NOT NULL,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    imagen VARCHAR(255)
+    estado VARCHAR(50) NOT NULL,
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    imagen VARCHAR(100),
+    CONSTRAINT ck_estado_producto CHECK (estado IN ('activo', 'inactivo'))
 );
 
--- Tabla Promocion
-CREATE TABLE "Promocion" (
+CREATE TABLE Promocion (
     id SERIAL PRIMARY KEY,
-    tienda_id INTEGER REFERENCES "Tienda"(id) ON DELETE CASCADE,
+    tienda_id INTEGER NOT NULL REFERENCES Tienda(id) ON DELETE CASCADE,
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT,
-    descuento DECIMAL(5, 2) NOT NULL,
-    tipo_descuento VARCHAR(50),
+    descuento DECIMAL(10,2) NOT NULL,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
-    activo BOOLEAN DEFAULT TRUE
+    activo BOOLEAN DEFAULT TRUE,
+    CONSTRAINT ck_fecha_promocion CHECK (fecha_inicio <= fecha_fin)
+);
+CREATE UNIQUE INDEX unique_active_promotion_per_store ON Promocion (tienda_id) WHERE activo = TRUE;
+
+CREATE TABLE Orden (
+    id SERIAL PRIMARY KEY,
+    cliente_id INTEGER NOT NULL REFERENCES Cliente(id) ON DELETE CASCADE,
+    tienda_id INTEGER NOT NULL REFERENCES Tienda(id) ON DELETE CASCADE,
+    direccion_envio_id INTEGER REFERENCES Direccion(id) ON DELETE SET NULL,
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2) NOT NULL,
+    subtotal DECIMAL(10,2) DEFAULT 0,
+    iva DECIMAL(10,2) DEFAULT 0,
+    estado VARCHAR(50) NOT NULL DEFAULT 'pendiente',
+    CONSTRAINT ck_estado_orden CHECK (estado IN ('pendiente', 'procesando', 'completada', 'cancelada')),
+    CONSTRAINT ck_total_orden CHECK (total >= 0)
 );
 
--- Tabla Venta
-CREATE TABLE "Venta" (
+CREATE TABLE ProductoOrden (
     id SERIAL PRIMARY KEY,
-    cliente_id INTEGER REFERENCES "Cliente"(id) ON DELETE CASCADE,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total DECIMAL(10, 2) NOT NULL
-);
-
--- Tabla DetalleVenta
-CREATE TABLE "DetalleVenta" (
-    id SERIAL PRIMARY KEY,
-    venta_id INTEGER REFERENCES "Venta"(id) ON DELETE CASCADE,
-    producto_tienda_id INTEGER REFERENCES "ProductosTiendas"(id) ON DELETE CASCADE,
-    cantidad INTEGER NOT NULL,
-    precio DECIMAL(10, 2) NOT NULL
-);
-
--- Tabla Inventario
-CREATE TABLE "Inventario" (
-    id SERIAL PRIMARY KEY,
-    producto_tienda_id INTEGER REFERENCES "ProductosTiendas"(id) ON DELETE CASCADE,
-    tienda_id INTEGER REFERENCES "Tienda"(id) ON DELETE CASCADE,
-    cantidad INTEGER NOT NULL CHECK (cantidad >= 0)
-);
-
--- Tabla MetodoPago
-CREATE TABLE "MetodoPago" (
-    id SERIAL PRIMARY KEY,
-    tipo VARCHAR(50) NOT NULL,
-    descripcion TEXT
-);
-
--- Tabla AtencionCliente
-CREATE TABLE "AtencionCliente" (
-    id SERIAL PRIMARY KEY,
-    cliente_id INTEGER REFERENCES "Cliente"(id) ON DELETE CASCADE,
-    asunto VARCHAR(100) NOT NULL,
-    descripcion TEXT NOT NULL,
-    estado VARCHAR(50) CHECK (estado IN ('abierto', 'en progreso', 'cerrado')) NOT NULL,
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE Carrito (
-    id SERIAL PRIMARY KEY,
-    cliente_id INTEGER REFERENCES Cliente(id) ON DELETE CASCADE,
-    producto_tienda_id INTEGER REFERENCES ProductosTiendas(id) ON DELETE CASCADE,
+    orden_id INTEGER NOT NULL REFERENCES Orden(id) ON DELETE CASCADE,
+    producto_tienda_id INTEGER NOT NULL REFERENCES ProductosTiendas(id) ON DELETE CASCADE,
     cantidad INTEGER NOT NULL CHECK (cantidad > 0),
-    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    precio_unitario DECIMAL(10,2) NOT NULL
 );
 
-CREATE TABLE ReseñaProducto (
+CREATE TABLE MetodoPago (
     id SERIAL PRIMARY KEY,
-    cliente_id INTEGER REFERENCES Cliente(id) ON DELETE CASCADE,
-    producto_id INTEGER REFERENCES Producto(id) ON DELETE CASCADE,
-    calificacion INTEGER CHECK (calificacion >= 1 AND calificacion <= 5),
-    comentario TEXT,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    cliente_id INTEGER NOT NULL REFERENCES Cliente(id) ON DELETE CASCADE,
+    tipo VARCHAR(50) NOT NULL,
+    detalles TEXT,
+    metodo_pago VARCHAR(50) NOT NULL,
+    CONSTRAINT ck_metodo_pago CHECK (metodo_pago IN ('tarjeta_credito', 'tarjeta_debito', 'transferencia_bancaria', 'paypal'))
 );
 
-CREATE TABLE HistorialPrecioProducto (
+CREATE TABLE AtencionCliente (
     id SERIAL PRIMARY KEY,
-    producto_tienda_id INTEGER REFERENCES ProductosTiendas(id) ON DELETE CASCADE,
-    precio_anterior DECIMAL(10, 2) NOT NULL,
-    precio_nuevo DECIMAL(10, 2) NOT NULL CHECK (precio_nuevo >= precio_anterior),
-    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE EstadoPedido (
-    id SERIAL PRIMARY KEY,
-    venta_id INTEGER REFERENCES Venta(id) ON DELETE CASCADE,
-    estado VARCHAR(50) NOT NULL,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    comentarios TEXT
+    cliente_id INTEGER NOT NULL REFERENCES Cliente(id) ON DELETE CASCADE,
+    tienda_id INTEGER NOT NULL REFERENCES Tienda(id) ON DELETE CASCADE,
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    mensaje TEXT NOT NULL,
+    respuesta TEXT,
+    estado BOOLEAN DEFAULT FALSE,
+    estado_atencion VARCHAR(50) NOT NULL DEFAULT 'no_leido',
+    CONSTRAINT ck_estado_atencion CHECK (estado_atencion IN ('no_leido', 'leido', 'respondido'))
 );
 
 select * from "Producto"
@@ -189,6 +152,7 @@ select * from "Direccion"
 select * from "Departamento"	
 select * from "Ciudad"
 select * from "ordenes"
+select * from "Promocion"
 
 SELECT username, password FROM auth_user WHERE username = 'vamunozf';
 
