@@ -116,7 +116,7 @@ class Producto(models.Model):
             models.Index(fields=['nombre']),
         ]
 class Proveedor(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proveedores')
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='proveedores')
     razon_social = models.CharField(max_length=150, verbose_name="Razón Social")
     email = models.EmailField(max_length=100, verbose_name="Email", blank=True, null=True)
     telefono = models.CharField(max_length=20, verbose_name="Teléfono", blank=True, null=True)
@@ -129,7 +129,7 @@ class Proveedor(models.Model):
     estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
     def __str__(self):
-        return self.razon_social
+        return f"{self.razon_social} - {self.tienda.nombre}"
     class Meta:
         db_table = 'Proveedor'
         verbose_name = "Proveedor"

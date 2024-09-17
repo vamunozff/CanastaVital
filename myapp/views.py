@@ -239,10 +239,11 @@ def index_producto(request):
     productos = Producto.objects.all()
     tienda = get_object_or_404(Tienda, user=request.user)
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
-    proveedores = Proveedor.objects.filter(usuario=request.user, estado='activo')
+    proveedores = Proveedor.objects.filter(tienda=tienda)
 
     return render(request, 'productos/index.html',
                   {'productos': productos, 'productos_tiendas': productos_tiendas, 'proveedores': proveedores})
+
 def ver_producto(request, id):
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
     return render(request, 'productos/ver_producto.html', {'producto_tienda': producto_tienda})
@@ -283,8 +284,11 @@ def eliminar_producto(request, id):
     return redirect('index_producto')
 @login_required
 def index_proveedor(request):
-    proveedores = Proveedor.objects.filter(usuario=request.user)
+    tienda = get_object_or_404(Tienda, user=request.user)
+    proveedores = Proveedor.objects.filter(tienda=tienda)
     return render(request, 'proveedor/index.html',{'proveedores': proveedores})
+
+
 @login_required
 def asignar_proveedor(request):
     if request.method == 'POST':
@@ -295,8 +299,11 @@ def asignar_proveedor(request):
             direccion = request.POST.get('txtdireccion')
             estado = request.POST.get('txtEstado')
 
+            # Obtener la tienda asociada al usuario que ha iniciado sesión
+            tienda = Tienda.objects.get(user=request.user)
+
             nuevo_proveedor = Proveedor(
-                usuario=request.user,
+                tienda=tienda,
                 razon_social=razon_social,
                 email=email,
                 telefono=telefono,
@@ -312,12 +319,15 @@ def asignar_proveedor(request):
 
         except ValueError as ve:
             messages.error(request, f'Error de valor al asignar el proveedor: {str(ve)}')
+        except Tienda.DoesNotExist:
+            messages.error(request, 'No se encontró una tienda asociada al usuario.')
         except Exception as e:
             messages.error(request, f'Error al asignar el proveedor: {str(e)}')
 
-    proveedores = Proveedor.objects.filter(usuario=request.user)
+    proveedores = Proveedor.objects.filter(tienda__user=request.user)
 
     return render(request, 'proveedor/index.html', {'proveedores': proveedores})
+
 @login_required
 def eliminar_proveedor(request, id):
     proveedor = get_object_or_404(Proveedor, id=id)
@@ -328,9 +338,10 @@ def eliminar_proveedor(request, id):
         return redirect('index_proveedor')
 
     return redirect('index_proveedor')
+
 @login_required
 def actualizar_proveedor(request, id):
-    proveedores = get_object_or_404(Proveedor, id=id)
+    proveedor = get_object_or_404(Proveedor, id=id)
 
     if request.method == 'POST':
         try:
@@ -340,26 +351,32 @@ def actualizar_proveedor(request, id):
             direccion = request.POST.get('txtdireccion')
             estado = request.POST.get('txtEstado')
 
-            proveedores.razon_social = razon_social
-            proveedores.email = email
-            proveedores.telefono = telefono
-            proveedores.direccion = direccion
-            proveedores.estado = estado
+            # Verificar si la tienda del proveedor es de la tienda asociada al usuario
+            if proveedor.tienda.user != request.user:
+                messages.error(request, 'No tienes permiso para actualizar este proveedor.')
+                return redirect('index_proveedor')
 
-            proveedores.full_clean()
-            proveedores.save()
+            proveedor.razon_social = razon_social
+            proveedor.email = email
+            proveedor.telefono = telefono
+            proveedor.direccion = direccion
+            proveedor.estado = estado
 
-            messages.success(request, '¡Proveedor actualizado!')
+            proveedor.full_clean()
+            proveedor.save()
+
+            messages.success(request, '¡Proveedor actualizado correctamente!')
             return redirect('index_proveedor')
 
         except ValueError:
-            messages.error(request, 'Por favor, ingrese valores numéricos válidos para cantidad.')
+            messages.error(request, 'Por favor, ingrese valores válidos.')
         except Exception as e:
-            messages.error(request, f'Error al actualizar el producto: {str(e)}')
+            messages.error(request, f'Error al actualizar el proveedor: {str(e)}')
 
     return render(request, 'proveedor/actualizar.html', {
-        'proveedores': proveedores,
+        'proveedor': proveedor,
     })
+
 def leer_proveedor(request, id):
     proveedores = get_object_or_404(Proveedor, id=id)
     return render(request, 'proveedor/leer.html', {'proveedores': proveedores})

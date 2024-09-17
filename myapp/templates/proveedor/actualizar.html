@@ -6,7 +6,7 @@
     <main>
     <br>
             <h2>Actualizar Proveedor</h2>
-                    <form action="{% url 'actualizar_proveedor' proveedores.id %}" method="POST">
+                    <form action="{% url 'actualizar_proveedor' proveedor.id %}" method="POST">
                         {% csrf_token %}
                         <div class="inputField">
 
@@ -20,19 +20,19 @@
                             </div>
                             <div>
                                 <label for="city" class="form-label">Razon Social:</label>
-                                <input class="form-control" type="text" id="txtRazonSocial" name="txtRazonSocial" value="{{ proveedores.razon_social }}" required>
+                                <input class="form-control" type="text" id="txtRazonSocial" name="txtRazonSocial" value="{{ proveedor.razon_social }}" required>
                             </div>
                             <div>
                                 <label for="city" class="form-label">Email:</label>
-                                <input class="form-control" type="email" id="txtEmail" name="txtEmail" value="{{ proveedores.email }}" required>
+                                <input class="form-control" type="email" id="txtEmail" name="txtEmail" value="{{ proveedor.email }}" required>
                             </div>
                             <div>
                                 <label for="city" class="form-label">Télefono:</label>
-                                <input class="form-control" type="number" id="numTelefono" name="numTelefono" value="{{ proveedores.telefono }}" required>
+                                <input class="form-control" type="number" id="numTelefono" name="numTelefono" value="{{ proveedor.telefono }}" required>
                             </div>
                             <div>
                                 <label for="city" class="form-label">Dirección:</label>
-                                <input class="form-control" type="text" id="txtdireccion" name="txtdireccion" value="{{ proveedores.direccion }}" required>
+                                <input class="form-control" type="text" id="txtdireccion" name="txtdireccion" value="{{ proveedor.direccion }}" required>
                             </div>
                             <div>
                                 <label for="phone" class="form-label">Estado:</label>

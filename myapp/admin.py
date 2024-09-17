@@ -41,9 +41,9 @@ class ProductosTiendasAdmin(admin.ModelAdmin):
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'razon_social', 'email', 'telefono', 'estado', 'fecha_registro')
+    list_display = ('tienda', 'razon_social', 'email', 'telefono', 'estado', 'fecha_registro')
     search_fields = ('razon_social', 'email', 'telefono')
-    list_filter = ('usuario', 'estado', 'fecha_registro')
+    list_filter = ('tienda', 'estado', 'fecha_registro')
     ordering = ('razon_social',)
 
 @admin.register(Cliente)
