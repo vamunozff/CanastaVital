@@ -15,8 +15,6 @@ urlpatterns = [
     path('index_cliente/', index_cliente, name='index_cliente'),
     path('categorias/', categoria, name='categorias'),
     path('asignarProducto/', views.asignarProducto),
-    path('productos/eliminarPrductosTiendas/<int:id>', views.eliminarPrductosTiendas),
-    path('productos/actualizarProductosTiendas/', views.actualizarProductosTiendas_list, name='actualizarProductosTiendas_list'),
     path('index_producto/', index_producto, name='index_producto'),
     path('index_producto/ver_producto/<int:id>/', views.ver_producto, name='ver_producto'),
     path('index_producto/actualizar_producto/<int:id>/', views.actualizar_producto, name='actualizar_producto'),

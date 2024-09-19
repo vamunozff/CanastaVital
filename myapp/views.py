@@ -424,30 +424,35 @@ def promociones_activas(request, tienda_id):
     }
     return render(request, 'promociones/activas.html', context)
 
-
 @login_required
 def confirmar_pago(request):
     cliente = request.user.cliente
-    direcciones = Direccion.objects.filter(cliente=cliente)
+    direcciones = Direccion.objects.filter(cliente__user=request.user)
+    form = DireccionForm()
     direccion_principal = Direccion.objects.filter(cliente=cliente, principal=True).first()
+
+    departamentos = Departamento.objects.all()
+    ciuda = Ciudad.objects.all()
 
     if request.method == 'POST':
         carrito = request.session.get('carrito', [])  # Suponiendo que el carrito se guarda en la sesión
+
+        if not carrito:
+            return JsonResponse({'error': 'El carrito está vacío.'})
 
         productos_en_tienda = []
         error = None
 
         for item in carrito:
             try:
-                # Buscamos en la tabla ProductosTiendas usando producto_tienda_id
                 producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
 
                 productos_en_tienda.append({
-                    'producto': producto_tienda,  # Producto en tienda relacionado
-                    'nombre': producto_tienda.producto.nombre,  # Nombre del producto
-                    'cantidad': item['cantidad'],  # Cantidad seleccionada
-                    'precio_unitario': producto_tienda.precio_unitario,  # Precio unitario de ProductosTiendas
-                    'subtotal': producto_tienda.precio_unitario * item['cantidad']  # Cálculo subtotal
+                    'producto': producto_tienda,
+                    'nombre': producto_tienda.producto.nombre,
+                    'cantidad': item['cantidad'],
+                    'precio_unitario': producto_tienda.precio_unitario,
+                    'subtotal': producto_tienda.precio_unitario * item['cantidad']
                 })
             except ProductosTiendas.DoesNotExist:
                 error = f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'
@@ -463,6 +468,9 @@ def confirmar_pago(request):
             'direccion_principal': direccion_principal,
             'productos_en_tienda': productos_en_tienda,
             'total': total,
+            'form': form,
+            'departamentos': departamentos,
+            'ciudad': ciuda,
         }
 
         return render(request, 'otros/confirmar_pago.html', context)
@@ -470,8 +478,11 @@ def confirmar_pago(request):
     # Renderizar la página de confirmación de pago en GET
     return render(request, 'otros/confirmar_pago.html', {
         'direcciones': direcciones,
-        'direccion_principal': direccion_principal
+        'direccion_principal': direccion_principal,
+        'departamentos': departamentos,
+        'ciudad': ciuda,
     })
+
 
 
 @csrf_exempt
@@ -506,6 +517,7 @@ def crear_direccion(request):
 def crear_orden(request):
     if request.method == 'POST':
         try:
+            # Parsear los datos recibidos en la solicitud
             data = json.loads(request.body)
             cliente = request.user.cliente
             direccion_envio_id = data.get('direccion_envio_id')
@@ -514,11 +526,14 @@ def crear_orden(request):
             total = float(data.get('total', 0))
             productos = data.get('productos', [])
 
+            # Verificar que el carrito de productos no esté vacío
             if not productos:
                 return JsonResponse({'success': False, 'error': 'El carrito está vacío.'})
 
+            # Obtener la dirección de envío seleccionada
             direccion_envio = Direccion.objects.get(id=direccion_envio_id, cliente=cliente)
 
+            # Verificar que todos los productos pertenecen a la misma tienda
             tienda_ids = set()
             for item in productos:
                 try:
@@ -529,49 +544,60 @@ def crear_orden(request):
 
             if len(tienda_ids) != 1:
                 return JsonResponse({'success': False, 'error': 'Todos los productos deben pertenecer a la misma tienda.'})
+
             tienda_id = tienda_ids.pop()
             tienda = Tienda.objects.get(id=tienda_id)
 
+            # Iniciar una transacción atómica
             with transaction.atomic():
+                # Crear la nueva orden
                 orden = Orden.objects.create(
                     cliente=cliente,
                     tienda=tienda,
                     direccion_envio=direccion_envio,
-                    subtotal=subtotal,
+                    subtotal=0,  # Inicialmente 0, lo calculamos después
                     iva=iva,
                     total=total,
                     estado='pendiente'
                 )
 
+                subtotal_orden = 0
+                # Crear los registros de productos en la orden
                 for item in productos:
                     try:
                         producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
                         cantidad = int(item['cantidad'])
                         precio_unitario = float(item['precio_unitario'])
                         subtotal_producto = cantidad * precio_unitario
+                        subtotal_orden += subtotal_producto
 
-                        if producto_tienda.cantidad < cantidad:
-                            raise ValueError(f"Producto {producto_tienda.producto.nombre} no tiene suficiente stock.")
-
+                        # Crear ProductoOrden sin el campo subtotal
                         ProductoOrden.objects.create(
                             orden=orden,
                             producto_tienda=producto_tienda,
                             cantidad=cantidad,
-                            precio_unitario=precio_unitario,
-                            subtotal=subtotal_producto
+                            precio_unitario=precio_unitario
                         )
 
+                        # Actualizar el stock del producto
                         producto_tienda.cantidad -= cantidad
                         producto_tienda.save()
 
                     except ProductosTiendas.DoesNotExist:
                         return JsonResponse({'success': False, 'error': f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'})
 
+                # Actualizar el subtotal y guardar la orden
+                orden.subtotal = subtotal_orden
+                orden.save()
+
+            # Retornar una respuesta exitosa
             return JsonResponse({'success': True, 'orden_id': orden.id})
+
         except Direccion.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Dirección de envío no encontrada.'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 @login_required
@@ -645,11 +671,17 @@ def actualizar_direccion(request, direccion_id):
 
 def get_ciudades(request):
     departamento_id = request.GET.get('departamento')
-    if departamento_id:
-        ciudades = Ciudad.objects.filter(departamento_id=departamento_id)
-        ciudad_list = list(ciudades.values('id', 'nombre'))
-    else:
-        ciudad_list = []
 
-    return JsonResponse({'ciudades': ciudad_list})
+    # Obtener todos los departamentos
+    departamentos = Departamento.objects.values('id', 'nombre')
+
+    # Obtener ciudades si hay un departamento seleccionado
+    ciudades = []
+    if departamento_id:
+        ciudades = Ciudad.objects.filter(departamento_id=departamento_id).values('id', 'nombre')
+
+    return JsonResponse({
+        'departamentos': list(departamentos),
+        'ciudades': list(ciudades)
+    })
 

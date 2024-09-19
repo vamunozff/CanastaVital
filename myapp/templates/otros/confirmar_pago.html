@@ -2,49 +2,201 @@
 {% block content %}
     {% load static %}
     <link rel="stylesheet" href="{% static 'myapp/css/prueba.css' %}">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
-    <div class="container">
-        <h1>Carrito de Compras</h1>
-        <table id="tabla-carrito" class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpo-tabla-carrito">
-                <!-- Los productos del carrito se insertarán dinámicamente aquí -->
-            </tbody>
-        </table>
+    <div class="container mt-4">
+        <h1 class="mb-4">Carrito de Compras</h1>
 
-        <p><strong>Subtotal:</strong> $<span id="subtotal-carrito">0.00</span></p>
-        <p><strong>IVA (19%):</strong> $<span id="iva-carrito">0.00</span></p>
-        <p><strong>Total:</strong> $<span id="total-carrito">0.00</span></p>
-
-        <button id="boton-carrito" class="btn btn-primary">Proceder al Pago</button>
-
-        <!-- Mostrar direcciones registradas -->
-        <div id="direcciones-container">
-            <p><strong>Selecciona una dirección de envío:</strong></p>
-            {% for direccion in direcciones %}
-                <div>
-                    <input type="radio" id="direccion_{{ direccion.id }}" name="direccion" value="{{ direccion.id }}"
-                        {% if direccion.id == direccion_principal.id %} checked {% endif %}>
-                    <label for="direccion_{{ direccion.id }}">
-                        <span>Dirección: {{ direccion.direccion }} Ciudad: {{ direccion.ciudad }} Departamento: {{ direccion.departamento }}</span>
-                        {% if direccion.codigo_postal %}
-{#                            <span>{{ direccion.codigo_postal }}</span>#}
-                        {% else %}
-                            <span>No especificado</span>
-                        {% endif %}
-                    </label>
+        <!-- Tabla del carrito -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Resumen del Carrito</h5>
+            </div>
+            <div class="card-body">
+                <table id="tabla-carrito" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla-carrito">
+                        <!-- Los productos del carrito se insertarán dinámicamente aquí -->
+                    </tbody>
+                </table>
+                <!-- Totales -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Subtotal:</strong> $<span id="subtotal-carrito">0.00</span></p>
+                        <p><strong>IVA (19%):</strong> $<span id="iva-carrito">0.00</span></p>
+                        <p><strong>Total:</strong> $<span id="total-carrito">0.00</span></p>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <!-- Botones -->
+                        <button id="vaciar-carrito" class="btn btn-danger mb-2">Vaciar Carrito</button>
+                        <button id="boton-carrito" class="btn btn-primary">Proceder al Pago</button>
+                    </div>
                 </div>
-            {% endfor %}
+            </div>
         </div>
 
+        <!-- Indicador de carga -->
+        <div id="spinner" class="spinner-border text-primary" role="status" style="display: none;">
+            <span class="sr-only">Cargando...</span>
+        </div>
+
+        <!-- Mensajes de éxito y error -->
+        <div id="mensaje-exito" class="alert alert-success" role="alert" style="display: none;">
+            Pago procesado con éxito.
+        </div>
+        <div id="mensaje-error" class="alert alert-danger" role="alert" style="display: none;">
+            Ocurrió un error al procesar el pago. Inténtalo de nuevo.
+        </div>
+
+        <!-- Mostrar direcciones registradas -->
+        <div id="direcciones-container" class="mb-4">
+            <p><strong>Selecciona una dirección de envío:</strong></p>
+            <div class="list-group">
+                {% for direccion in direcciones %}
+                    <div class="list-group-item">
+                        <input type="radio" id="direccion_{{ direccion.id }}" name="direccion" value="{{ direccion.id }}"
+                            {% if direccion.id == direccion_principal.id %} checked {% endif %}>
+                        <label for="direccion_{{ direccion.id }}">
+                            <strong>Dirección:</strong> {{ direccion.direccion }}<br>
+                            <strong>Ciudad:</strong> {{ direccion.ciudad }}<br>
+                            <strong>Departamento:</strong> {{ direccion.departamento }}<br>
+                            {% if direccion.codigo_postal %}
+                                <strong>Código Postal:</strong> {{ direccion.codigo_postal }}
+                            {% else %}
+                                <strong>Código Postal:</strong> No especificado
+                            {% endif %}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Botón para agregar nueva dirección -->
+        <button class="btn btn-secondary" id="agregar-nueva-direccion" data-toggle="modal" data-target="#modalNuevaDireccion">
+            Agregar nueva dirección
+        </button>
+
+            <!-- Modal para registrar nueva dirección -->
+        <div class="modal fade" id="modalNuevaDireccion" tabindex="-1" aria-labelledby="modalNuevaDireccionLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="registrarModalLabel">Registrar Nueva Dirección</h5>
+                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+        <form method="POST" action="{% url 'registrar_direccion' %}">
+            {% csrf_token %}
+            <p id="modalDescription">Por favor, complete la información de la nueva dirección.</p>
+            <div class="mb-3">
+                <label for="id_direccion" class="form-label">Dirección</label>
+                <input type="text" class="form-control" id="id_direccion" name="direccion" required>
+            </div>
+            <div class="mb-3">
+                <label for="id_departamento" class="form-label">Departamento</label>
+                <select class="form-control" id="id_departamento" name="departamento" required>
+                    <option value="">Seleccione un departamento</option>
+                    {% for departamento in departamentos %}
+                <option value="{{ departamento.id }}">{{ departamento.nombre }}</option>
+            {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="id_ciudad" class="form-label">Ciudad</label>
+                <select class="form-control" id="id_ciudad" name="ciudad" required>
+                    <option value="">Seleccione una ciudad</option>
+                    <!-- Las opciones se llenarán dinámicamente -->
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="id_codigo_postal" class="form-label">Código Postal</label>
+                <input type="text" class="form-control" id="id_codigo_postal" name="codigo_postal">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="id_principal" name="principal" value="on">
+                <label class="form-check-label" for="id_principal">
+                    ¿Hacer esta dirección principal?
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary me-2">Registrar</button>
+        </form>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Scripts -->
     <script src="{% static 'myapp/js/confirmar_pago.js' %}"></script>
+    <!-- Incluir dependencias de Bootstrap JS y jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var deptCreate = document.getElementById('id_departamento');
+    var ciudadCreate = document.getElementById('id_ciudad');
+
+    // Cargar departamentos inicialmente
+    fetch('/get-datos/')
+        .then(response => response.json())
+        .then(data => {
+            // Llenar el select de departamentos
+            deptCreate.innerHTML = '<option value="">Seleccione un departamento</option>';
+            data.departamentos.forEach(departamento => {
+                var option = document.createElement('option');
+                option.value = departamento.id;
+                option.text = departamento.nombre;
+                deptCreate.add(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching departments:', error);
+        });
+
+    // Cargar ciudades cuando se seleccione un departamento
+    if (deptCreate) {
+        deptCreate.addEventListener('change', function() {
+            var departamentoId = this.value;
+            ciudadCreate.innerHTML = '<option value="">Seleccione una ciudad</option>';
+
+            if (departamentoId) {
+                fetch(`/get-datos/?departamento=${departamentoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Llenar el select de ciudades
+                        if (data.ciudades.length > 0) {
+                            data.ciudades.forEach(ciudad => {
+                                var option = document.createElement('option');
+                                option.value = ciudad.id;
+                                option.text = ciudad.nombre;
+                                ciudadCreate.add(option);
+                            });
+                        } else {
+                            var option = document.createElement('option');
+                            option.text = 'No hay ciudades disponibles';
+                            ciudadCreate.add(option);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cities:', error);
+                    });
+            }
+        });
+    }
+});
+
+</script>
 {% endblock %}
