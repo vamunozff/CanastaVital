@@ -432,7 +432,7 @@ def confirmar_pago(request):
     direccion_principal = Direccion.objects.filter(cliente=cliente, principal=True).first()
 
     departamentos = Departamento.objects.all()
-    ciuda = Ciudad.objects.all()
+    ciudad = Ciudad.objects.all()
 
     if request.method == 'POST':
         carrito = request.session.get('carrito', [])  # Suponiendo que el carrito se guarda en la sesión
@@ -470,7 +470,7 @@ def confirmar_pago(request):
             'total': total,
             'form': form,
             'departamentos': departamentos,
-            'ciudad': ciuda,
+            'ciudad': ciudad,
         }
 
         return render(request, 'otros/confirmar_pago.html', context)
@@ -480,10 +480,8 @@ def confirmar_pago(request):
         'direcciones': direcciones,
         'direccion_principal': direccion_principal,
         'departamentos': departamentos,
-        'ciudad': ciuda,
+        'ciudad': ciudad,
     })
-
-
 
 @csrf_exempt
 @login_required
@@ -615,22 +613,19 @@ def registrar_direccion(request):
     if request.method == 'POST':
         form = DireccionForm(request.POST)
         if form.is_valid():
-            direccion = form.save(commit=False)
-            direccion.cliente = Cliente.objects.get(user=request.user)
-            if direccion.principal:
-                Direccion.objects.filter(cliente=direccion.cliente, principal=True).update(principal=False)
-            direccion.save()
-            messages.success(request, 'Dirección registrada correctamente.')
-            return redirect('direccion_cliente')
+            try:
+                direccion = form.save(commit=False)
+                direccion.cliente = Cliente.objects.get(user=request.user)
+                if direccion.principal:
+                    Direccion.objects.filter(cliente=direccion.cliente, principal=True).update(principal=False)
+                direccion.save()
+                return JsonResponse({'success': True}, status=200)
+            except Exception as e:
+                print(str(e))  # Imprimir el error en la consola del servidor
+                return JsonResponse({'success': False, 'message': 'Ocurrió un error al registrar la dirección.'}, status=500)
         else:
-            messages.error(request, 'Error al registrar la dirección. Verifica los campos del formulario.')
-            print(form.errors)  # Imprime los errores del formulario
-    else:
-        form = DireccionForm()
-
-    direcciones = Direccion.objects.filter(cliente=Cliente.objects.get(user=request.user))
-    return render(request, 'clientes/direccion.html', {'form': form, 'direcciones': direcciones})
-
+            return JsonResponse({'success': False, 'message': 'El formulario no es válido.'}, status=400)
+    return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
 
 @login_required
 def eliminar_direccion(request, direccion_id):
@@ -669,19 +664,14 @@ def actualizar_direccion(request, direccion_id):
                   {'form': form, 'direccion': direccion, 'departamentos': departamentos, 'ciudades': ciudades})
 
 
-def get_ciudades(request):
-    departamento_id = request.GET.get('departamento')
-
-    # Obtener todos los departamentos
-    departamentos = Departamento.objects.values('id', 'nombre')
-
-    # Obtener ciudades si hay un departamento seleccionado
-    ciudades = []
-    if departamento_id:
-        ciudades = Ciudad.objects.filter(departamento_id=departamento_id).values('id', 'nombre')
-
-    return JsonResponse({
-        'departamentos': list(departamentos),
-        'ciudades': list(ciudades)
-    })
+def get_datos(request):
+    if 'departamento' in request.GET:
+        departamento_id = request.GET.get('departamento')
+        ciudades = Ciudad.objects.filter(departamento_id=departamento_id)
+        ciudades_list = list(ciudades.values('id', 'nombre'))
+        return JsonResponse({'ciudades': ciudades_list})
+    else:
+        departamentos = Departamento.objects.all()
+        departamentos_list = list(departamentos.values('id', 'nombre'))
+        return JsonResponse({'departamentos': departamentos_list})
 
