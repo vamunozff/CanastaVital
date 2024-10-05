@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 iva: iva,
                 total: total,
                 productos: carritoData.map(item => ({
-                    producto_tienda_id: item.id, // Asegúrate de que esta propiedad existe en los datos del carrito
+                    producto_tienda_id: item.id,
                     cantidad: item.cantidad,
                     precio_unitario: item.precio
                 }))

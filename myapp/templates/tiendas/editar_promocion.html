@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1 class="mb-2">Promoción</h1>
+
+<div class="d-flex justify-content-end mb-2">
+    <button type="submit" class="btn btn-primary me-2">Actualizar</button>
+    <button type="submit" class="btn btn-danger" onclick="eliminarPromocion({{ promocion.id }})">Eliminar</button>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ promocion.nombre }}" required>
+            </div>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-center">
+            <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="activo" name="activo" {% if promocion.activo %} checked {% endif %}>
+                <label class="form-check-label" for="activo">
+                    Activar Promoción
+                </label>
+                <small class="form-text text-muted">Marca esta casilla si deseas que la promoción esté activa.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ promocion.descripcion }}</textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="descuento">Descuento (COP)</label>
+        <input type="text" class="form-control" id="descuento" name="descuento" value="{{ promocion.descuento }}" step="0.01" required>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="fecha_inicio">Fecha de Inicio</label>
+                <input type="datetime-local" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ promocion.fecha_inicio|date:'Y-m-d H:i' }}" required>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="fecha_fin">Fecha de Fin</label>
+                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ promocion.fecha_fin|date:'Y-m-d' }}" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="codigo_promocional">Código Promocional (Opcional)</label>
+        <input type="text" class="form-control" id="codigo_promocional" name="codigo_promocional" value="{{ promocion.codigo_promocional }}">
+    </div>
+
+    <div class="form-group">
+        <label for="condiciones">Condiciones</label>
+        <textarea class="form-control" id="condiciones" name="condiciones" rows="3">{{ promocion.condiciones }}</textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="cantidad_minima">Cantidad Mínima (Opcional)</label>
+                <input type="number" class="form-control" id="cantidad_minima" name="cantidad_minima" value="{{ promocion.cantidad_minima }}">
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="cantidad_maxima">Cantidad Máxima (Opcional)</label>
+                <input type="number" class="form-control" id="cantidad_maxima" name="cantidad_maxima" value="{{ promocion.cantidad_maxima }}">
+            </div>
+        </div>
+    </div>
+
+</form>
+<script>
+function eliminarPromocion(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar esta promoción?')) {
+        fetch(`{% url 'eliminar_promocion' 0 %}`.replace('0', id), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}', // Obtén el token CSRF desde el contexto de Django
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload(); // Recarga la página si la eliminación fue exitosa
+            } else {
+                alert('Error al eliminar la promoción.'); // Manejo de error
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al intentar eliminar la promoción.');
+        });
+    }
+}
+</script>
+{% endblock %}

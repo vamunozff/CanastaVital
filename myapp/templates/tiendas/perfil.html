@@ -1,4 +1,4 @@
-{% extends 'tiendas/base.html' %}
+{% extends 'base.html' %}
 {% block content %}
 {% load static %}
 
@@ -11,7 +11,7 @@
             <div class="perfil-usuario-header">
                 <div class="perfil-usuario-portada">
                     <div class="perfil-usuario-avatar">
-                        <img src="{{ tienda.logo_url.url }}" alt="Logo de {{ tienda.nombre }}">
+                    <img src="{% if tienda.logo_url %}{{ tienda.logo_url.url }}{% else %}{% static 'myapp/img/Default.jpg' %}{% endif %}" alt="Logo de {{ tienda.nombre }}">
                         <button type="button" class="boton-avatar">
                             <i class="far fa-image"></i>
                         </button>
@@ -27,7 +27,7 @@
                     <ul class="">
                         <li>
                             <label><i class="bi bi-geo-alt-fill"></i> Dirección:</label>
-                            <span>{{ tienda.direccion }}</span>
+                            <span>{{ direccion.direccion }}, {{ direccion.ciudad }}</span>
                         </li>
                         <li>
                             <br>
@@ -68,10 +68,6 @@
                         <div class="mb-3">
                             <label for="nombre" class="form-label">Nombre</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" value="{{ tienda.nombre }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="direccion" class="form-label">Dirección</label>
-                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ tienda.direccion }}">
                         </div>
                         <div class="mb-3">
                             <label for="horarios" class="form-label">Horarios</label>

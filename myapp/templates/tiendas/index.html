@@ -1,7 +1,8 @@
-{% extends 'tiendas/base.html' %}
+{% extends 'base.html' %}
+{% block title %}Panel de Tienda{% endblock %}
 {% block content %}
 
-                <h1>Bienvenido <br>{{ user.tienda.nombre | upper }}<span></span></h1>
+                <h1>Bienvenido <br>{{ user.first_name }} {{ user.last_name }}<span></span></h1>
                 <p>Todo lo relacionado a la <span class="auto-input">canasta familiar.</span></p>
 
 {% endblock %}

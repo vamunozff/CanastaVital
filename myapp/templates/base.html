@@ -10,6 +10,7 @@
     <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
 </head>
 
@@ -47,15 +48,33 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="/index_producto/" class="sidebar-link">
-                            <i class="bi bi-bag-check-fill"></i>
-                            <span>Ventas</span>
+                        <a href="/promocion/" class="sidebar-link">
+                            <i class="bi bi-currency-exchange"></i>
+                            <span>Promociones y ofertas</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                    <a href="" class="sidebar-link">
+                        <i class="lni lni-popup"></i>
+                        <span>Gestión de inventario</span>
+                    </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="/direccion/" class="sidebar-link">
+                            <i class="bi bi-save2"></i>
+                            <span>Direcciones guardadas</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
                         <a href="/index_producto/" class="sidebar-link">
-                            <i class="bi bi-bag-check-fill"></i>
-                            <span>Gestión de inventarios</span>
+                            <i class="bi bi-pie-chart-fill"></i>
+                            <span>Análisis y reportes</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="/index_producto/" class="sidebar-link">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>Confi. Metodos de pago</span>
                         </a>
                     </li>
                 {% endif %}
@@ -99,7 +118,7 @@
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="/direccion_cliente/" class="sidebar-link">
+                    <a href="/direccion/" class="sidebar-link">
                         <i class="bi bi-save2"></i>
                         <span>Direcciones guardadas</span>
                     </a>
@@ -110,6 +129,73 @@
                         <span>Atención al cliente</span>
                     </a>
                 </li>
+                {% endif %}
+
+                            <!-- Opciones para la administrador -->
+                {% if user.is_authenticated and user.perfil.rol.nombre == 'administrador' %}
+                    <li class="sidebar-item">
+                        <a href="" class="sidebar-link">
+                            <i class="bi bi-person-circle"></i>
+                            <span>Perfil</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
+                            data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                            <i class="bi bi-receipt"></i>
+                            <span>Otros</span>
+                        </a>
+                        <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="#" class="sidebar-link">Roles</a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="#" class="sidebar-link">Perfiles usuarios</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="/index_proveedor/" class="sidebar-link">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Proveedor</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="" class="sidebar-link">
+                            <i class="bi bi-bag-check-fill"></i>
+                            <span>Categorias</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="" class="sidebar-link">
+                            <i class="bi bi-bag-check-fill"></i>
+                            <span>Productos</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="/index_producto/" class="sidebar-link">
+                            <i class="bi bi-currency-exchange"></i>
+                            <span>Promociones y ofertas</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">
+                        <i class="lni lni-popup"></i>
+                        <span>Gestión de inventario</span>
+                    </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="/index_producto/" class="sidebar-link">
+                            <i class="bi bi-pie-chart-fill"></i>
+                            <span>Análisis y reportes</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="/index_producto/" class="sidebar-link">
+                            <i class="bi bi-gear-fill"></i>
+                            <span>Confi. Metodos de pago</span>
+                        </a>
+                    </li>
                 {% endif %}
 
                 <!-- Opciones comunes a todos los roles -->
@@ -131,7 +217,7 @@
             </ul>
 
             <div class="sidebar-footer">
-                <a href="{% url 'logout' %}" class="sidebar-link">
+                <a href="#" class="sidebar-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="lni lni-exit"></i>
                     <span>Salir</span>
                 </a>
@@ -146,15 +232,42 @@
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item dropdown">
-                            <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-                                <img src="{{ user.profile_image.url }}" class="avatar img-fluid" alt="Perfil de {{ user.username }}">
-                            </a>
+                        {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
+                                <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
+                                    <img src="{{ user.perfil.tienda.logo_url.url }}" class="avatar img-fluid" alt="Logo de la tienda {{ user.username }}">
+                                </a>
+                                {% endif %}
+                        {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
+                                <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
+                                    <img src="{{ user.perfil.cliente.imagen_perfil.url }}" class="avatar img-fluid" alt="perfil cliente {{ user.username }}">
+                                </a>
+                                {% endif %}
                             <div class="dropdown-menu dropdown-menu-end rounded">
+                                <!-- Opciones para la tienda -->
+                                {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
+                                <a href="/perfil_tienda/" class="dropdown-item">
+                                    <i class="bi bi-person-check"></i>
+                                    <span>Perfil</span>
+                                </a>
+                                {% endif %}
+                            <!-- Opciones para la Cliente -->
+                                {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
                                 <a href="/perfil_cliente/" class="dropdown-item">
                                     <i class="bi bi-person-check"></i>
                                     <span>Perfil</span>
                                 </a>
-                                <a href="{% url 'logout' %}" class="dropdown-item">
+                                {% endif %}
+                            <!-- Opciones para la administrador -->
+                                {% if user.is_authenticated and user.perfil.rol.nombre == 'administrador' %}
+                                <a href="" class="dropdown-item">
+                                    <i class="bi bi-person-check"></i>
+                                    <span>Perfil</span>
+                                </a>
+                                {% endif %}
+                                <form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: none;">
+                                    {% csrf_token %}
+                                </form>
+                                <a href="#" class="dropdown-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                     <i class="lni lni-timer"></i>
                                     <span>Salir</span>
                                 </a>
@@ -173,6 +286,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 </body>
 

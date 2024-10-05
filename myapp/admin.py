@@ -1,6 +1,76 @@
 from django.contrib import admin
-from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Departamento, Ciudad, Orden, ProductoOrden
+from .models import Rol, Perfil, Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Departamento, Ciudad, Orden, ProductoOrden
 from django.utils.html import mark_safe, format_html
+
+@admin.register(Rol)
+class RolAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    search_fields = ('nombre',)
+    list_filter = ('nombre',)
+    ordering = ('nombre',)
+
+@admin.register(Perfil)
+class PerfilAdmin(admin.ModelAdmin):
+    list_display = ('user', 'rol_nombre')
+    search_fields = ('user__username', 'rol__nombre')
+    list_filter = ('rol',)
+    ordering = ('user__username',)
+
+    def rol_nombre(self, obj):
+        return obj.rol.nombre
+    rol_nombre.short_description = 'Rol'
+
+@admin.register(Cliente)
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ('perfil_usuario', 'tipo_documento', 'numero_documento', 'telefono', 'fecha_registro')
+    search_fields = ('perfil__user__username', 'numero_documento', 'telefono')
+    list_filter = ('tipo_documento', 'fecha_registro')
+    ordering = ('perfil__user__username',)
+
+    fieldsets = (
+        (None, {
+            'fields': ('perfil', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil')
+        }),
+        ('Información de registro', {
+            'fields': ('fecha_registro',),
+        }),
+    )
+
+    readonly_fields = ('fecha_registro',)
+    list_editable = ('telefono', 'tipo_documento')
+
+    def perfil_usuario(self, obj):
+        return obj.perfil.user.username
+    perfil_usuario.short_description = 'Usuario'
+
+@admin.register(Tienda)
+class TiendaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'perfil_usuario', 'telefono', 'fecha_registro', 'logo_preview')
+    search_fields = ('nombre', 'perfil__user__username', 'telefono')
+    list_filter = ('fecha_registro',)
+    ordering = ('nombre',)
+
+    fieldsets = (
+        (None, {
+            'fields': ('perfil', 'nombre', 'telefono', 'horarios', 'descripcion', 'logo_url')
+        }),
+        ('Información de registro', {
+            'fields': ('fecha_registro',),
+        }),
+    )
+
+    readonly_fields = ('fecha_registro',)
+    list_editable = ('telefono',)
+
+    def perfil_usuario(self, obj):
+        return obj.perfil.user.username
+    perfil_usuario.short_description = 'Usuario'
+
+    def logo_preview(self, obj):
+        if obj.logo_url:
+            return format_html('<img src="{}" width="50" height="50"/>', obj.logo_url.url)
+        return "No Logo"
+    logo_preview.short_description = 'Logo'
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
@@ -46,14 +116,6 @@ class ProveedorAdmin(admin.ModelAdmin):
     list_filter = ('tienda', 'estado', 'fecha_registro')
     ordering = ('razon_social',)
 
-@admin.register(Cliente)
-class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'tipo_documento', 'numero_documento', 'telefono', 'fecha_nacimiento', 'fecha_registro', 'imagen_perfil')
-    list_filter = ('tipo_documento', 'fecha_nacimiento')
-    search_fields = ('user__username', 'numero_documento')
-    ordering = ('-fecha_registro',)
-    fields = ('user', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil')
-    readonly_fields = ('fecha_registro',)
 
 @admin.register(Direccion)
 class DireccionAdmin(admin.ModelAdmin):
@@ -78,23 +140,29 @@ class CiudadAdmin(admin.ModelAdmin):
     search_fields = ('nombre',)
     list_filter = ('departamento',)
 
-@admin.register(Tienda)
-class TiendaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'user', 'telefono', 'descripcion', 'logo_url', 'fecha_registro')
-    search_fields = ('nombre', 'user__username', 'direccion')
-    list_filter = ('fecha_registro',)
 
 @admin.register(Promocion)
 class PromocionAdmin(admin.ModelAdmin):
-    list_display = ('tienda', 'nombre', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo')
-    search_fields = ('nombre', 'tienda__nombre')
-    list_filter = ('activo', 'fecha_inicio', 'fecha_fin', 'tienda')
-    ordering = ('-fecha_inicio', 'tienda')
+    list_display = (
+    'nombre', 'tienda', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo', 'cantidad_minima', 'cantidad_maxima')
+    list_filter = ('tienda', 'activo', 'fecha_inicio', 'fecha_fin')
+    search_fields = ('nombre', 'codigo_promocional')
+    ordering = ('fecha_inicio',)
+    prepopulated_fields = {'codigo_promocional': ('nombre',)}
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return self.readonly_fields + ('descuento',)
-        return self.readonly_fields
+    fieldsets = (
+        (None, {
+            'fields': (
+            'nombre', 'tienda', 'descripcion', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo', 'codigo_promocional',
+            'condiciones', 'cantidad_minima', 'cantidad_maxima')
+        }),
+    )
+
+    def has_change_permission(self, request, obj=None):
+        # Ejemplo de cómo restringir el cambio de promociones inactivas
+        if obj and not obj.activo:
+            return False
+        return super().has_change_permission(request, obj)
 
 @admin.register(MetodoPago)
 class MetodoPagoAdmin(admin.ModelAdmin):

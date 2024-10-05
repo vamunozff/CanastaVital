@@ -3,27 +3,63 @@ from django.contrib.auth.models import User
 from datetime import date
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-class Cliente(models.Model):
-    DOCUMENTO_CHOICES = [
-        ('CC', 'Cédula de Ciudadanía'),
-        ('TI', 'Tarjeta de Identidad'),
-        ('CE', 'Cédula de Extranjería'),
-        ('PA', 'Pasaporte'),
+from datetime import datetime
+from django.db import models, IntegrityError
+
+class Rol(models.Model):
+    NOMBRE_ROLES = [
+        ('administrador', 'Administrador'),
+        ('cliente', 'Cliente'),
+        ('tienda', 'Tienda'),
     ]
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cliente')
-    telefono = models.CharField(max_length=20, null=True, blank=True)
-    fecha_nacimiento = models.DateField(null=True, blank=True)
-    tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, default='CC')
-    numero_documento = models.CharField(max_length=50, default='Sin número')
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Defaut.jpg')
+
+    nombre = models.CharField(max_length=50, choices=NOMBRE_ROLES, unique=True)
 
     def __str__(self):
-        return f'{self.user.username} - {self.numero_documento}'
+        return self.nombre
+
     class Meta:
-        db_table = 'Cliente'
+        db_table = 'Rol'
+        verbose_name = 'Rol'
+        verbose_name_plural = 'Roles'
+
+from django.contrib.auth.models import User
+
+class Perfil(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE, related_name='perfiles')
+
+    def __str__(self):
+        return f'{self.user.username} - {self.rol.nombre}'
+
+    class Meta:
+        db_table = 'Perfil'
+
+class Departamento(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+    class Meta:
+        db_table = 'Departamento'
+        verbose_name = 'Departamento'
+        verbose_name_plural = 'Departamentos'
+
+class Ciudad(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE, related_name='ciudades')
+
+    def __str__(self):
+        return self.nombre
+
+    class Meta:
+        db_table = 'Ciudad'
+        verbose_name = 'Ciudad'
+        verbose_name_plural = 'Ciudades'
+
 class Tienda(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='tienda')
+    perfil = models.OneToOneField(Perfil, on_delete=models.CASCADE, related_name='tienda')
     nombre = models.CharField(max_length=100)
     horarios = models.TextField(null=True, blank=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
@@ -33,30 +69,30 @@ class Tienda(models.Model):
 
     def __str__(self):
         return self.nombre
+
     class Meta:
         db_table = 'Tienda'
-        verbose_name = 'Tienda'
-        verbose_name_plural = 'Tiendas'
 
-class Departamento(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
+class Cliente(models.Model):
+    DOCUMENTO_CHOICES = [
+        ('CC', 'Cédula de Ciudadanía'),
+        ('TI', 'Tarjeta de Identidad'),
+        ('CE', 'Cédula de Extranjería'),
+        ('PA', 'Pasaporte'),
+    ]
+    perfil = models.OneToOneField(Perfil, on_delete=models.CASCADE, related_name='cliente')
+    telefono = models.CharField(max_length=20, null=True, blank=True)
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, default='CC')
+    numero_documento = models.CharField(max_length=50, default='Sin número')
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Defaut.jpg')
 
     def __str__(self):
-        return self.nombre
-    class Meta:
-        db_table = 'Departamento'
-        verbose_name = 'Departamento'
-        verbose_name_plural = 'Departamentos'
-class Ciudad(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
-    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE, related_name='ciudades')
+        return f'{self.perfil.user.username} - {self.numero_documento}'
 
-    def __str__(self):
-        return self.nombre
     class Meta:
-        db_table = 'Ciudad'
-        verbose_name = 'Ciudad'
-        verbose_name_plural = 'Ciudades'
+        db_table = 'Cliente'
 
 class Direccion(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='direcciones', null=True, blank=True)
@@ -77,7 +113,7 @@ class Direccion(models.Model):
 
     def __str__(self):
         if self.cliente:
-            return f'{self.cliente.user.username} - {self.direccion}'
+            return f'{self.cliente.perfil.user.username} - {self.direccion}'
         elif self.tienda:
             return f'{self.tienda.nombre} - {self.direccion}'
         else:
@@ -115,6 +151,7 @@ class Producto(models.Model):
             models.Index(fields=['codigo']),
             models.Index(fields=['nombre']),
         ]
+
 class Proveedor(models.Model):
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='proveedores')
     razon_social = models.CharField(max_length=150, verbose_name="Razón Social")
@@ -135,7 +172,7 @@ class Proveedor(models.Model):
         verbose_name = "Proveedor"
         verbose_name_plural = "Proveedores"
 
-# esta tabla tambien va ser usada para el inventario
+# esta tabla tambien va ha ser usada para el inventario
 class ProductosTiendas(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='productos_tiendas')
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor", related_name='productos_tiendas')
@@ -163,33 +200,46 @@ class PromocionManager(models.Manager):
     def activas(self):
         return self.filter(activo=True, fecha_inicio__lte=date.today(), fecha_fin__gte=date.today())
 
+
 class Promocion(models.Model):
-    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE)
+    tienda = models.ForeignKey('Tienda', on_delete=models.CASCADE)
+    productos_aplicables = models.ManyToManyField('ProductosTiendas', related_name='promociones')
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
     descuento = models.DecimalField(max_digits=10, decimal_places=2)
-    fecha_inicio = models.DateField()
+    fecha_inicio = models.DateTimeField(default=timezone.now)
     fecha_fin = models.DateField()
     activo = models.BooleanField(default=True)
+    codigo_promocional = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    condiciones = models.TextField(blank=True, null=True)
+    cantidad_minima = models.IntegerField(blank=True, null=True)
+    cantidad_maxima = models.IntegerField(blank=True, null=True)
 
-    objects = PromocionManager()
+    def clean(self):
+        # Validación de que la fecha de inicio no sea posterior a la fecha de fin
+        if self.fecha_inicio > timezone.make_aware(datetime.combine(self.fecha_fin, datetime.min.time())):
+            raise ValidationError("La fecha de inicio no puede ser posterior a la fecha de fin.")
+
+        # Validación de cantidades mínimas y máximas
+        if self.cantidad_minima is not None and self.cantidad_maxima is not None:
+            if self.cantidad_minima > self.cantidad_maxima:
+                raise ValidationError("La cantidad mínima no puede ser mayor que la cantidad máxima.")
 
     def save(self, *args, **kwargs):
-        if self.fecha_inicio > self.fecha_fin:
-            raise ValueError("La fecha de inicio no puede ser posterior a la fecha de fin.")
-        if self.fecha_fin < date.today():
-            self.activo = False
-        super(Promocion, self).save(*args, **kwargs)
+        # Generar un código promocional único si no se proporciona
+        if not self.codigo_promocional:
+            self.codigo_promocional = str(uuid.uuid4())[:8]  # Código promocional automático de 8 caracteres
 
-    def __str__(self):
-        return self.nombre
+        # Llamar al método clean para validar antes de guardar
+        self.clean()
+        super(Promocion, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'Promocion'
-        constraints = [
-            models.UniqueConstraint(fields=['tienda'], condition=models.Q(activo=True),
-                                    name='unique_active_promotion_per_store')
-        ]
+        ordering = ['-fecha_inicio']  # Ordenar por fecha de inicio descendente
+        verbose_name = 'Promoción'
+        verbose_name_plural = 'Promociones'
+
 class Orden(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ordenes')
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='ordenes')
@@ -208,7 +258,7 @@ class Orden(models.Model):
     estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.PENDIENTE)
 
     def __str__(self):
-        return f"Orden {self.id} - Cliente: {self.cliente.user.username} - Tienda: {self.tienda.nombre} - Fecha: {self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"Orden {self.id} - Cliente: {self.cliente.perfil.user.username} - Tienda: {self.tienda.nombre} - Fecha: {self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')}"
     def clean(self):
         if self.total < 0:
             raise ValidationError('El total no puede ser negativo.')

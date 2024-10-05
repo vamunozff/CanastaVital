@@ -3,31 +3,69 @@ from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden, Departamento, Ciudad
-
+import datetime
 class CustomUserCreationForm(UserCreationForm):
     
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("El nombre de usuario ya está en uso.")
+        return username
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este correo electrónico ya está en uso.")
+        return email
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+        return password2
+
 class ProveedorForm(forms.ModelForm):
     class Meta:
         model = Proveedor
         fields = ['razon_social', 'email', 'telefono', 'direccion', 'estado']
+
 
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
         fields = ['telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil']
         widgets = {
-            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo_documento': forms.Select(attrs={'class': 'form-control'}),
+            'numero_documento': forms.TextInput(attrs={'class': 'form-control'}),
+            'imagen_perfil': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
+    # Validación personalizada para la fecha de nacimiento
     def clean_fecha_nacimiento(self):
-        fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
-        if fecha_nacimiento and fecha_nacimiento > date.today():
+        fecha = self.cleaned_data['fecha_nacimiento']
+        if fecha and fecha > datetime.date.today():
             raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
-        return fecha_nacimiento
+        return fecha
+
+    # Validación personalizada para la fecha de nacimiento
+    def clean_fecha_nacimiento(self):
+        fecha = self.cleaned_data['fecha_nacimiento']
+        if fecha and fecha > datetime.date.today():
+            raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
+        return fecha
+
+    # Validación personalizada para el número de documento
+    def clean_numero_documento(self):
+        numero_documento = self.cleaned_data['numero_documento']
+        if len(numero_documento) < 6:
+            raise forms.ValidationError("El número de documento es demasiado corto.")
+        return numero_documento
 
     def clean(self):
         cleaned_data = super().clean()
