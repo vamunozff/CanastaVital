@@ -144,7 +144,9 @@ class CiudadAdmin(admin.ModelAdmin):
 @admin.register(Promocion)
 class PromocionAdmin(admin.ModelAdmin):
     list_display = (
-    'nombre', 'tienda', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo', 'cantidad_minima', 'cantidad_maxima')
+        'nombre', 'tienda', 'descuento', 'fecha_inicio', 'fecha_fin',
+        'activo', 'cantidad_minima', 'cantidad_maxima', 'get_productos_aplicables'
+    )
     list_filter = ('tienda', 'activo', 'fecha_inicio', 'fecha_fin')
     search_fields = ('nombre', 'codigo_promocional')
     ordering = ('fecha_inicio',)
@@ -153,16 +155,33 @@ class PromocionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-            'nombre', 'tienda', 'descripcion', 'descuento', 'fecha_inicio', 'fecha_fin', 'activo', 'codigo_promocional',
-            'condiciones', 'cantidad_minima', 'cantidad_maxima')
+                'nombre', 'tienda', 'descripcion', 'descuento', 'fecha_inicio',
+                'fecha_fin', 'activo', 'codigo_promocional', 'condiciones',
+                'productos_aplicables', 'cantidad_minima', 'cantidad_maxima'
+            )
         }),
     )
 
     def has_change_permission(self, request, obj=None):
-        # Ejemplo de cómo restringir el cambio de promociones inactivas
         if obj and not obj.activo:
             return False
         return super().has_change_permission(request, obj)
+
+    # Método para mostrar productos aplicables en la lista
+    def get_productos_aplicables(self, obj):
+        return ", ".join([str(producto) for producto in obj.productos_aplicables.all()])
+    get_productos_aplicables.short_description = 'Productos Aplicables'
+
+    # Agregar acciones personalizadas si es necesario
+    actions = ['activar_promociones', 'desactivar_promociones']
+
+    def activar_promociones(self, request, queryset):
+        queryset.update(activo=True)
+        self.message_user(request, "Las promociones seleccionadas han sido activadas.")
+
+    def desactivar_promociones(self, request, queryset):
+        queryset.update(activo=False)
+        self.message_user(request, "Las promociones seleccionadas han sido desactivadas.")
 
 @admin.register(MetodoPago)
 class MetodoPagoAdmin(admin.ModelAdmin):

@@ -2,73 +2,91 @@
 
 {% load static %}
 
-{% block title %} Actualizar Producto {% endblock %}
+{% block title %}Editar Producto{% endblock %}
 
 {% block content %}
-    <main class="d-flex justify-content-center align-items-center vh-100">
-        <div class="container col-md-6">
-            <h2>Actualizar Producto</h2>
-            <form action="{% url 'actualizar_producto' producto_tienda.id %}" method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-                <div class="text-center mb-4">
-                    <br>
-                    {% if producto_tienda.imagen %}
-                        <img id="imagen-preview" src="{{ producto_tienda.imagen.url }}" alt="{{ producto_tienda.producto.nombre }}" width="100"><br>
-                        <p id="imagen-status">Imagen Actual</p><br>
-                    {% else %}
-                        <img id="imagen-preview" src="{% static 'default-image.png' %}" alt="Imagen Predeterminada" width="100"><br>
-                        <p id="imagen-status">Sin Imagen Actual</p><br>
-                    {% endif %}
+<main class="d-flex justify-content-center align-items-center">
+    <div class="container">
+        <h2 class="text-center mb-1">Editar Producto</h2>
 
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form action="{% url 'actualizar_producto' producto_tienda.id %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row mb-4">
+                <div class="col-md-4 text-center">
+                    {% if producto_tienda.imagen %}
+                        <div class="image-preview mb-2">
+                            <img id="imagen-preview" src="{{ producto_tienda.imagen.url }}" alt="{{ producto_tienda.producto.nombre }}" class="img-thumbnail" style="border: 1px solid #808a94; width: 100%; height: auto; max-width: 300px;">
+                        </div>
+                        <p id="imagen-status">Imagen Actual</p>
+                    {% else %}
+                        <img id="imagen-preview" src="{% static 'default-image.png' %}" alt="Imagen Predeterminada" class="img-thumbnail mb-2" style="border: 2px solid #007bff; width: 100%; height: auto; max-width: 300px;">
+                        <p id="imagen-status">Sin Imagen Actual</p>
+                    {% endif %}
                     <label for="imagen" class="form-label">Actualizar Imagen:</label>
                     <input type="file" id="imagen" name="imagen" class="form-control" onchange="previewImage(event)">
                 </div>
 
-            <div class="form-group">
-                <label for="txtProductoId" class="form-label">Nombre del producto:</label>
-                <select id="txtProductoId" name="producto" class="form-select" required>
-                    <option value="{{ producto_tienda.producto.id }}" selected>{{ producto_tienda.producto.nombre }}</option>
-                    {% for producto in productos %}
-                        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
-                    {% endfor %}
-                </select>
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label for="txtProductoId" class="form-label">Nombre del producto:</label>
+                        <select id="txtProductoId" name="producto" class="form-select" required>
+                            <option value="{{ producto_tienda.producto.id }}" selected>{{ producto_tienda.producto.nombre }}</option>
+                            {% for producto in productos %}
+                                <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="txtProveedor_id" class="form-label">Proveedor:</label>
+                        <select id="txtProveedor_id" name="proveedor" class="form-select" required>
+                            <option value="{{ producto_tienda.proveedor.id }}" selected>{{ producto_tienda.proveedor.razon_social }}</option>
+                            {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}">{{ proveedor.razon_social }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="txtPrecioUnitario" class="form-label">Precio Unitario:</label>
+                        <input type="text" id="txtPrecioUnitario" name="precio_unitario" class="form-control" value="{{ producto_tienda.precio_unitario }}" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="txtCantidad" class="form-label">Cantidad:</label>
+                        <input type="number" id="txtCantidad" name="cantidad" class="form-control" min="1" value="{{ producto_tienda.cantidad }}" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="txtEstado" class="form-label">Estado:</label>
+                        <select id="txtEstado" name="estado" class="form-select" required>
+                            <option value="activo" {% if producto_tienda.estado == 'activo' %} selected {% endif %}>Activo</option>
+                            <option value="inactivo" {% if producto_tienda.estado == 'inactivo' %} selected {% endif %}>Inactivo</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="txtProveedor_id" class="form-label">Proveedor:</label>
-                <select id="txtProveedor_id" name="proveedor" class="form-select" required>
-                    <option value="{{ producto_tienda.proveedor.id }}" selected>{{ producto_tienda.proveedor.razon_social }}</option>
-                    {% for proveedor in proveedores %}
-                        <option value="{{ proveedor.id }}">{{ proveedor.razon_social }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="txtPrecioUnitario" class="form-label">Precio Unitario:</label>
-                <input type="text" id="txtPrecioUnitario" name="precio_unitario" class="form-control" value="{{ producto_tienda.precio_unitario }}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="txtCantidad" class="form-label">Cantidad:</label>
-                <input type="number" id="txtCantidad" name="cantidad" class="form-control" min="1" value="{{ producto_tienda.cantidad }}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="txtEstado" class="form-label">Estado:</label>
-                <select id="txtEstado" name="estado" class="form-select" required>
-                    <option value="activo" {% if producto_tienda.estado == 'activo' %} selected {% endif %}>Activo</option>
-                    <option value="inactivo" {% if producto_tienda.estado == 'inactivo' %} selected {% endif %}>Inactivo</option>
-                </select>
-            </div>
-
-            <br>
-            <div class="form-group">
+            <div class="">
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'index_producto' %}'">Volver</button>
+                <form action="{% url 'eliminar_producto' producto_tienda.id %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.');">Eliminar Producto</button>
+                </form>
             </div>
         </form>
-        </div>
+    </div>
+</main>
 
 <script>
 function previewImage(event) {
@@ -84,7 +102,6 @@ function previewImage(event) {
         };
         reader.readAsDataURL(event.target.files[0]);
     } else {
-        // When no file is selected, keep the existing image or show a default image
         var currentImageSrc = "{{ producto_tienda.imagen.url }}";
         imagePreview.src = currentImageSrc ? currentImageSrc : "{% static 'default-image.png' %}";
         imageStatus.textContent = currentImageSrc ? 'Imagen Actual' : 'Sin Imagen Actual';
@@ -93,7 +110,4 @@ function previewImage(event) {
 
 document.getElementById('imagen').addEventListener('change', previewImage);
 </script>
-
-
-    </main>
 {% endblock %}

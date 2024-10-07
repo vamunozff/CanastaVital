@@ -43,7 +43,6 @@ urlpatterns = [
     path('actualizar_direccion/<int:direccion_id>/', views.actualizar_direccion, name='actualizar_direccion'),
     path('get-datos/', get_datos, name='get_datos'),
     path('promocion/', views.promocion, name='promocion'),
-    path('promocion/registrar/', views.registrar_promocion, name='registrar_promocion'),
     path('promocion/editar/<int:id>/', views.editar_promocion, name='editar_promocion'),
     path('promocion/eliminar/<int:id>/', views.eliminar_promocion, name='eliminar_promocion'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

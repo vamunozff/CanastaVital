@@ -10,9 +10,10 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from .models import Rol, Perfil, Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden, Ciudad, Departamento
 from django.contrib import messages
-from .forms import ProductosTiendasForm
+from .forms import ProductosTiendasForm, PromocionForm
 from django.db import transaction
 import json
+from decimal import Decimal
 from .decorators import user_is_tienda, user_is_cliente, user_is_administrador
 from django.utils import timezone
 import logging
@@ -700,28 +701,6 @@ def direccion(request):
         'direcciones': todas_direcciones,
     })
 
-# @login_required
-# def direccion(request):
-#
-#     cliente = get_object_or_404(Cliente, perfil__user=request.user)
-#
-#     if request.method == 'POST':
-#         form = DireccionForm(request.POST)
-#         if form.is_valid():
-#             direccion = form.save(commit=False)
-#             direccion.cliente = cliente
-#             direccion.save()
-#             return redirect('direccion')
-#     else:
-#         form = DireccionForm()
-#
-#     direcciones = Direccion.objects.filter(cliente=cliente)
-#
-#     return render(request, 'otros/direccion.html', {
-#         'form': form,
-#         'direcciones': direcciones,
-#     })
-
 @login_required
 def registrar_direccion(request):
     if request.method == 'POST':
@@ -820,65 +799,83 @@ def get_datos(request):
         departamentos_list = list(departamentos.values('id', 'nombre'))
         return JsonResponse({'departamentos': departamentos_list})
 
+
+@login_required
 def promocion(request):
-    promociones = Promocion.objects.all()
-    return render(request, 'tiendas/promocion.html', {'promociones': promociones})
+    perfil = get_object_or_404(Perfil, user=request.user)
+    tienda = get_object_or_404(Tienda, perfil=perfil)
 
-
-def registrar_promocion(request):
+    # Manejo del formulario para registrar una nueva promoción
     if request.method == 'POST':
-        nombre = request.POST['nombre']
-        descripcion = request.POST.get('descripcion', '')
-        descuento = request.POST['descuento']
-        fecha_inicio = request.POST['fecha_inicio']
-        fecha_fin = request.POST['fecha_fin']
-        codigo_promocional = request.POST.get('codigo_promocional', '')
-        condiciones = request.POST.get('condiciones', '')
-        cantidad_minima = request.POST.get('cantidad_minima', None)
-        cantidad_maxima = request.POST.get('cantidad_maxima', None)
+        form = PromocionForm(request.POST)
+        if form.is_valid():
+            nueva_promocion = form.save(commit=False)
+            nueva_promocion.tienda = tienda  # Asigna la tienda al objeto promoción
+            nueva_promocion.save()
+            form.save_m2m()  # Guarda la relación ManyToManyField para productos aplicables
+            return redirect('promocion')  # Redirige a la página de éxito o a la misma vista
+    else:
+        form = PromocionForm()
 
-        promocion = Promocion(
-            nombre=nombre,
-            descripcion=descripcion,
-            descuento=descuento,
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin,
-            codigo_promocional=codigo_promocional,
-            condiciones=condiciones,
-            cantidad_minima=cantidad_minima,
-            cantidad_maxima=cantidad_maxima,
-            activo=True
-        )
-        promocion.save()
+    # Consulta las promociones y productos aplicables
+    promociones = Promocion.objects.filter(tienda=tienda)
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
-        return redirect('promocion')  # Redirige a la lista de promociones
+    return render(request, 'tiendas/promocion.html', {
+        'promociones': promociones,
+        'productos_tiendas': productos_tiendas,
+        'form': form,  # Asegúrate de pasar el formulario al contexto
+    })
 
-    return render(request, 'tienda/registrar_promocion.html')
-
-
+@login_required
 def editar_promocion(request, id):
-    promocion = get_object_or_404(Promocion, id=id)  # Obtener la promoción por ID
+    perfil = get_object_or_404(Perfil, user=request.user)
+    tienda = get_object_or_404(Tienda, perfil=perfil)
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
+    promocion = get_object_or_404(Promocion, id=id)
 
     if request.method == 'POST':
-        promocion.nombre = request.POST.get('nombre')
-        promocion.descripcion = request.POST.get('descripcion')
-        promocion.descuento = request.POST.get('descuento')
-        promocion.fecha_inicio = request.POST.get('fecha_inicio')
-        promocion.fecha_fin = request.POST.get('fecha_fin')
-        promocion.codigo_promocional = request.POST.get('codigo_promocional')
-        promocion.condiciones = request.POST.get('condiciones')
-        promocion.cantidad_minima = request.POST.get('cantidad_minima')
-        promocion.cantidad_maxima = request.POST.get('cantidad_maxima')
+        form = PromocionForm(request.POST, instance=promocion)
 
-        promocion.save()
-        # Redirigir a otra página después de guardar, por ejemplo:
-        return redirect('promocion')  # Asegúrate de definir esta URL
+        if form.is_valid():
+            # Obtener el descuento del formulario
+            descuento_input = request.POST.get('descuento', '')
+
+            try:
+                # Reemplaza la coma por un punto y convierte a Decimal
+                if descuento_input:
+                    # Quita los puntos y cambia la coma por un punto
+                    descuento_decimal = Decimal(descuento_input.replace('.', '').replace(',', '.'))
+                    form.cleaned_data['descuento'] = descuento_decimal
+
+                # Si todo está bien, guarda la promoción
+                form.save()
+                return redirect('promocion')
+
+            except (ValueError, ValidationError):
+                form.add_error('descuento', 'Ingrese un número válido.')
+                # Renderizar el formulario de nuevo en caso de error
+                context = {
+                    'form': form,
+                    'promocion': promocion,
+                    'productos_tiendas': productos_tiendas,
+                    'productos_aplicables_ids': list(promocion.productos_aplicables.values_list('id', flat=True)),
+                }
+                return render(request, 'tiendas/editar_promocion.html', context)
+
+    else:
+        form = PromocionForm(instance=promocion)
+
+    # Obtener los IDs de los productos aplicables
+    productos_aplicables_ids = promocion.productos_aplicables.values_list('id', flat=True)
 
     context = {
+        'form': form,
         'promocion': promocion,
+        'productos_tiendas': productos_tiendas,
+        'productos_aplicables_ids': list(productos_aplicables_ids),
     }
     return render(request, 'tiendas/editar_promocion.html', context)
-
 
 def eliminar_promocion(request, id):
     promocion = get_object_or_404(Promocion, id=id)

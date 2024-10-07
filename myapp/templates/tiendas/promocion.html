@@ -3,117 +3,256 @@
 
 <div class="">
     <h1 class="mb-2">Promociones</h1>
-
-    <!-- Botón para abrir el modal de registro -->
-    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#registroPromocionModal">
+    <button class="btn btn-primary newUser" data-toggle="modal" data-target="#registroPromocionModal">
         Registrar Nueva Promoción
     </button>
 
-
-<!-- Tabla para mostrar las promociones -->
-<table class="table table-promociones">
-    <thead>
-        <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Descuento (COP)</th>
-            <th>Fecha de Inicio</th>
-            <th>Fecha de Fin</th>
-            <th>Estado</th>
-            <th>Código Promocional</th>
-            <th>Condiciones</th>
-            <th>Cantidad Mínima</th>
-            <th>Cantidad Máxima</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for promocion in promociones %}
-        <tr>
-            <td><a href="{% url 'editar_promocion' promocion.id %}">{{ promocion.nombre }}</a></td>
-            <td>{{ promocion.descripcion }}</td>
-            <td>{{ promocion.descuento|floatformat:2 }}</td>
-            <td>{{ promocion.fecha_inicio|date:"d/m/Y H:i" }}</td>
-            <td>{{ promocion.fecha_fin|date:"d/m/Y" }}</td>
-            <td>{{ promocion.activo|yesno:"Activo,Inactivo" }}</td>
-            <td>{{ promocion.codigo_promocional }}</td>
-            <td>{{ promocion.condiciones }}</td>
-            <td>{{ promocion.cantidad_minima }}</td>
-            <td>{{ promocion.cantidad_maxima }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="11">No hay promociones registradas.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-    <!-- Modal para registrar una nueva promoción -->
-    <div class="modal fade" id="registroPromocionModal" tabindex="-1" aria-labelledby="registroPromocionModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="registroPromocionModalLabel">Registrar Nueva Promoción</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-                <div class="modal-body">
-                    <!-- Formulario de Registro de Promoción -->
-                    <form id="formRegistrarPromocion" method="POST" action="{% url 'registrar_promocion' %}">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="nombre">Nombre de la Promoción</label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+        <div class="table-responsive">
+        <table class="table table-promociones">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Descuento</th>
+                    <th>Fecha de Inicio</th>
+                    <th>Fecha de Fin</th>
+                    <th>Estado</th>
+                    <th>Código Promocional</th>
+                    <th>Condiciones</th>
+                    <th>Cantidad Mínima</th>
+                    <th>Cantidad Máxima</th>
+                    <th>productos Aplicables</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for promocion in promociones %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><a href="{% url 'editar_promocion' promocion.id %}">{{ promocion.nombre }}</a></td>
+                    <td>{{ promocion.descripcion }}</td>
+                    <td>{{ promocion.descuento|floatformat:2 }}</td>
+                    <td>{{ promocion.fecha_inicio|date:"d/m/Y H:i" }}</td>
+                    <td>{{ promocion.fecha_fin|date:"d/m/Y" }}</td>
+                    <td>{{ promocion.activo|yesno:"Activo,Inactivo" }}</td>
+                    <td>{{ promocion.codigo_promocional }}</td>
+                    <td>{{ promocion.condiciones }}</td>
+                    <td>{{ promocion.cantidad_minima|default_if_none:"-" }}</td>
+                    <td>{{ promocion.cantidad_maxima|default_if_none:"-" }}</td>
+                <td>
+                    {% for producto in promocion.productos_aplicables.all %}
+                        <a href="{% url 'ver_producto' producto.id %}">{{ producto.producto.nombre }}</a>{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        Ningún producto aplicable
+                    {% endfor %}
+                </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11">No hay promociones registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+<!-- Modal para registrar una nueva promoción -->
+<div class="modal fade" id="registroPromocionModal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar Promoción</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'promocion' %}">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="nombre">Nombre de la Promoción</label>
+                                <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="nombre" name="nombre" value="{{ form.nombre.value|default_if_none:'' }}" required oninput="generarCodigoPromocional()">
+                                {% if form.nombre.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nombre.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="descripcion">Descripción</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                        <div class="col-md-4 d-flex align-items-center">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="activo" name="activo" {% if promocion.activo %} checked {% endif %}>
+                                <label class="form-check-label" for="activo">
+                                    Activar Promoción
+                                </label>
+                                <small class="form-text text-muted">Marca esta casilla si deseas que la promoción esté activa.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}" id="descripcion" name="descripcion" rows="3">{{ form.descripcion.value|default_if_none:'' }}</textarea>
+                        {% if form.descripcion.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.descripcion.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descuento">Descuento (COP)</label>
+                        <input type="number" class="form-control {% if form.descuento.errors %}is-invalid{% endif %}" id="descuento" name="descuento" step="0.01" value="{{ form.descuento.value|default_if_none:'' }}" required>
+                        {% if form.descuento.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.descuento.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_inicio">Fecha de Inicio</label>
+                        <input type="datetime-local" class="form-control {% if form.fecha_inicio.errors %}is-invalid{% endif %}" id="fecha_inicio" name="fecha_inicio" required>
+                        {% if form.fecha_inicio.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.fecha_inicio.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha_fin">Fecha de Fin</label>
+                        <input type="date" class="form-control {% if form.fecha_fin.errors %}is-invalid{% endif %}" id="fecha_fin" name="fecha_fin" value="{{ form.fecha_fin.value|default_if_none:'' }}" required>
+                        {% if form.fecha_fin.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.fecha_fin.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="codigo_promocional">Código Promocional (Opcional)</label>
+                        <input type="text" class="form-control" id="codigo_promocional" name="codigo_promocional" value="{{ form.codigo_promocional.value|default_if_none:'' }}" readonly>
+                        <small class="form-text text-muted">Este código se generará automáticamente.</small>
+                        {% if form.codigo_promocional.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.codigo_promocional.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="condiciones">Condiciones</label>
+                        <textarea class="form-control {% if form.condiciones.errors %}is-invalid{% endif %}" id="condiciones" name="condiciones" rows="3">{{ form.condiciones.value|default_if_none:'' }}</textarea>
+                        {% if form.condiciones.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.condiciones.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cantidad_minima">Cantidad Mínima (Opcional)</label>
+                                <input type="number" class="form-control {% if form.cantidad_minima.errors %}is-invalid{% endif %}" id="cantidad_minima" name="cantidad_minima" value="{{ form.cantidad_minima.value|default_if_none:'' }}">
+                                {% if form.cantidad_minima.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cantidad_minima.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="descuento">Descuento (COP)</label>
-                            <input type="number" class="form-control" id="descuento" name="descuento" step="0.01" required>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cantidad_maxima">Cantidad Máxima (Opcional)</label>
+                                <input type="number" class="form-control {% if form.cantidad_maxima.errors %}is-invalid{% endif %}" id="cantidad_maxima" name="cantidad_maxima" value="{{ form.cantidad_maxima.value|default_if_none:'' }}">
+                                {% if form.cantidad_maxima.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cantidad_maxima.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
+                    </div>
 
+                    {% if productos_tiendas %}
                         <div class="form-group">
-                            <label for="fecha_inicio">Fecha de Inicio</label>
-                            <input type="datetime-local" class="form-control" id="fecha_inicio" name="fecha_inicio" required>
+                            <label for="id_productos_aplicables">Productos Aplicables:</label>
+                            <select multiple class="form-control" id="id_productos_aplicables" name="productos_aplicables" required>
+                                {% for producto_tienda in productos_tiendas %}
+                                    <option value="{{ producto_tienda.id }}">{{ producto_tienda.producto.nombre }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
+                    {% else %}
+                        <p>No hay productos disponibles en esta tienda.</p>
+                    {% endif %}
 
-                        <div class="form-group">
-                            <label for="fecha_fin">Fecha de Fin</label>
-                            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="codigo_promocional">Código Promocional (Opcional)</label>
-                            <input type="text" class="form-control" id="codigo_promocional" name="codigo_promocional">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="condiciones">Condiciones</label>
-                            <textarea class="form-control" id="condiciones" name="condiciones" rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cantidad_minima">Cantidad Mínima (Opcional)</label>
-                            <input type="number" class="form-control" id="cantidad_minima" name="cantidad_minima">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cantidad_maxima">Cantidad Máxima (Opcional)</label>
-                            <input type="number" class="form-control" id="cantidad_maxima" name="cantidad_maxima">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Registrar Promoción</button>
-                    </form>
-                </div>
+<br>
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+
+</div>
+    <script>
+    function generarCodigoPromocional() {
+        const nombre = document.getElementById("nombre").value;
+        const codigoInput = document.getElementById("codigo_promocional");
+        if (nombre) {
+            // Crear un código basado en el nombre (puedes personalizar esto)
+            const codigo = nombre.replace(/\s+/g, '').substring(0, 8).toUpperCase(); // Elimina espacios y limita a 8 caracteres
+            codigoInput.value = codigo;
+        } else {
+            codigoInput.value = ''; // Limpiar el código si no hay nombre
+        }
+    }
+</script>
 
 {% endblock %}

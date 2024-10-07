@@ -10,15 +10,6 @@
                     <form action="{% url 'leer_proveedor' proveedores.id %}" method="POST">
                         {% csrf_token %}
                         <div class="inputField">
-
-                            <div>
-                                {% if request.user.is_authenticated %}
-                                    <label for="txtUsuario" class="form-label">Usuario asignado:</label>
-                                    <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ request.user.first_name }}" disabled>
-                                {% else %}
-                                    <p>Error al mostrar el usuario logueado.</p>
-                                {% endif %}
-                            </div>
                             <div>
                                 <label for="city" class="form-label">Razon Social:</label>
                                 <input class="form-control" type="text" id="txtRazonSocial" name="txtRazonSocial" value="{{ proveedores.razon_social }}" disabled>

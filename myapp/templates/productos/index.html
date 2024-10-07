@@ -7,8 +7,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Productos asignados{% endblock %}</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.5/css/dataTables.bootstrap5.css">
   </head>
   <body>
   <main>
@@ -25,82 +23,47 @@
             {% endfor %}
           </div>
         {% endif %}
+
         <div class="row">
             <div class="col-12">
-                <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Asignar producto <i class="bi bi-people"></i></button>
+                <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Asignar producto</button>
             </div>
         </div>
-        <div class="row">
-            <div class="col-12">
-                <table id="example" class="table table-striped" style="width:100%">
+
+        <div class="table-responsive">
+                <table id="example" class="table table-striped">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Imagen</th>
-                            <th>Proveedor</th>
                             <th>Producto</th>
+                            <th>Proveedor</th>
+                            <th>Descripción</th>
+                            <th>Categoría</th>
                             <th>Precio Unitario</th>
                             <th>Cantidad</th>
                             <th>Estado</th>
                             <th>Fecha de Registro</th>
-                            <th colspan="3">Opciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for producto_tienda in productos_tiendas %}
                         <tr>
                             <td>{{ forloop.counter }}</td>
-                            <td>
-                                {% if producto_tienda.imagen %}
-                                    <img src="{{ producto_tienda.imagen.url }}" alt="{{ producto_tienda.producto.nombre }}" width="50" height="50">
-                                {% else %}
-                                    No Image
-                                {% endif %}
-                            </td>
-                            <td>{{ producto_tienda.proveedor.razon_social }}</td>
-                            <td>{{ producto_tienda.producto.nombre }}</td>
+                            <td><a href="{% url 'actualizar_producto' producto_tienda.id %}">{{ producto_tienda.producto.nombre }}</a></td>
+                            <td><a href="{% url 'leer_proveedor' producto_tienda.proveedor.id %}">{{ producto_tienda.proveedor.razon_social }}</a></td>
+                            <td>{{ producto_tienda.producto.descripcion }}</td>
+                            <td>{{ producto_tienda.producto.categoria }}</td>
                             <td>{{ producto_tienda.precio_unitario }}</td>
                             <td>{{ producto_tienda.cantidad }}</td>
                             <td>{{ producto_tienda.estado }}</td>
                             <td>{{ producto_tienda.fecha_registro }}</td>
-                            <td>
-                                <button name="btnVer" class="btn btn-success" onclick="window.location.href='ver_producto/{{ producto_tienda.id }}'"><i class="bi bi-eye"></i></button>
-                                <button name="btnActualizar" class="btn btn-primary" onclick="window.location.href='actualizar_producto/{{ producto_tienda.id }}'"><i class="bi bi-pencil-square"></i></button>
-                                <form action="{% url 'eliminar_producto' producto_tienda.id %}" method="POST" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="button" class="btn btn-danger btnEliminacion"><i class="bi bi-trash"></i></button>
-                                </form>
-                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
         </div>
     </section>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const btnEliminacion = document.querySelectorAll(".btnEliminacion");
 
-            btnEliminacion.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const confirmacion = confirm('¿Seguro de eliminar el producto asociado?');
-                    if (confirmacion) {
-                        e.target.closest('form').submit();
-                    } else {
-                        e.preventDefault();
-                    }
-                });
-            });
-            // Ocultar el mensaje de éxito después de 3 segundo
-            setTimeout(function() {
-                const successAlert = document.querySelector('.alert-success');
-                if (successAlert) {
-                    successAlert.style.display = 'none';
-                }
-            }, 3000); // 3000 milisegundos = 1 segundo
-        });
-    </script>
     <!--Modal Form-->
     <div class="modal fade" id="userForm">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -175,10 +138,6 @@
         </div>
     </div>
       <script src="{% static 'myapp/js/datatable.js' %}"> </script>
-    <script defer src="https://code.jquery.com/jquery-3.7.1.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script defer src="https://cdn.datatables.net/2.1.5/js/dataTables.js"></script>
-      <script defer src="https://cdn.datatables.net/2.1.5/js/dataTables.bootstrap5.js"></script>
   </main>
   </body>
 </html>

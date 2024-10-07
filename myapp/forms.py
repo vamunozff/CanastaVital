@@ -2,8 +2,12 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden, Departamento, Ciudad
-import datetime
+from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden, Departamento, Ciudad, Promocion
+from datetime import datetime, time
+from decimal import Decimal
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+
 class CustomUserCreationForm(UserCreationForm):
     
     class Meta:
@@ -143,3 +147,32 @@ class OrdenForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class PromocionForm(forms.ModelForm):
+    class Meta:
+        model = Promocion
+        fields = [
+            'nombre',
+            'descripcion',
+            'descuento',
+            'fecha_inicio',
+            'fecha_fin',
+            'codigo_promocional',
+            'condiciones',
+            'cantidad_minima',
+            'cantidad_maxima',
+            'productos_aplicables',
+            'activo',
+        ]
+        widgets = {
+            'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'fecha_fin': forms.DateInput(attrs={'type': 'date'}),
+            'productos_aplicables': forms.SelectMultiple(attrs={'class': 'form-control'}),  # Añade este widget
+        }
+    def clean_descuento(self):
+        descuento = self.cleaned_data.get('descuento')
+        if isinstance(descuento, str):
+            # Reemplaza las comas por puntos y elimina los puntos de miles
+            descuento = descuento.replace('.', '').replace(',', '.')
+        return Decimal(descuento)

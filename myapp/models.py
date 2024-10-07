@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
 from django.utils import timezone
+from django.utils.timezone import now
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.db import models, IntegrityError
@@ -216,27 +217,21 @@ class Promocion(models.Model):
     cantidad_maxima = models.IntegerField(blank=True, null=True)
 
     def clean(self):
-        # Validación de que la fecha de inicio no sea posterior a la fecha de fin
-        if self.fecha_inicio > timezone.make_aware(datetime.combine(self.fecha_fin, datetime.min.time())):
-            raise ValidationError("La fecha de inicio no puede ser posterior a la fecha de fin.")
-
-        # Validación de cantidades mínimas y máximas
         if self.cantidad_minima is not None and self.cantidad_maxima is not None:
             if self.cantidad_minima > self.cantidad_maxima:
                 raise ValidationError("La cantidad mínima no puede ser mayor que la cantidad máxima.")
-
+        if self.descuento < 0:
+            raise ValidationError("El descuento no puede ser un valor negativo.")
     def save(self, *args, **kwargs):
-        # Generar un código promocional único si no se proporciona
         if not self.codigo_promocional:
-            self.codigo_promocional = str(uuid.uuid4())[:8]  # Código promocional automático de 8 caracteres
+            self.codigo_promocional = str(uuid.uuid4())[:8]
 
-        # Llamar al método clean para validar antes de guardar
         self.clean()
         super(Promocion, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'Promocion'
-        ordering = ['-fecha_inicio']  # Ordenar por fecha de inicio descendente
+        ordering = ['-fecha_inicio']
         verbose_name = 'Promoción'
         verbose_name_plural = 'Promociones'
 

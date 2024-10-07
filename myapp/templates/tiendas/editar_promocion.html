@@ -1,21 +1,31 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h1 class="mb-2">Promoción</h1>
-
-<div class="d-flex justify-content-end mb-2">
-    <button type="submit" class="btn btn-primary me-2">Actualizar</button>
-    <button type="submit" class="btn btn-danger" onclick="eliminarPromocion({{ promocion.id }})">Eliminar</button>
-</div>
+<h1 class="mb-2">Editar Promoción</h1>
 
 <form method="POST">
     {% csrf_token %}
 
+    <div class="d-flex justify-content-end mb-2">
+        <button type="submit" class="btn btn-primary me-2">Actualizar</button>
+        <button type="button" class="btn btn-danger" onclick="eliminarPromocion({{ promocion.id }})">Eliminar</button>
+    </div>
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
     <div class="row">
         <div class="col-md-8">
             <div class="form-group">
                 <label for="nombre">Nombre</label>
-                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ promocion.nombre }}" required>
+                <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="nombre" name="nombre" value="{{ promocion.nombre }}" required>
+                <!-- Errores específicos de campo -->
+                {% if form.nombre.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.nombre.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
@@ -32,71 +42,158 @@
 
     <div class="form-group">
         <label for="descripcion">Descripción</label>
-        <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ promocion.descripcion }}</textarea>
+        <textarea class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}" id="descripcion" name="descripcion" rows="3">{{ promocion.descripcion }}</textarea>
+        {% if form.descripcion.errors %}
+            <div class="invalid-feedback">
+                {{ form.descripcion.errors }}
+            </div>
+        {% endif %}
     </div>
 
-    <div class="form-group">
-        <label for="descuento">Descuento (COP)</label>
-        <input type="text" class="form-control" id="descuento" name="descuento" value="{{ promocion.descuento }}" step="0.01" required>
-    </div>
+{% load humanize %}
+
+<div class="form-group">
+    <label for="descuento">Descuento (COP)</label>
+    <input type="text" class="form-control {% if form.descuento.errors %}is-invalid{% endif %}"
+           id="descuento" name="descuento" value="{{ promocion.descuento|floatformat:2|intcomma }}" required
+           oninput="formatCurrency(this)">
+
+    {% if form.descuento.errors %}
+        <div class="invalid-feedback">
+            {{ form.descuento.errors }}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    function formatCurrency(input) {
+        // Elimina todo excepto dígitos
+        let value = input.value.replace(/\D/g, '');
+
+        if (value) {
+            // Convierte el valor a formato decimal
+            let decimalValue = (value / 100).toFixed(2);
+            // Formatea el valor para mostrarlo en el campo de entrada
+            input.value = decimalValue.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Formato con puntos
+        } else {
+            input.value = ''; // Si no hay valor, limpiar el campo
+        }
+    }
+
+    function handleInputChange(input) {
+        // Asegúrate de que solo se guarde el número
+        let value = input.value.replace(/\D/g, ''); // Solo números
+        input.value = value; // Guarda solo el número
+    }
+</script>
 
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
                 <label for="fecha_inicio">Fecha de Inicio</label>
-                <input type="datetime-local" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ promocion.fecha_inicio|date:'Y-m-d H:i' }}" required>
+                <input type="datetime-local" class="form-control {% if form.fecha_inicio.errors %}is-invalid{% endif %}" id="fecha_inicio" name="fecha_inicio" value="{{ promocion.fecha_inicio|date:'Y-m-d H:i' }}" required>
+                {% if form.fecha_inicio.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.fecha_inicio.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
         <div class="col-md-6">
             <div class="form-group">
                 <label for="fecha_fin">Fecha de Fin</label>
-                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ promocion.fecha_fin|date:'Y-m-d' }}" required>
+                <input type="date" class="form-control {% if form.fecha_fin.errors %}is-invalid{% endif %}" id="fecha_fin" name="fecha_fin" value="{{ promocion.fecha_fin|date:'Y-m-d' }}" required>
+                {% if form.fecha_fin.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.fecha_fin.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <div class="form-group">
         <label for="codigo_promocional">Código Promocional (Opcional)</label>
-        <input type="text" class="form-control" id="codigo_promocional" name="codigo_promocional" value="{{ promocion.codigo_promocional }}">
+        <input type="text" class="form-control {% if form.codigo_promocional.errors %}is-invalid{% endif %}" id="codigo_promocional" name="codigo_promocional" value="{{ promocion.codigo_promocional }}">
+        {% if form.codigo_promocional.errors %}
+            <div class="invalid-feedback">
+                {{ form.codigo_promocional.errors }}
+            </div>
+        {% endif %}
     </div>
 
     <div class="form-group">
         <label for="condiciones">Condiciones</label>
-        <textarea class="form-control" id="condiciones" name="condiciones" rows="3">{{ promocion.condiciones }}</textarea>
+        <textarea class="form-control {% if form.condiciones.errors %}is-invalid{% endif %}" id="condiciones" name="condiciones" rows="3">{{ promocion.condiciones }}</textarea>
+        {% if form.condiciones.errors %}
+            <div class="invalid-feedback">
+                {{ form.condiciones.errors }}
+            </div>
+        {% endif %}
     </div>
 
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
                 <label for="cantidad_minima">Cantidad Mínima (Opcional)</label>
-                <input type="number" class="form-control" id="cantidad_minima" name="cantidad_minima" value="{{ promocion.cantidad_minima }}">
+                <input type="number" class="form-control {% if form.cantidad_minima.errors %}is-invalid{% endif %}" id="cantidad_minima" name="cantidad_minima" value="{{ promocion.cantidad_minima }}">
+                {% if form.cantidad_minima.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.cantidad_minima.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
+
 
         <div class="col-md-6">
             <div class="form-group">
                 <label for="cantidad_maxima">Cantidad Máxima (Opcional)</label>
-                <input type="number" class="form-control" id="cantidad_maxima" name="cantidad_maxima" value="{{ promocion.cantidad_maxima }}">
+                <input type="number" class="form-control {% if form.cantidad_maxima.errors %}is-invalid{% endif %}" id="cantidad_maxima" name="cantidad_maxima" value="{{ promocion.cantidad_maxima }}">
+                {% if form.cantidad_maxima.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.cantidad_maxima.errors }}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
+    <div class="form-group">
+        <label for="id_productos_aplicables">Productos Aplicables:</label>
+        <select multiple class="form-control" id="id_productos_aplicables" name="productos_aplicables" required>
+            {% for producto_tienda in productos_tiendas %}
+                <option value="{{ producto_tienda.id }}" {% if producto_tienda.id in productos_aplicables_ids %} selected {% endif %}>
+                    {{ producto_tienda.producto.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if form.productos_aplicables.errors %}
+            <div class="text-danger">
+                {% for error in form.productos_aplicables.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
 </form>
+
 <script>
 function eliminarPromocion(id) {
     if (confirm('¿Estás seguro de que deseas eliminar esta promoción?')) {
         fetch(`{% url 'eliminar_promocion' 0 %}`.replace('0', id), {
             method: 'POST',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}', // Obtén el token CSRF desde el contexto de Django
+                'X-CSRFToken': '{{ csrf_token }}',  // Asegúrate de que este valor esté disponible
+                'Content-Type': 'application/json'  // Aunque no es estrictamente necesario aquí
             }
         })
         .then(response => {
             if (response.ok) {
-                window.location.reload(); // Recarga la página si la eliminación fue exitosa
+                window.location.reload();  // Recargar la página para reflejar los cambios
             } else {
-                alert('Error al eliminar la promoción.'); // Manejo de error
+                alert('Error al eliminar la promoción.');
             }
         })
         .catch(error => {
@@ -106,4 +203,5 @@ function eliminarPromocion(id) {
     }
 }
 </script>
+
 {% endblock %}
