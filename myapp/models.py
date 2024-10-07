@@ -172,6 +172,7 @@ class Proveedor(models.Model):
         db_table = 'Proveedor'
         verbose_name = "Proveedor"
         verbose_name_plural = "Proveedores"
+        unique_together = ('tienda', 'razon_social')
 
 # esta tabla tambien va ha ser usada para el inventario
 class ProductosTiendas(models.Model):
@@ -179,13 +180,13 @@ class ProductosTiendas(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor", related_name='productos_tiendas')
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='productos_tiendas')
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    cantidad = models.IntegerField()
+    cantidad = models.PositiveIntegerField()
 
     ESTADO_CHOICES = [
         ('activo', 'Activo'),
         ('inactivo', 'Inactivo'),
     ]
-    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, verbose_name="Estado")
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, verbose_name="Estado")
     fecha_registro = models.DateTimeField(auto_now_add=True)
     imagen = models.ImageField(upload_to='productos_tiendas/', null=True, blank=True, verbose_name="Imagen del Producto")
 
@@ -196,6 +197,13 @@ class ProductosTiendas(models.Model):
         db_table = 'ProductosTiendas'
         verbose_name = 'Producto en Tienda'
         verbose_name_plural = 'Productos en Tiendas'
+        indexes = [
+            models.Index(fields=['estado']),
+            models.Index(fields=['precio_unitario']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['producto', 'proveedor', 'tienda'], name='unique_prod_prov_tienda')
+        ]
 
 class PromocionManager(models.Manager):
     def activas(self):

@@ -20,54 +20,113 @@
         </div>
     {% endif %}
 
-        <div class="table-responsive">
-        <table class="table table-promociones">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Descuento</th>
-                    <th>Fecha de Inicio</th>
-                    <th>Fecha de Fin</th>
-                    <th>Estado</th>
-                    <th>Código Promocional</th>
-                    <th>Condiciones</th>
-                    <th>Cantidad Mínima</th>
-                    <th>Cantidad Máxima</th>
-                    <th>productos Aplicables</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for promocion in promociones %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td><a href="{% url 'editar_promocion' promocion.id %}">{{ promocion.nombre }}</a></td>
-                    <td>{{ promocion.descripcion }}</td>
-                    <td>{{ promocion.descuento|floatformat:2 }}</td>
-                    <td>{{ promocion.fecha_inicio|date:"d/m/Y H:i" }}</td>
-                    <td>{{ promocion.fecha_fin|date:"d/m/Y" }}</td>
-                    <td>{{ promocion.activo|yesno:"Activo,Inactivo" }}</td>
-                    <td>{{ promocion.codigo_promocional }}</td>
-                    <td>{{ promocion.condiciones }}</td>
-                    <td>{{ promocion.cantidad_minima|default_if_none:"-" }}</td>
-                    <td>{{ promocion.cantidad_maxima|default_if_none:"-" }}</td>
+<div class="table-responsive">
+    <table class="table table-promociones">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Descuento</th>
+                <th>Fecha de Inicio</th>
+                <th>Fecha de Fin</th>
+                <th>Estado</th>
+                <th>Código Promocional</th>
+                <th>Condiciones</th>
+                <th>Cantidad Mínima</th>
+                <th>Cantidad Máxima</th>
+                <th>Productos Aplicables</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for promocion in promociones %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><a href="{% url 'editar_promocion' promocion.id %}">{{ promocion.nombre }}</a></td>
+                <td>{{ promocion.descripcion }}</td>
+                <td>{{ promocion.descuento|floatformat:2 }}</td>
+                <td>{{ promocion.fecha_inicio|date:"d/m/Y H:i" }}</td>
+                <td>{{ promocion.fecha_fin|date:"d/m/Y" }}</td>
+                <td>{{ promocion.activo|yesno:"Activo,Inactivo" }}</td>
+                <td>{{ promocion.codigo_promocional }}</td>
+                <td>{{ promocion.condiciones }}</td>
+                <td>{{ promocion.cantidad_minima|default_if_none:"-" }}</td>
+                <td>{{ promocion.cantidad_maxima|default_if_none:"-" }}</td>
                 <td>
-                    {% for producto in promocion.productos_aplicables.all %}
-                        <a href="{% url 'ver_producto' producto.id %}">{{ producto.producto.nombre }}</a>{% if not forloop.last %}, {% endif %}
+                    {% for producto_tienda in promocion.productos_aplicables.all %}
+                        <a href="#" class="producto-aplicable" data-toggle="modal" data-target="#productoModal"
+                           data-id="{{ producto_tienda.producto.id }}"
+                           data-nombre="{{ producto_tienda.producto.nombre }}"
+                           data-foto="{{ producto_tienda.imagen.url }}"
+                           data-precio="{{ producto_tienda.precio_unitario }}"
+                           data-cantidad="{{ producto_tienda.cantidad }}"
+                           data-estado="{{ producto_tienda.estado }}">
+                        {{ producto_tienda.producto.nombre }}</a>
+                        {% if not forloop.last %}, {% endif %}
                     {% empty %}
                         Ningún producto aplicable
                     {% endfor %}
                 </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="11">No hay promociones registradas.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="12">No hay promociones registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para mostrar detalles del producto -->
+<div class="modal fade" id="productoModal" tabindex="-1" role="dialog" aria-labelledby="productoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productoModalLabel">Detalles del Producto</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img id="producto-foto" src="" alt="" class="img-fluid">
+                <h5 id="producto-nombre"></h5>
+                <p id="producto-precio"></p>
+                <p id="producto-cantidad"></p> <!-- Nueva línea para mostrar cantidad -->
+                <p id="producto-estado"></p> <!-- Nueva línea para mostrar estado -->
+            </div>
         </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productoModal = new bootstrap.Modal(document.getElementById('productoModal'));
+
+        // Selecciona todos los elementos que contienen la información del producto
+        document.querySelectorAll('.producto-aplicable').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault(); // Evita el comportamiento predeterminado del enlace
+
+                // Obtén los atributos de datos del elemento clicado
+                const nombre = item.getAttribute('data-nombre');
+                const foto = item.getAttribute('data-foto');
+                const precio = item.getAttribute('data-precio');
+                const cantidad = item.getAttribute('data-cantidad');
+                const estado = item.getAttribute('data-estado');
+
+                // Actualiza el contenido del modal con la información del producto
+                document.getElementById('producto-nombre').innerText = nombre;
+                document.getElementById('producto-foto').setAttribute('src', foto);
+                document.getElementById('producto-precio').innerText = `Precio: ${precio}`;
+                document.getElementById('producto-cantidad').innerText = `Cantidad disponible: ${cantidad}`;
+                document.getElementById('producto-estado').innerText = `Estado: ${estado}`;
+
+                // Muestra el modal
+                productoModal.show();
+            });
+        });
+    });
+</script>
 
 <!-- Modal para registrar una nueva promoción -->
 <div class="modal fade" id="registroPromocionModal">
@@ -241,6 +300,7 @@
 
 
 </div>
+
     <script>
     function generarCodigoPromocional() {
         const nombre = document.getElementById("nombre").value;

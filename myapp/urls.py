@@ -19,7 +19,7 @@ urlpatterns = [
     path('categorias/', categoria, name='categorias'),
     path('asignarProducto/', views.asignarProducto),
     path('index_producto/', index_producto, name='index_producto'),
-    path('index_producto/ver_producto/<int:id>/', views.ver_producto, name='ver_producto'),
+
     path('index_producto/actualizar_producto/<int:id>/', views.actualizar_producto, name='actualizar_producto'),
     path('index_producto/actualizar_producto/', views.actualizar_producto, name='actualizar_producto_list'),
     path('index_producto/eliminar_producto/<int:id>/', views.eliminar_producto, name='eliminar_producto'),
@@ -27,7 +27,6 @@ urlpatterns = [
     path('asignar_proveedor/', views.asignar_proveedor),
     path('index_proveedor/eliminar_proveedor/<int:id>/', views.eliminar_proveedor, name='eliminar_proveedor'),
     path('index_proveedor/actualizar_proveedor/<int:id>/', views.actualizar_proveedor, name='actualizar_proveedor'),
-    path('index_proveedor/leer_proveedor/<int:id>/', views.leer_proveedor, name='leer_proveedor'),
 
     path('register_cliente/', views.register_cliente, name='register_cliente'),
     path('register_tienda/', views.register_tienda, name='register_tienda'),

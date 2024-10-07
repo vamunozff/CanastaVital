@@ -1,9 +1,6 @@
 {% extends 'base.html' %}
-
 {% load static %}
-
 {% block title %}Editar Producto{% endblock %}
-
 {% block content %}
 <main class="d-flex justify-content-center align-items-center">
     <div class="container">
@@ -84,30 +81,52 @@
                     <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.');">Eliminar Producto</button>
                 </form>
             </div>
+
+
+        <!-- Mostrar Promoción Activa si existe -->
+            {% if promociones_activas %}
+                <div class="alert alert-success mt-3">
+                    <h5>Promociones Activas para este Producto:</h5>
+                    <ul>
+                        {% for promocion in promociones_activas %}
+                            <li>
+                                <strong>{{ promocion.nombre }}</strong>: {{ promocion.descripcion }}<br>
+                                <strong>Descuento:</strong> ${{ promocion.descuento }}<br>
+                                <strong>Válido hasta:</strong> {{ promocion.fecha_fin }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="alert alert-info mt-3">
+                    Este producto no tiene promociones activas en este momento.
+                </div>
+            {% endif %}
         </form>
     </div>
 </main>
 
-<script>
-function previewImage(event) {
-    var reader = new FileReader();
-    var imagePreview = document.getElementById('imagen-preview');
-    var imageStatus = document.getElementById('imagen-status');
-
-    if (event.target.files && event.target.files[0]) {
-        reader.onload = function(e) {
-            imagePreview.src = e.target.result;
-            imagePreview.alt = 'Nueva Imagen Seleccionada';
-            imageStatus.textContent = 'Imagen a Modificar';
-        };
-        reader.readAsDataURL(event.target.files[0]);
-    } else {
-        var currentImageSrc = "{{ producto_tienda.imagen.url }}";
-        imagePreview.src = currentImageSrc ? currentImageSrc : "{% static 'default-image.png' %}";
-        imageStatus.textContent = currentImageSrc ? 'Imagen Actual' : 'Sin Imagen Actual';
-    }
-}
-
-document.getElementById('imagen').addEventListener('change', previewImage);
-</script>
 {% endblock %}
+
+{#<script>#}
+{#function previewImage(event) {#}
+{#    var reader = new FileReader();#}
+{#    var imagePreview = document.getElementById('imagen-preview');#}
+{#    var imageStatus = document.getElementById('imagen-status');#}
+{##}
+{#    if (event.target.files && event.target.files[0]) {#}
+{#        reader.onload = function(e) {#}
+{#            imagePreview.src = e.target.result;#}
+{#            imagePreview.alt = 'Nueva Imagen Seleccionada';#}
+{#            imageStatus.textContent = 'Imagen a Modificar';#}
+{#        };#}
+{#        reader.readAsDataURL(event.target.files[0]);#}
+{#    } else {#}
+{#        var currentImageSrc = "{{ producto_tienda.imagen.url }}";#}
+{#        imagePreview.src = currentImageSrc ? currentImageSrc : "{% static 'default-image.png' %}";#}
+{#        imageStatus.textContent = currentImageSrc ? 'Imagen Actual' : 'Sin Imagen Actual';#}
+{#    }#}
+{#}#}
+{##}
+{#document.getElementById('imagen').addEventListener('change', previewImage);#}
+{#</script>#}

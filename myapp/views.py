@@ -242,13 +242,14 @@ def index_producto(request):
         'proveedores': proveedores
     })
 
-def ver_producto(request, id):
-    producto_tienda = get_object_or_404(ProductosTiendas, id=id)
-    return render(request, 'productos/ver_producto.html', {'producto_tienda': producto_tienda})
-
 @login_required
 def actualizar_producto(request, id):
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
+
+    # Verificar que el producto pertenezca a la tienda del usuario
+    if producto_tienda.tienda != request.user.perfil.tienda:
+        messages.error(request, 'No tienes permiso para actualizar este producto.')
+        return redirect('index_producto')
 
     if request.method == 'POST':
         form = ProductosTiendasForm(request.POST, request.FILES, instance=producto_tienda)
@@ -267,9 +268,18 @@ def actualizar_producto(request, id):
     else:
         form = ProductosTiendasForm(instance=producto_tienda)
 
+    # Obtener promociones activas para este producto
+    promociones_activas = Promocion.objects.filter(
+        productos_aplicables=producto_tienda,
+        activo=True,
+        fecha_inicio__lte=timezone.now(),
+        fecha_fin__gte=timezone.now()
+    )
+
     return render(request, 'productos/actualizar_producto.html', {
         'form': form,
         'producto_tienda': producto_tienda,
+        'promociones_activas': promociones_activas,  # Pasar promociones activas al contexto
     })
 
 @login_required
@@ -377,11 +387,6 @@ def actualizar_proveedor(request, id):
         'proveedor': proveedor,
     })
 
-
-def leer_proveedor(request, id):
-    proveedores = get_object_or_404(Proveedor, id=id)
-    return render(request, 'proveedor/leer.html', {'proveedores': proveedores})
-from django.shortcuts import redirect
 
 @login_required
 def register_cliente(request):
@@ -813,6 +818,10 @@ def promocion(request):
             nueva_promocion.tienda = tienda  # Asigna la tienda al objeto promoción
             nueva_promocion.save()
             form.save_m2m()  # Guarda la relación ManyToManyField para productos aplicables
+
+            # Agrega un mensaje de éxito
+            messages.success(request, '¡Promoción registrada exitosamente!')
+
             return redirect('promocion')  # Redirige a la página de éxito o a la misma vista
     else:
         form = PromocionForm()

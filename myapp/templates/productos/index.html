@@ -1,70 +1,71 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Productos asignados{% endblock %}</title>
-  </head>
-  <body>
-  <main>
+<main>
     <section class="p-3">
-    <h2>Consulta de productos asigandos</h2><br>
+        <h1>Productos Asignados</h1>
+
         <!-- Alert Messages -->
         {% if messages %}
-          <div class="container mt-3">
-            {% for message in messages %}
-              <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <strong class="text-dark">{{ message }}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
-              </div>
-            {% endfor %}
-          </div>
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <strong class="text-dark">{{ message }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
         <div class="row">
             <div class="col-12">
-                <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Asignar producto</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userForm">Asignar producto</button>
             </div>
         </div>
 
         <div class="table-responsive">
-                <table id="example" class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Producto</th>
-                            <th>Proveedor</th>
-                            <th>Descripción</th>
-                            <th>Categoría</th>
-                            <th>Precio Unitario</th>
-                            <th>Cantidad</th>
-                            <th>Estado</th>
-                            <th>Fecha de Registro</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for producto_tienda in productos_tiendas %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td><a href="{% url 'actualizar_producto' producto_tienda.id %}">{{ producto_tienda.producto.nombre }}</a></td>
-                            <td><a href="{% url 'leer_proveedor' producto_tienda.proveedor.id %}">{{ producto_tienda.proveedor.razon_social }}</a></td>
-                            <td>{{ producto_tienda.producto.descripcion }}</td>
-                            <td>{{ producto_tienda.producto.categoria }}</td>
-                            <td>{{ producto_tienda.precio_unitario }}</td>
-                            <td>{{ producto_tienda.cantidad }}</td>
-                            <td>{{ producto_tienda.estado }}</td>
-                            <td>{{ producto_tienda.fecha_registro }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <table id="example" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Proveedor</th>
+                        <th>Descripción</th>
+                        <th>Categoría</th>
+                        <th>Precio Unitario</th>
+                        <th>Cantidad</th>
+                        <th>Estado</th>
+                        <th>Fecha de Registro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto_tienda in productos_tiendas %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><a href="{% url 'actualizar_producto' producto_tienda.id %}">{{ producto_tienda.producto.nombre }}</a></td>
+                        <td>
+                            <a href="#" class="proveedor-info"
+                               data-id="{{ producto_tienda.proveedor.id }}"
+                               data-nombre="{{ producto_tienda.proveedor.razon_social }}"
+                               data-direccion="{{ producto_tienda.proveedor.direccion }}"
+                               data-telefono="{{ producto_tienda.proveedor.telefono }}"
+                               data-email="{{ producto_tienda.proveedor.email }}">
+                            {{ producto_tienda.proveedor.razon_social }}</a>
+                        </td>
+                        <td>{{ producto_tienda.producto.descripcion }}</td>
+                        <td>{{ producto_tienda.producto.categoria }}</td>
+                        <td>{{ producto_tienda.precio_unitario }}</td>
+                        <td>{{ producto_tienda.cantidad }}</td>
+                        <td>{{ producto_tienda.estado }}</td>
+                        <td>{{ producto_tienda.fecha_registro }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </section>
 
-    <!--Modal Form-->
+    <!-- Modal Form -->
     <div class="modal fade" id="userForm">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -77,7 +78,7 @@
                         {% csrf_token %}
                         <div class="inputField">
                             <div>
-                                <label for="name" class="form-label">Producto:</label>
+                                <label for="txtProducto_id" class="form-label">Producto:</label>
                                 <select id="txtProducto_id" name="txtProducto_id" class="form-select" required>
                                     <option value="" selected disabled>Seleccione un producto a asignar</option>
                                     {% for producto in productos %}
@@ -85,9 +86,8 @@
                                     {% endfor %}
                                 </select>
                             </div>
-
                             <div>
-                                <label for="name" class="form-label">Proveedor:</label>
+                                <label for="txtProveedor_id" class="form-label">Proveedor:</label>
                                 <select id="txtProveedor_id" name="txtProveedor_id" class="form-select" required>
                                     <option value="" selected disabled>Seleccione un proveedor</option>
                                     {% for proveedor in proveedores %}
@@ -95,29 +95,26 @@
                                     {% endfor %}
                                 </select>
                             </div>
-
                             <div>
                                 {% if productos_tiendas %}
                                     {% with primer_producto=productos_tiendas.0 %}
-
                                         <label for="txtUsuario" class="form-label">Nombre de la tienda:</label>
                                         <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ primer_producto.tienda.nombre }}" disabled>
-
                                     {% endwith %}
                                 {% else %}
                                     <p>No hay productos asignados.</p>
                                 {% endif %}
                             </div>
                             <div>
-                                <label for="city" class="form-label">Precio Unitario:</label>
-                                <input class="form-control" type="number" id="txtPrecioUnitario" name="txtPrecioUnitario" required>
+                                <label for="txtPrecioUnitario" class="form-label">Precio Unitario:</label>
+                                <input class="form-control" type="number" id="txtPrecioUnitario" name="txtPrecioUnitario" step="0.01" required>
                             </div>
                             <div>
-                                <label for="email" class="form-label">Cantidad:</label>
+                                <label for="txtCantidad" class="form-label">Cantidad:</label>
                                 <input class="form-control" type="number" id="txtCantidad" name="txtCantidad" min="1" value="1" required>
                             </div>
                             <div>
-                                <label for="phone" class="form-label">Estado:</label>
+                                <label for="txtEstado" class="form-label">Estado:</label>
                                 <select id="txtEstado" name="txtEstado" class="form-select" required>
                                     <option value="activo">Activo</option>
                                     <option value="inactivo">Inactivo</option>
@@ -125,20 +122,54 @@
                             </div>
                             <div class="mb-3">
                                 <label for="logo_url" class="form-label">Imagen:</label>
-                                <input type="file" class="form-control" id="logo_url" name="logo_url">
+                                <input type="file" class="form-control" id="logo_url" name="logo_url" accept="image/*">
                             </div>
                         </div>
-                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" form="myForm" class="btn btn-primary submit">Guardar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Proveedor -->
+    <div class="modal fade" id="proveedorModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Proveedor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="proveedorNombre"></p>
+                    <p id="proveedorDireccion"></p>
+                    <p id="proveedorTelefono"></p>
+                    <p id="proveedorEmail"></p>
                 </div>
             </div>
         </div>
     </div>
-      <script src="{% static 'myapp/js/datatable.js' %}"> </script>
-  </main>
-  </body>
-</html>
+
+    <script src="{% static 'myapp/js/datatable.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const proveedorSelect = document.getElementById('txtProveedor_id');
+            const proveedorModal = new bootstrap.Modal(document.getElementById('proveedorModal'));
+
+            document.querySelectorAll('.proveedor-info').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('proveedorNombre').innerText = `Nombre: ${item.getAttribute('data-nombre')}`;
+                    document.getElementById('proveedorDireccion').innerText = `Dirección: ${item.getAttribute('data-direccion')}`;
+                    document.getElementById('proveedorTelefono').innerText = `Teléfono: ${item.getAttribute('data-telefono')}`;
+                    document.getElementById('proveedorEmail').innerText = `Email: ${item.getAttribute('data-email')}`;
+                    proveedorModal.show();
+                });
+            });
+        });
+    </script>
+</main>
 {% endblock %}
