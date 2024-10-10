@@ -234,6 +234,10 @@ class Promocion(models.Model):
         if not self.codigo_promocional:
             self.codigo_promocional = str(uuid.uuid4())[:8]
 
+        # Desactivar si la promoción ha caducado
+        if self.fecha_fin and timezone.now().date() > self.fecha_fin:
+            self.activo = False
+
         self.clean()
         super(Promocion, self).save(*args, **kwargs)
 

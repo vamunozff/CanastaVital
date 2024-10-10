@@ -22,47 +22,95 @@
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userForm">Asignar producto</button>
             </div>
         </div>
-
-        <div class="table-responsive">
-            <table id="example" class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Producto</th>
-                        <th>Proveedor</th>
-                        <th>Descripción</th>
-                        <th>Categoría</th>
-                        <th>Precio Unitario</th>
-                        <th>Cantidad</th>
-                        <th>Estado</th>
-                        <th>Fecha de Registro</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for producto_tienda in productos_tiendas %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td><a href="{% url 'actualizar_producto' producto_tienda.id %}">{{ producto_tienda.producto.nombre }}</a></td>
-                        <td>
-                            <a href="#" class="proveedor-info"
-                               data-id="{{ producto_tienda.proveedor.id }}"
-                               data-nombre="{{ producto_tienda.proveedor.razon_social }}"
-                               data-direccion="{{ producto_tienda.proveedor.direccion }}"
-                               data-telefono="{{ producto_tienda.proveedor.telefono }}"
-                               data-email="{{ producto_tienda.proveedor.email }}">
-                            {{ producto_tienda.proveedor.razon_social }}</a>
-                        </td>
-                        <td>{{ producto_tienda.producto.descripcion }}</td>
-                        <td>{{ producto_tienda.producto.categoria }}</td>
-                        <td>{{ producto_tienda.precio_unitario }}</td>
-                        <td>{{ producto_tienda.cantidad }}</td>
-                        <td>{{ producto_tienda.estado }}</td>
-                        <td>{{ producto_tienda.fecha_registro }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<br>
+    <div class="row mb-4">
+    <!-- Barra de búsqueda -->
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" id="search-input" class="form-control" placeholder="Buscar producto...">
+            <button class="btn btn-primary" type="button" id="search-button">
+                <i class="fas fa-search"></i> <!-- Ícono de lupa -->
+            </button>
         </div>
+    </div>
+
+    <!-- Filtro por estado -->
+    <div class="col-md-3">
+        <select class="form-select" id="filter-status">
+            <option value="">Filtrar por estado</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+        </select>
+    </div>
+
+    <!-- Filtro por categoría -->
+    <div class="col-md-3">
+        <select class="form-select" id="filter-category">
+            <option value="">Filtrar por categoría</option>
+            {% for producto_tienda in productos_tiendas %}
+            <option value="{{ producto_tienda.producto.categoria.id }}">{{ producto_tienda.producto.categoria.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div class="table-responsive mt-4">
+    <table id="example" class="table table-hover table-bordered align-middle">
+        <thead class="table-dark text-center">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Proveedor</th>
+                <th scope="col">Descripción</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Precio Unitario</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Fecha de Registro</th>
+            </tr>
+        </thead>
+        <tbody id="product-table-body">
+            {% for producto_tienda in productos_tiendas %}
+            <tr class="text-center">
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    <a href="{% url 'actualizar_producto' producto_tienda.id %}" class="text-decoration-none">
+                        {{ producto_tienda.producto.nombre }}
+                    </a>
+                </td>
+                <td>
+                    <a href="#" class="proveedor-info text-primary fw-bold"
+                       data-id="{{ producto_tienda.proveedor.id }}"
+                       data-nombre="{{ producto_tienda.proveedor.razon_social }}"
+                       data-direccion="{{ producto_tienda.proveedor.direccion }}"
+                       data-telefono="{{ producto_tienda.proveedor.telefono }}"
+                       data-email="{{ producto_tienda.proveedor.email }}">
+                        {{ producto_tienda.proveedor.razon_social }}
+                    </a>
+                </td>
+                <td>{{ producto_tienda.producto.descripcion }}</td>
+                <td>
+                    <a href="#" class="categoria-info text-info fw-bold"
+                    data-id="{{ producto_tienda.producto.categoria.id }}"
+                    data-nombre="{{ producto_tienda.producto.categoria.nombre }}"
+                    data-descripcion="{{ producto_tienda.producto.categoria.descripcion }}">
+                        {{ producto_tienda.producto.categoria.nombre }}
+                    </a>
+                </td>
+                <td>$ {{ producto_tienda.precio_unitario|floatformat:2 }}</td>
+                <td>{{ producto_tienda.cantidad }}</td>
+                <td>
+                    <span class="badge {% if producto_tienda.estado == 'activo' %} bg-success {% else %} bg-danger {% endif %}">
+                        {{ producto_tienda.estado|capfirst }}
+                    </span>
+                </td>
+                <td>{{ producto_tienda.fecha_registro|date:"d M Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
     </section>
 
     <!-- Modal Form -->
@@ -94,16 +142,6 @@
                                         <option value="{{ proveedor.id }}">{{ proveedor.razon_social }}</option>
                                     {% endfor %}
                                 </select>
-                            </div>
-                            <div>
-                                {% if productos_tiendas %}
-                                    {% with primer_producto=productos_tiendas.0 %}
-                                        <label for="txtUsuario" class="form-label">Nombre de la tienda:</label>
-                                        <input class="form-control" type="text" id="txtUsuario" name="txtUsuario" value="{{ primer_producto.tienda.nombre }}" disabled>
-                                    {% endwith %}
-                                {% else %}
-                                    <p>No hay productos asignados.</p>
-                                {% endif %}
                             </div>
                             <div>
                                 <label for="txtPrecioUnitario" class="form-label">Precio Unitario:</label>
@@ -153,6 +191,22 @@
         </div>
     </div>
 
+    <!-- Modal Categoria -->
+    <div class="modal fade" id="categoriaModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de Categoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="categoriaNombre"></p>
+                    <p id="categoriaDescripcion"></p> <!-- Nota: 'Descripción' lleva sin tilde en IDs -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{% static 'myapp/js/datatable.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -169,7 +223,63 @@
                     proveedorModal.show();
                 });
             });
+
+                    // Script para el modal de la categoría
+            const categoriaModal = new bootstrap.Modal(document.getElementById('categoriaModal'));
+
+            document.querySelectorAll('.categoria-info').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Cargar los datos de la categoría al modal
+                    document.getElementById('categoriaNombre').innerText = `Nombre: ${item.getAttribute('data-nombre')}`;
+                    document.getElementById('categoriaDescripcion').innerText = `Descripción: ${item.getAttribute('data-descripcion')}`;
+                    // Mostrar el modal
+                    categoriaModal.show();
+                });
+            });
         });
     </script>
+
+<script>
+    document.getElementById('search-button').addEventListener('click', function() {
+    let searchQuery = document.getElementById('search-input').value.toLowerCase();
+    let rows = document.querySelectorAll('#product-table-body tr');
+    rows.forEach(row => {
+        let productName = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+        if (productName.includes(searchQuery)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById('filter-status').addEventListener('change', function() {
+    let selectedStatus = this.value.toLowerCase();
+    let rows = document.querySelectorAll('#product-table-body tr');
+    rows.forEach(row => {
+        let productStatus = row.querySelector('td:nth-child(8) span').innerText.toLowerCase();
+        if (selectedStatus === '' || productStatus.includes(selectedStatus)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById('filter-category').addEventListener('change', function() {
+    let selectedCategory = this.value;
+    let rows = document.querySelectorAll('#product-table-body tr');
+    rows.forEach(row => {
+        let productCategory = row.querySelector('td:nth-child(5)').innerText.trim();
+        if (selectedCategory === '' || productCategory === selectedCategory) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+</script>
 </main>
 {% endblock %}

@@ -8,7 +8,7 @@ from django.contrib.auth import logout
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-from .models import Rol, Perfil, Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden, Ciudad, Departamento
+from .models import Rol, Perfil, Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden, Ciudad, Departamento, Categoria
 from django.contrib import messages
 from .forms import ProductosTiendasForm, PromocionForm
 from django.db import transaction
@@ -232,11 +232,14 @@ def eliminarPrductosTiendas(request, id):
 def index_producto(request):
     perfil = get_object_or_404(Perfil, user=request.user)
     tienda = get_object_or_404(Tienda, perfil=perfil)
+    # categorias = Categoria.objects.all()
+
     proveedores = Proveedor.objects.filter(tienda=tienda)
     productos = Producto.objects.all()
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
     return render(request, 'productos/index.html', {
+        # 'categorias': categorias,
         'productos': productos,
         'productos_tiendas': productos_tiendas,
         'proveedores': proveedores
@@ -276,7 +279,7 @@ def actualizar_producto(request, id):
         fecha_fin__gte=timezone.now()
     )
 
-    return render(request, 'productos/actualizar_producto.html', {
+    return render(request, 'productos/actualizar.html', {
         'form': form,
         'producto_tienda': producto_tienda,
         'promociones_activas': promociones_activas,  # Pasar promociones activas al contexto
@@ -828,6 +831,15 @@ def promocion(request):
 
     # Consulta las promociones y productos aplicables
     promociones = Promocion.objects.filter(tienda=tienda)
+
+    # # Imprimir para depuración
+    # for promocion in promociones:
+    #     print(promocion.nombre)
+    #     for producto_tienda in promocion.productos_aplicables.all():
+    #         print(f"Producto: {producto_tienda.producto.nombre}, "
+    #               f"Categoría: {producto_tienda.producto.categoria.nombre}, "
+    #               f"Descripción: {producto_tienda.producto.descripcion}")
+    #
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
     return render(request, 'tiendas/promocion.html', {

@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Proveedor, Cliente, Tienda, ProductosTiendas, Direccion, Orden, Departamento, Ciudad, Promocion
 from datetime import datetime, time
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
@@ -121,9 +121,17 @@ class ProductosTiendasForm(forms.ModelForm):
     class Meta:
         model = ProductosTiendas
         fields = ['producto', 'proveedor', 'precio_unitario', 'cantidad', 'estado', 'imagen']
-        widgets = {
-            'estado': forms.Select(choices=[('activo', 'Activo'), ('inactivo', 'Inactivo')]),
-        }
+
+    def clean_precio_unitario(self):
+        precio = self.cleaned_data.get('precio_unitario')
+
+        if isinstance(precio, str) and ',' in precio:
+            precio = precio.replace(',', '.')
+        try:
+            precio = float(precio)
+        except ValueError:
+            raise forms.ValidationError('Ingrese un número válido para el precio unitario.')
+        return precio
 
 class OrdenForm(forms.ModelForm):
     class Meta:
@@ -166,13 +174,24 @@ class PromocionForm(forms.ModelForm):
             'activo',
         ]
         widgets = {
-            'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'fecha_fin': forms.DateInput(attrs={'type': 'date'}),
-            'productos_aplicables': forms.SelectMultiple(attrs={'class': 'form-control'}),  # Añade este widget
+            'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'fecha_fin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'productos_aplicables': forms.SelectMultiple(attrs={'class': 'form-control'}),  # O CheckboxSelectMultiple
         }
+
     def clean_descuento(self):
         descuento = self.cleaned_data.get('descuento')
-        if isinstance(descuento, str):
-            # Reemplaza las comas por puntos y elimina los puntos de miles
-            descuento = descuento.replace('.', '').replace(',', '.')
-        return Decimal(descuento)
+        if descuento:
+            # Verifica si el descuento es un string para convertirlo correctamente
+            if isinstance(descuento, str):
+                descuento = descuento.replace('.', '').replace(',', '.')
+            try:
+                descuento_decimal = Decimal(descuento)
+            except InvalidOperation:
+                raise forms.ValidationError("El valor del descuento no es válido.")
+
+            if descuento_decimal < 0:
+                raise forms.ValidationError("El descuento no puede ser negativo.")
+
+            return descuento_decimal
+        return descuento

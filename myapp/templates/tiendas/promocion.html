@@ -60,8 +60,10 @@
                            data-foto="{{ producto_tienda.imagen.url }}"
                            data-precio="{{ producto_tienda.precio_unitario }}"
                            data-cantidad="{{ producto_tienda.cantidad }}"
-                           data-estado="{{ producto_tienda.estado }}">
-                        {{ producto_tienda.producto.nombre }}</a>
+                           data-estado="{{ producto_tienda.estado }}"
+                           data-categoria="{{ producto_tienda.producto.categoria.nombre }}"
+                           data-descripcion="{{ producto_tienda.producto.descripcion }}">
+                            {{ producto_tienda.producto.nombre }}</a>
                         {% if not forloop.last %}, {% endif %}
                     {% empty %}
                         Ningún producto aplicable
@@ -77,22 +79,30 @@
     </table>
 </div>
 
-<!-- Modal para mostrar detalles del producto -->
+
+<!-- Modal mejorado para mostrar detalles del producto asignado -->
 <div class="modal fade" id="productoModal" tabindex="-1" role="dialog" aria-labelledby="productoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title" id="productoModalLabel">Detalles del Producto</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <img id="producto-foto" src="" alt="" class="img-fluid">
-                <h5 id="producto-nombre"></h5>
-                <p id="producto-precio"></p>
-                <p id="producto-cantidad"></p> <!-- Nueva línea para mostrar cantidad -->
-                <p id="producto-estado"></p> <!-- Nueva línea para mostrar estado -->
+                <div class="row">
+                    <div class="col-md-6 text-center">
+                        <img id="producto-foto" src="" alt="Imagen del producto" class="img-fluid rounded mb-4 shadow-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <h5 id="producto-nombre" class="fw-bold mb-3"></h5>
+                        <p id="producto-precio" class="text-success fs-5 mb-3"></p>
+                        <p id="producto-cantidad" class="text-muted mb-2"></p>
+                        <p id="producto-estado" class="mb-2"></p>
+                        <p id="producto-categoria" class="text-muted mb-2"></p>
+                        <p id="producto-descripcion" class="text-muted mb-2"></p>
+                        <button type="button" class="btn btn-primary w-100 mt-3">Actualizar</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -113,6 +123,8 @@
                 const precio = item.getAttribute('data-precio');
                 const cantidad = item.getAttribute('data-cantidad');
                 const estado = item.getAttribute('data-estado');
+                const categoria = item.getAttribute('producto-categoria');
+                const descripcion = item.getAttribute('producto-descripcion')
 
                 // Actualiza el contenido del modal con la información del producto
                 document.getElementById('producto-nombre').innerText = nombre;
@@ -120,6 +132,8 @@
                 document.getElementById('producto-precio').innerText = `Precio: ${precio}`;
                 document.getElementById('producto-cantidad').innerText = `Cantidad disponible: ${cantidad}`;
                 document.getElementById('producto-estado').innerText = `Estado: ${estado}`;
+                document.getElementById('producto-categoria').innerText = `Categoria: ${categoria}`;
+                document.getElementById('producto-descripcion').innerText = `Descripción: ${descripcion}`;
 
                 // Muestra el modal
                 productoModal.show();
@@ -188,7 +202,7 @@
 
                     <div class="form-group">
                         <label for="descuento">Descuento (COP)</label>
-                        <input type="number" class="form-control {% if form.descuento.errors %}is-invalid{% endif %}" id="descuento" name="descuento" step="0.01" value="{{ form.descuento.value|default_if_none:'' }}" required>
+                        <input type="number" class="form-control {% if form.descuento.errors %}is-invalid{% endif %}" id="descuento" name="descuento" step="0.01" value="{{ form.descuento.value|default_if_none:'' }}" placeholder="Ej: 1000 o 1,000.00" required>
                         {% if form.descuento.errors %}
                             <div class="invalid-feedback">
                                 {% for error in form.descuento.errors %}
