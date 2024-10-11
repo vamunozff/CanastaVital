@@ -97,7 +97,7 @@
                         {{ producto_tienda.producto.categoria.nombre }}
                     </a>
                 </td>
-                <td>$ {{ producto_tienda.precio_unitario|floatformat:2 }}</td>
+                <td>${{ producto_tienda.precio_unitario|floatformat:2 }}</td>
                 <td>{{ producto_tienda.cantidad }}</td>
                 <td>
                     <span class="badge {% if producto_tienda.estado == 'activo' %} bg-success {% else %} bg-danger {% endif %}">
@@ -105,11 +105,43 @@
                     </span>
                 </td>
                 <td>{{ producto_tienda.fecha_registro|date:"d M Y" }}</td>
-            </tr>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No se encontraron productos.</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+            <!-- Paginación -->
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if productos_tiendas.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ productos_tiendas.previous_page_number }}" aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for num in productos_tiendas.paginator.page_range %}
+                    <li class="page-item {% if productos_tiendas.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if productos_tiendas.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ productos_tiendas.next_page_number }}" aria-label="Siguiente">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
 
     </section>
 
@@ -207,76 +239,24 @@
         </div>
     </div>
 
-    <script src="{% static 'myapp/js/datatable.js' %}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const proveedorSelect = document.getElementById('txtProveedor_id');
-            const proveedorModal = new bootstrap.Modal(document.getElementById('proveedorModal'));
+    <script src="{% static 'myapp/js/p.index.js' %}"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-            document.querySelectorAll('.proveedor-info').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.getElementById('proveedorNombre').innerText = `Nombre: ${item.getAttribute('data-nombre')}`;
-                    document.getElementById('proveedorDireccion').innerText = `Dirección: ${item.getAttribute('data-direccion')}`;
-                    document.getElementById('proveedorTelefono').innerText = `Teléfono: ${item.getAttribute('data-telefono')}`;
-                    document.getElementById('proveedorEmail').innerText = `Email: ${item.getAttribute('data-email')}`;
-                    proveedorModal.show();
-                });
-            });
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#search-input').on('input', function() {
+        var query = $(this).val();
 
-                    // Script para el modal de la categoría
-            const categoriaModal = new bootstrap.Modal(document.getElementById('categoriaModal'));
-
-            document.querySelectorAll('.categoria-info').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    // Cargar los datos de la categoría al modal
-                    document.getElementById('categoriaNombre').innerText = `Nombre: ${item.getAttribute('data-nombre')}`;
-                    document.getElementById('categoriaDescripcion').innerText = `Descripción: ${item.getAttribute('data-descripcion')}`;
-                    // Mostrar el modal
-                    categoriaModal.show();
-                });
-            });
+        $.ajax({
+            url: "{% url 'buscar_producto' %}",
+            data: {
+                'q': query
+            },
+            success: function(data) {
+                // Reemplazar el contenido del tbody con el nuevo contenido
+                $('#product-table-body').html(data.html);
+            }
         });
-    </script>
-
-<script>
-    document.getElementById('search-button').addEventListener('click', function() {
-    let searchQuery = document.getElementById('search-input').value.toLowerCase();
-    let rows = document.querySelectorAll('#product-table-body tr');
-    rows.forEach(row => {
-        let productName = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
-        if (productName.includes(searchQuery)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-
-document.getElementById('filter-status').addEventListener('change', function() {
-    let selectedStatus = this.value.toLowerCase();
-    let rows = document.querySelectorAll('#product-table-body tr');
-    rows.forEach(row => {
-        let productStatus = row.querySelector('td:nth-child(8) span').innerText.toLowerCase();
-        if (selectedStatus === '' || productStatus.includes(selectedStatus)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-
-document.getElementById('filter-category').addEventListener('change', function() {
-    let selectedCategory = this.value;
-    let rows = document.querySelectorAll('#product-table-body tr');
-    rows.forEach(row => {
-        let productCategory = row.querySelector('td:nth-child(5)').innerText.trim();
-        if (selectedCategory === '' || productCategory === selectedCategory) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
     });
 });
 

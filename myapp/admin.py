@@ -211,7 +211,7 @@ class AtencionClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Orden)
 class OrdenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'tienda', 'direccion_envio', 'fecha_creacion', 'total', 'estado')
+    list_display = ('id', 'cliente', 'tienda', 'direccion_envio', 'total', 'estado', 'fecha_creacion', 'fecha_venta')
     list_filter = ('estado', 'tienda', 'fecha_creacion')
     search_fields = ('cliente__user__username', 'tienda__nombre', 'estado')
     date_hierarchy = 'fecha_creacion'

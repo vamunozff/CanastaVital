@@ -1,12 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
-
-<link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
-
     <div class="custom-profile-section">
-    <main>
-        <i class="fa-solid fa-bars" id="MenuBtn"></i>
+
         <section class="seccion-perfil-usuario">
             <div class="perfil-usuario-header">
                 <div class="perfil-usuario-portada">
@@ -19,28 +15,25 @@
                 </div>
             </div>
             <div class="perfil-usuario-body">
-                <div class="perfil-usuario-bio">
+                <div class="perfil-usuario-bio text-center">
                     <h3 class="titulo">{{ tienda.nombre|upper }}</h3>
                     <p class="texto">Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.</p>
                 </div>
                 <div class="perfil-usuario-footer">
-                    <ul class="">
-                        <li>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
                             <label><i class="bi bi-geo-alt-fill"></i> Dirección:</label>
                             <span>{{ direccion.direccion }}, {{ direccion.ciudad }}</span>
                         </li>
-                        <li>
-                            <br>
+                        <li class="mb-2">
                             <label><i class="icono bi bi-calendar"></i> Horario de atención:</label>
                             <span>{{ tienda.horarios }}</span>
                         </li>
-                        <li>
-                            <br>
+                        <li class="mb-2">
                             <label><i class="bi bi-stopwatch"></i> Teléfono:</label>
                             <span>{{ tienda.telefono }}</span>
                         </li>
-                        <li>
-                            <br>
+                        <li class="mb-2">
                             <label><i class="bi bi-info-circle"></i> Descripción:</label>
                             <span>{{ tienda.descripcion }}</span>
                         </li>
@@ -51,7 +44,6 @@
 
             </div>
         </section>
-    </main>
 
     <!-- Modal for updating data -->
     <div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">

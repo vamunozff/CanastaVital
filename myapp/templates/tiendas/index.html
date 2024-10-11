@@ -1,8 +1,150 @@
 {% extends 'base.html' %}
 {% block title %}Panel de Tienda{% endblock %}
 {% block content %}
+    <div class="dashboard">
+        <div class="dashboard-header">
+            <h1>Bienvenido, {{ user.first_name }} {{ user.last_name }}</h1>
+            <p>Panel de control de tu tienda. Administra inventarios, pedidos, ventas y más.</p>
+        </div>
 
-                <h1>Bienvenido <br>{{ user.first_name }} {{ user.last_name }}<span></span></h1>
-                <p>Todo lo relacionado a la <span class="auto-input">canasta familiar.</span></p>
+        <div class="dashboard-cards">
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Inventario</h3>
+                    <p>Total de productos: {{ total_productos }}</p>
+                    <p>Fuera de stock: {{ productos_sin_stock }}</p>
+                    <a href="{% url 'index_producto' %}" class="card-link">Gestionar inventario</a>
+                </div>
+            </div>
 
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Pedidos</h3>
+                    <p>Pedidos pendientes: {{ pedidos_pendientes }}</p>
+                    <a href="{% url 'perfil_tienda' %}" class="card-link">Ver pedidos</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Ventas</h3>
+                    <p>Ventas hoy: ${{ ventas_hoy }}</p>
+                    <p>Ventas esta semana:${{ ventas_semana }}</p>
+                    <a href="{% url 'perfil_tienda' %}" class="card-link">Ver reporte de ventas</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Promociones</h3>
+                    <p>Promociones activas: {{ promociones_activas|length }}</p>
+                    <a href="{% url 'promocion' %}" class="card-link">Gestionar promociones</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Proveedores</h3>
+                    <p>Proveedores activos: {{ proveedores_activos|length }}</p>
+                    <a href="{% url 'index_proveedor' %}" class="card-link">Gestionar proveedores</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Atención al Cliente</h3>
+                    <a href="{% url 'perfil_tienda' %}" class="card-link">Ver mensajes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <style>
+.dashboard {
+    padding: 20px;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.dashboard-header p {
+    font-size: 1.2rem;
+    color: #555;
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.card-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.card-content p {
+    font-size: 1rem;
+    color: #555;
+}
+
+.card-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 1rem;
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.card-link:hover {
+    text-decoration: underline;
+}
+
+    </style>
 {% endblock %}

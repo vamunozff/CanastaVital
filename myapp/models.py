@@ -6,6 +6,7 @@ from django.utils.timezone import now
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.db import models, IntegrityError
+from django.core.validators import RegexValidator
 
 class Rol(models.Model):
     NOMBRE_ROLES = [
@@ -60,7 +61,7 @@ class Ciudad(models.Model):
         verbose_name_plural = 'Ciudades'
 
 class Tienda(models.Model):
-    perfil = models.OneToOneField(Perfil, on_delete=models.CASCADE, related_name='tienda')
+    perfil = models.OneToOneField(Perfil, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100)
     horarios = models.TextField(null=True, blank=True)
     telefono = models.CharField(max_length=20, null=True, blank=True)
@@ -81,7 +82,7 @@ class Cliente(models.Model):
         ('CE', 'Cédula de Extranjería'),
         ('PA', 'Pasaporte'),
     ]
-    perfil = models.OneToOneField(Perfil, on_delete=models.CASCADE, related_name='cliente')
+    perfil = models.OneToOneField(Perfil, on_delete=models.CASCADE)
     telefono = models.CharField(max_length=20, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     tipo_documento = models.CharField(max_length=20, choices=DOCUMENTO_CHOICES, default='CC')
@@ -101,7 +102,7 @@ class Direccion(models.Model):
     direccion = models.TextField()
     ciudad = models.ForeignKey(Ciudad, on_delete=models.PROTECT)
     departamento = models.ForeignKey(Departamento, on_delete=models.PROTECT)
-    codigo_postal = models.CharField(max_length=10, null=True, blank=True)
+    codigo_postal = models.CharField(max_length=10, validators=[RegexValidator(regex='^[0-9]{5}(?:-[0-9]{4})?$', message='Formato de código postal no válido')])
     principal = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -247,65 +248,6 @@ class Promocion(models.Model):
         verbose_name = 'Promoción'
         verbose_name_plural = 'Promociones'
 
-class Orden(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ordenes')
-    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='ordenes')
-    direccion_envio = models.ForeignKey(Direccion, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordenes')
-    fecha_creacion = models.DateTimeField(default=timezone.now)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    iva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    class Estado(models.TextChoices):
-        PENDIENTE = 'pendiente', 'Pendiente'
-        PROCESANDO = 'procesando', 'Procesando'
-        COMPLETADA = 'completada', 'Completada'
-        CANCELADA = 'cancelada', 'Cancelada'
-
-    estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.PENDIENTE)
-
-    def __str__(self):
-        return f"Orden {self.id} - Cliente: {self.cliente.perfil.user.username} - Tienda: {self.tienda.nombre} - Fecha: {self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')}"
-    def clean(self):
-        if self.total < 0:
-            raise ValidationError('El total no puede ser negativo.')
-    class Meta:
-        db_table = 'ordenes'
-        verbose_name = 'Orden'
-        verbose_name_plural = 'Órdenes'
-
-class ProductoOrden(models.Model):
-    orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='productos_orden')
-    producto_tienda = models.ForeignKey(ProductosTiendas, on_delete=models.CASCADE, related_name='productos_orden')
-    cantidad = models.PositiveIntegerField()
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.producto_tienda.producto.nombre} - Orden {self.orden.id}"
-
-    class Meta:
-        db_table = 'productos_orden'
-        verbose_name = 'Producto en Orden'
-        verbose_name_plural = 'Productos en Órdenes'
-
-class MetodoPago(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='metodos_pago')
-    tipo = models.CharField(max_length=50)
-    detalles = models.TextField()
-
-    class Metodo(models.TextChoices):
-        TARJETA_CREDITO = 'tarjeta_credito', 'Tarjeta de Crédito'
-        TARJETA_DEBITO = 'tarjeta_debito', 'Tarjeta de Débito'
-        TRANSFERENCIA_BANCARIA = 'transferencia_bancaria', 'Transferencia Bancaria'
-        PAYPAL = 'paypal', 'PayPal'
-
-    metodo_pago = models.CharField(max_length=50, choices=Metodo.choices)
-
-    def __str__(self):
-        return f"{self.tipo} - Cliente: {self.cliente.user.username}"
-
-    class Meta:
-        db_table = 'metodo_pago'
 class AtencionCliente(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='atencion_cliente')
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='atencion_cliente')
@@ -328,3 +270,80 @@ class AtencionCliente(models.Model):
         db_table = 'atencion_cliente'
         verbose_name = 'Atención al Cliente'
         verbose_name_plural = 'Atención al Cliente'
+
+class Orden(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ordenes')
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='ordenes')
+    direccion_envio = models.ForeignKey(Direccion, on_delete=models.CASCADE)
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    iva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    promocion = models.ForeignKey('Promocion', on_delete=models.SET_NULL, null=True, blank=True)
+    metodo_pago = models.CharField(max_length=50, choices=[
+        ('tarjeta', 'Tarjeta'),
+        ('efectivo', 'Efectivo')
+    ])
+    fecha_venta = models.DateTimeField(null=True, blank=True)
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'pendiente', 'Pendiente'
+        PROCESANDO = 'procesando', 'Procesando'
+        COMPLETADA = 'completada', 'Completada'
+        CANCELADA = 'cancelada', 'Cancelada'
+
+    estado = models.CharField(max_length=50, choices=Estado.choices, default=Estado.PENDIENTE)
+
+    def __str__(self):
+        return f"Orden {self.id} - Cliente: {self.cliente.perfil.user.username} - Tienda: {self.tienda.nombre} - Fecha: {self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S')}"
+    def clean(self):
+        if self.total < 0:
+            raise ValidationError('El total no puede ser negativo.')
+        if self.subtotal < 0:
+            raise ValidationError('El subtotal no puede ser negativo.')
+        if self.iva < 0:
+            raise ValidationError('El IVA no puede ser negativo.')
+
+    def calcular_total(self):
+        total = sum(detalle.subtotal() for detalle in self.productos_orden.all())
+        self.total = total
+        self.save()
+
+    class Meta:
+        db_table = 'ordenes'
+        verbose_name = 'Orden'
+        verbose_name_plural = 'Órdenes'
+
+class ProductoOrden(models.Model):
+    orden = models.ForeignKey(Orden, on_delete=models.CASCADE, related_name='productos_orden')
+    producto_tienda = models.ForeignKey(ProductosTiendas, on_delete=models.CASCADE, related_name='productos_orden')
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.producto_tienda.producto.nombre} - Orden {self.orden.id}"
+
+    class Meta:
+        db_table = 'productos_orden'
+        verbose_name = 'Producto en Orden'
+        verbose_name_plural = 'Productos en Órdenes'
+
+class MetodoPago(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=50)
+    detalles = models.TextField()
+
+    class Metodo(models.TextChoices):
+        TARJETA_CREDITO = 'tarjeta_credito', 'Tarjeta de Crédito'
+        TARJETA_DEBITO = 'tarjeta_debito', 'Tarjeta de Débito'
+        TRANSFERENCIA_BANCARIA = 'transferencia_bancaria', 'Transferencia Bancaria'
+        PAYPAL = 'paypal', 'PayPal'
+
+    metodo_pago = models.CharField(max_length=50, choices=Metodo.choices)
+
+    def __str__(self):
+        return f"{self.tipo} - Cliente: {self.cliente.user.username}"
+
+    class Meta:
+        db_table = 'metodo_pago'

@@ -1,0 +1,47 @@
+<div class="table-responsive mt-4">
+
+        <tbody id="product-table-body">
+            {% for producto_tienda in productos_tiendas %}
+            <tr class="text-center">
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    <a href="{% url 'actualizar_producto' producto_tienda.id %}" class="text-decoration-none">
+                        {{ producto_tienda.producto.nombre }}
+                    </a>
+                </td>
+                <td>
+                    <a href="#" class="proveedor-info text-primary fw-bold"
+                       data-id="{{ producto_tienda.proveedor.id }}"
+                       data-nombre="{{ producto_tienda.proveedor.razon_social }}"
+                       data-direccion="{{ producto_tienda.proveedor.direccion }}"
+                       data-telefono="{{ producto_tienda.proveedor.telefono }}"
+                       data-email="{{ producto_tienda.proveedor.email }}">
+                        {{ producto_tienda.proveedor.razon_social }}
+                    </a>
+                </td>
+                <td>{{ producto_tienda.producto.descripcion }}</td>
+                <td>
+                    <a href="#" class="categoria-info text-info fw-bold"
+                    data-id="{{ producto_tienda.producto.categoria.id }}"
+                    data-nombre="{{ producto_tienda.producto.categoria.nombre }}"
+                    data-descripcion="{{ producto_tienda.producto.categoria.descripcion }}">
+                        {{ producto_tienda.producto.categoria.nombre }}
+                    </a>
+                </td>
+                <td>${{ producto_tienda.precio_unitario|floatformat:2 }}</td>
+                <td>{{ producto_tienda.cantidad }}</td>
+                <td>
+                    <span class="badge {% if producto_tienda.estado == 'activo' %} bg-success {% else %} bg-danger {% endif %}">
+                        {{ producto_tienda.estado|capfirst }}
+                    </span>
+                </td>
+                <td>{{ producto_tienda.fecha_registro|date:"d M Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">No se encontraron productos.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+</div>

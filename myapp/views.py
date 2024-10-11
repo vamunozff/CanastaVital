@@ -13,9 +13,13 @@ from django.contrib import messages
 from .forms import ProductosTiendasForm, PromocionForm
 from django.db import transaction
 import json
+from django.db.models import Sum
 from decimal import Decimal
 from .decorators import user_is_tienda, user_is_cliente, user_is_administrador
 from django.utils import timezone
+from datetime import timedelta
+from django.core.paginator import Paginator
+from django.template.loader import render_to_string
 import logging
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -66,9 +70,44 @@ def home(request):
 def completar_registro(request):
     return render(request, 'registration/confirmar_completar.html')
 
+
 @login_required
 def index_tienda(request):
-    return render(request, 'tiendas/index.html')
+    perfil = request.user.perfil
+    tienda = perfil.tienda
+
+    # Datos de inventario
+    total_productos = tienda.productos_tiendas.count()
+    productos_sin_stock = tienda.productos_tiendas.filter(cantidad=0).count()
+
+    # Datos de pedidos
+    pedidos_pendientes = Orden.objects.filter(tienda=tienda, estado='pendiente').count()
+
+    # Datos de ventas
+    now = timezone.now()
+    ventas_hoy = Orden.objects.filter(tienda=tienda, fecha_venta__date=now).aggregate(Sum('total'))['total__sum'] or 0
+    ventas_semana = \
+    Orden.objects.filter(tienda=tienda, fecha_venta__gte=now - timedelta(days=7)).aggregate(Sum('total'))[
+        'total__sum'] or 0
+
+    # Obtener promociones y proveedores
+    promociones_activas = Promocion.objects.filter(tienda=tienda, activo=True)
+    proveedores_activos = Proveedor.objects.filter(tienda=tienda)
+
+    # Contexto para la plantilla
+    context = {
+        'tienda': tienda,
+        'total_productos': total_productos,
+        'productos_sin_stock': productos_sin_stock,
+        'pedidos_pendientes': pedidos_pendientes,
+        'ventas_hoy': ventas_hoy,
+        'ventas_semana': ventas_semana,
+        'promociones_activas': promociones_activas,
+        'proveedores_activos': proveedores_activos,
+    }
+
+    return render(request, 'tiendas/index.html', context)
+
 
 def logout_view(request):
     logout(request)
@@ -228,22 +267,59 @@ def eliminarPrductosTiendas(request, id):
     productosTiendas.delete()
     messages.success(request, 'Producto eliminado correctamente.')
     return redirect('productos')
+# @login_required
+# def index_producto(request):
+#     perfil = get_object_or_404(Perfil, user=request.user)
+#     tienda = get_object_or_404(Tienda, perfil=perfil)
+#
+#     proveedores = Proveedor.objects.filter(tienda=tienda)
+#     productos = Producto.objects.all()
+#     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
+#
+#     return render(request, 'productos/index.html', {
+#         # 'categorias': categorias,
+#         'productos': productos,
+#         'productos_tiendas': productos_tiendas,
+#         'proveedores': proveedores
+#     })
+
+
 @login_required
 def index_producto(request):
     perfil = get_object_or_404(Perfil, user=request.user)
     tienda = get_object_or_404(Tienda, perfil=perfil)
-    # categorias = Categoria.objects.all()
 
     proveedores = Proveedor.objects.filter(tienda=tienda)
     productos = Producto.objects.all()
-    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda).order_by('producto__nombre')
+
+    paginator = Paginator(productos_tiendas, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     return render(request, 'productos/index.html', {
-        # 'categorias': categorias,
         'productos': productos,
-        'productos_tiendas': productos_tiendas,
+        'productos_tiendas': page_obj,
         'proveedores': proveedores
     })
+
+@login_required
+def buscar_producto(request):
+    query = request.GET.get('q', '')  # Si no hay búsqueda, devolvemos cadena vacía
+    perfil = get_object_or_404(Perfil, user=request.user)
+    tienda = get_object_or_404(Tienda, perfil=perfil)
+
+    # Filtrar los productos por nombre que coincidan con la búsqueda
+    productos_tiendas = ProductosTiendas.objects.filter(
+        tienda=tienda,
+        producto__nombre__icontains=query  # Búsqueda por coincidencia parcial
+    )
+
+    # Renderizar solo el cuerpo de la tabla (tbody)
+    html = render_to_string('productos/_product_table.html', {
+        'productos_tiendas': productos_tiendas
+    })
+    return JsonResponse({'html': html})
 
 @login_required
 def actualizar_producto(request, id):
@@ -813,19 +889,17 @@ def promocion(request):
     perfil = get_object_or_404(Perfil, user=request.user)
     tienda = get_object_or_404(Tienda, perfil=perfil)
 
-    # Manejo del formulario para registrar una nueva promoción
     if request.method == 'POST':
         form = PromocionForm(request.POST)
         if form.is_valid():
             nueva_promocion = form.save(commit=False)
-            nueva_promocion.tienda = tienda  # Asigna la tienda al objeto promoción
+            nueva_promocion.tienda = tienda
             nueva_promocion.save()
-            form.save_m2m()  # Guarda la relación ManyToManyField para productos aplicables
+            form.save_m2m()
 
-            # Agrega un mensaje de éxito
             messages.success(request, '¡Promoción registrada exitosamente!')
 
-            return redirect('promocion')  # Redirige a la página de éxito o a la misma vista
+            return redirect('promocion')
     else:
         form = PromocionForm()
 
