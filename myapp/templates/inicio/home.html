@@ -2,65 +2,92 @@
 {% block content %}
 {% load static %}
 
-<head runat="server">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Home</title>
-    <link href="{% static 'myapp/css/principalStyle.css' %}" rel="stylesheet" />
-
+    <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>CanastaVital - Inicio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-    <div class="mi-clase">
-        <section class="contenedor">
-            <div class="contenedor-imag">
-                <p>Las mejores ofertas</p>
-                <h2>Todo lo relacionado a la Canasta Familiar</h2>
-                <a href="">Ver productos</a>
-            </div>
-        </section>
+<div class="mi-estilo">
+    <!-- Sección Hero -->
+    <div class="hero-section">
+        <h1>Tu canasta familiar, en un solo lugar</h1>
+        <p>Productos de calidad, entrega rápida y precios justos para tu hogar.</p>
+        <a href="#" class="cta-button">Explorar Productos</a>
+    </div>
 
-    <main class="main-contenedor">
-        <section class="contenedor-facturas">
-            <div class="carrito-factura">
-                <i class="fa-solid fa-truck"></i>
-                    <div class="factura-contenedor">
-                        <span>Envío gratuito a nivel nacional</span>
-                        <p>En pedido superior a $100.000.00</p>
-                    </div>
-            </div>
-            <div class="carrito-factura">
-                <i class="fa-solid fa-square-poll-horizontal"></i>
-                    <div class="factura-contenedor">
-                        <span>Pago contra entrega</span>
-                        <p>100% garantizado</p>
-                    </div>
-            </div>
-            <div class="carrito-factura">
-                <i class="fa-solid fa-bell-concierge"></i>
-                    <div class="factura-contenedor">
-                        <span>Servicio al cliente</span>
-                        <p>Llámenos al +57 3008181855</p>
-                    </div>
-            </div>
-        </section>
-    </main>
+    <!-- Sección Ofertas -->
+    <section class="ofertas-slider">
+        <!-- Aquí iría un carrusel de ofertas o promociones -->
+    </section>
 
-    <!--::::Pie de Pagina::::::-->
+    <!-- Beneficios -->
+    <section class="beneficios">
+        <div class="beneficio-item">
+            <i class="fa fa-truck"></i>
+            <p>Envío gratuito por compras superiores a $100.000</p>
+        </div>
+        <div class="beneficio-item">
+            <i class="fa fa-lock"></i>
+            <p>Pago 100% seguro y confiable</p>
+        </div>
+        <div class="beneficio-item">
+            <i class="fa fa-star"></i>
+            <p>Productos seleccionados de la mejor calidad</p>
+        </div>
+    </section>
+
+    <!-- Productos destacados -->
+    <section class="productos-destacados">
+        <h2>Productos Destacados</h2>
+        <div class="productos-grid">
+            <!-- Lista de productos -->
+        </div>
+    </section>
+
+    <!-- Categorías -->
+    <section class="categorias">
+        <h2>Nuestras Categorías</h2>
+        <div class="categorias-grid">
+            <div class="categoria-item">
+                <i class="fa fa-apple-alt"></i>
+                <p>Frutas y verduras</p>
+            </div>
+            <div class="categoria-item">
+                <i class="fa fa-drumstick-bite"></i>
+                <p>Carnes y pescados</p>
+            </div>
+            <div class="categoria-item">
+                <i class="fa fa-egg"></i>
+                <p>Lácteos y huevos</p>
+            </div>
+            <div class="categoria-item">
+                <i class="fa fa-bread-slice"></i>
+                <p>Panadería y cereales</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pie de página -->
     <footer class="pie-pagina">
         <div class="grupo-1">
             <div class="box">
                 <figure>
                     <a href="#">
-                        <img src="{% static  'myapp/img/ingresoDatos.png' %}" alt="Logo de SLee Dw">
+                        <img src="{% static 'myapp/img/ingresoDatos.png' %}" alt="Logo de CanastaVital">
                     </a>
                 </figure>
             </div>
             <div class="box">
                 <h2>SOBRE NOSOTROS</h2>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Odio, ipsa?</p>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Odio, ipsa?</p>
+                <p>En CanastaVital, ofrecemos productos esenciales de calidad para el hogar. Comprometidos en brindarte una experiencia de compra confiable y rápida. ¡Somos parte de tu día a día!</p>
             </div>
             <div class="box">
-                <h2>SIGUENOS</h2>
+                <h2>SÍGUENOS</h2>
                 <div class="red-social">
                     <a href="#" class="fa fa-facebook"></a>
                     <a href="#" class="fa fa-instagram"></a>
@@ -70,12 +97,13 @@
             </div>
         </div>
         <div class="grupo-2">
-            <small>&copy; 2023 <b>Tienda Virtual</b> - Todos los Derechos Reservados.</small>
+            <small>&copy; 2024 <b>CanastaVital</b> - Todos los Derechos Reservados.</small>
         </div>
     </footer>
-    </div>
 
-    <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
+</div>
 </body>
+</html>
+    <script src="https://kit.fontawesome.com/56cb96873c.js" crossorigin="anonymous"></script>
 
 {% endblock %}

@@ -23,9 +23,16 @@
                 <button class="toggle-btn" type="button">
                     <i class="bi bi-house"></i>
                 </button>
+                {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
                 <div class="sidebar-logo">
-                    <a href="/">Inicio</a>
+                    <a href="/index_tienda/">Inicio</a>
                 </div>
+                {% endif %}
+                {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
+                    <div class="sidebar-logo">
+                    <a href="/index_cliente/">Inicio</a>
+                </div>
+                {% endif %}
             </div>
             <ul class="sidebar-nav">
 

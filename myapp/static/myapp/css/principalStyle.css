@@ -1,617 +1,5 @@
-/*CSS del Login*/
+
  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
-.login-page * {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-.login-page body {
-    font-family: 'Poppins', sans-serif;
-}
-
-.login-page .wave {
-    position: fixed;
-    height: 100%;
-    left: 0;
-    bottom: 0;
-    z-index: -1;
-}
-
-.login-page .container {
-    width: 100vw;
-    height: 100vh;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 7rem;
-    padding: 0 2rem;
-}
-
-.login-page .img {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.login-page .img img {
-    width: 500px;
-}
-
-.login-page .login-container {
-    display: flex;
-    align-items: center;
-    text-align: center;
-}
-
-.login-page form {
-    width: 360px;
-}
-
-.login-page .avatar {
-    width: 100px;
-}
-
-.login-page form h2 {
-    font-size: 2.5rem;
-    text-transform: uppercase;
-    margin: 15px 0;
-    color: #2CCFFF;
-}
-
-.login-page .input-div {
-    position: relative;
-    display: grid;
-    grid-template-columns: 7% 93%;
-    margin: 25px 0;
-    padding: 5px;
-    border-bottom: 2px solid #2CCFFF;
-}
-
-.login-page .input-div:after,
-.login-page .input-div:before {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    width: 0;
-    height: 2px;
-    background-color: #2CCFFF;
-    transition: .3s;
-}
-
-.login-page .input-div:after {
-    right: 50%;
-}
-
-.login-page .input-div:before {
-    left: 50%;
-}
-
-.login-page .input-div.focus .i i {
-    color: #2CCFFF;
-}
-
-.login-page .input-div.focus div h5 {
-    top: -5px;
-    font-size: 15px;
-    color: #2CCFFF;
-}
-
-.login-page .input-div.focus:after,
-.login-page .input-div.focus:before {
-    width: 50%;
-}
-
-.login-page .input-div.one {
-    margin-top: 0;
-}
-
-.login-page .input-div.two {
-    margin-bottom: 4px;
-}
-
-.login-page .i {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.login-page .i i {
-    color: #2CCFFF;
-    transition: .3s;
-}
-
-.login-page .input-div > div {
-    position: relative;
-    height: 45px;
-}
-
-.login-page .input-div > div h5 {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #2CCFFF;
-    font-size: 18px;
-    transition: .3s;
-}
-
-.login-page .input {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    border: none;
-    outline: none;
-    background: none;
-    padding: 0.5rem 0.7rem;
-    font-size: 1.2rem;
-    font-family: 'Poppins', sans-serif;
-    color: #000000;
-}
-
-.login-page .iniciar_btn {
-    display: block;
-    width: 100%;
-    height: 50px;
-    border-radius: 25px;
-    margin: 1rem 0;
-    font-size: 1.2rem;
-    outline: none;
-    border: none;
-    background-image: linear-gradient(to right, #2CCFFF, #27b3dd, #86daf3);
-    cursor: pointer;
-    color: #fff;
-    text-transform: uppercase;
-    font-family: 'Poppins', sans-serif;
-    background-size: 200%;
-    transition: .5s;
-}
-
-.login-page .btn:hover {
-    background-position: right;
-}
-
-@media screen and (max-width: 1050px) {
-    .login-page .container {
-        grid-gap: 5rem;
-    }
-}
-
-@media screen and (max-width: 1000px) {
-    .login-page form {
-        width: 290px;
-    }
-
-    .login-page form h2 {
-        font-size: 2.4rem;
-        margin: 8px;
-    }
-
-    .login-page .img img {
-        width: 400px;
-    }
-}
-
-@media screen and (max-width: 900px) {
-    .login-page .img {
-        display: none;
-    }
-
-    .login-page .container {
-        grid-template-columns: 1fr;
-    }
-
-    .login-page .wave {
-        display: none;
-    }
-
-    .login-page .login-container {
-        justify-content: center;
-    }
-}
-
-/*CSS DEL REGISTER */
-
-.registration-page * {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-.registration-page body {
-    font-family: 'Poppins', sans-serif;
-}
-
-.registration-page .wave {
-    position: fixed;
-    height: 100%;
-    left: 0;
-    bottom: 0;
-    z-index: -1;
-}
-
-.registration-page .container {
-    width: 100vw;
-    height: 100vh;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 7rem;
-    padding: 0 2rem;
-}
-
-.registration-page .img {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.registration-page .img img {
-    width: 450px;
-}
-
-.registration-page .login-container {
-    display: flex;
-    align-items: center;
-    text-align: center;
-}
-
-.registration-page form {
-    width: 460px;
-}
-
-.registration-page .avatar {
-    width: 100px;
-}
-
-.registration-page form h2 {
-    font-size: 2.5rem;
-    text-transform: uppercase;
-    margin: 15px 0;
-    color: #2CCFFF;
-}
-
-.registration-page .input-div {
-    position: relative;
-    display: grid;
-    grid-template-columns: 7% 93%;
-    margin: 25px 0;
-    padding: 5px;
-    border-bottom: 2px solid #2CCFFF;
-}
-
-.registration-page .input-div:after,
-.registration-page .input-div:before {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    width: 0;
-    height: 2px;
-    background-color: #2CCFFF;
-    transition: .3s;
-}
-
-.registration-page .input-div:after {
-    right: 50%;
-}
-
-.registration-page .input-div:before {
-    left: 50%;
-}
-
-.registration-page .input-div.focus .i i {
-    color: #2CCFFF;
-}
-
-.registration-page .input-div.focus div h5 {
-    top: -5px;
-    font-size: 15px;
-    color: #080c0e;
-}
-
-.registration-page .input-div.focus:after,
-.registration-page .input-div.focus:before {
-    width: 50%;
-}
-
-.registration-page .input-div.one {
-    margin-top: 0;
-}
-
-.registration-page .input-div.two {
-    margin-bottom: 4px;
-}
-
-.registration-page .i {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.registration-page .i i {
-    color: #2CCFFF;
-    transition: .3s;
-}
-
-.registration-page .input-div > div {
-    position: relative;
-    height: 45px;
-}
-
-.registration-page .input-div > div h5 {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #2CCFFF;
-    font-size: 18px;
-    transition: .3s;
-}
-
-.registration-page .input {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    border: none;
-    outline: none;
-    background: none;
-    padding: 0.5rem 0.7rem;
-    font-size: 1.2rem;
-    font-family: 'Poppins', sans-serif;
-    color: #000000;
-}
-
-.registration-page .registrar_btn {
-    display: block;
-    width: 100%;
-    height: 50px;
-    border-radius: 25px;
-    margin: 1rem 0;
-    font-size: 1.2rem;
-    outline: none;
-    border: none;
-    background-image: linear-gradient(to right, #2CCFFF, #27b3dd, #86daf3);
-    cursor: pointer;
-    color: #fff;
-    text-transform: uppercase;
-    font-family: 'Poppins', sans-serif;
-    background-size: 200%;
-    transition: .5s;
-}
-
-.registration-page .registrar_btn:hover {
-    background-position: right;
-}
-
-@media screen and (max-width: 1050px) {
-    .registration-page .container {
-        grid-gap: 5rem;
-    }
-}
-
-@media screen and (max-width: 1000px) {
-    .registration-page form {
-        width: 290px;
-    }
-
-    .registration-page form h2 {
-        font-size: 2.4rem;
-        margin: 8px;
-    }
-
-    .registration-page .img img {
-        width: 400px;
-    }
-}
-
-@media screen and (max-width: 900px) {
-    .registration-page .img {
-        display: none;
-    }
-
-    .registration-page .container {
-        grid-template-columns: 1fr;
-    }
-
-    .registration-page .wave {
-        display: none;
-    }
-
-    .registration-page .login-container {
-        justify-content: center;
-    }
-}
-
-/*CCS DE LA PAGINA PRINCIPAL // HOME.HTML*/
-
-.mi-clase .contenedor {
-    background-image: linear-gradient(100deg, #000000, #00000020), url('/static/myapp/img/fondo_canasta.jpg');
-    height: 60rem;
-    background-size: cover;
-    background-position: center;
-}
-
-.mi-clase .contenedor-imag {
-    max-width: 80rem;
-    margin: 0 auto;
-    padding: 25rem 0;
-}
-
-.mi-clase .contenedor-imag p {
-    color: #585555;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
-}
-
-.mi-clase .contenedor-imag h2 {
-    color: #fff;
-    font-size: 2.5rem;
-    font-weight: 500;
-    line-height: 1.2;
-}
-
-.mi-clase .contenedor-imag a {
-    margin-top: 2rem;
-    text-decoration: none;
-    color: antiquewhite;
-    background-color: burlywood;
-    display: inline-block;
-    padding: 1rem 3rem;
-    text-transform: uppercase;
-    border-radius: 2rem;
-}
-
-/* opciones */
-
-.mi-clase .main-contenedor {
-    background-color: rgb(255, 255, 255);
-}
-
-.mi-clase .contenedor-facturas {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3rem;
-    padding: 3rem 0;
-    background-position: center;
-}
-
-.mi-clase .carrito-factura {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-}
-
-.mi-clase .carrito-factura i {
-    font-size: 2.7rem;
-    color: rgb(5, 4, 3);
-}
-
-.mi-clase .factura-contenedo {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.mi-clase .factura-contenedo span {
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: #000000;
-}
-
-.mi-clase .factura-contenedo p {
-    color: #777;
-    font-weight: 500;
-}
-
-/* responsive */
-
-@media (max-width: 768px) {
-    .mi-clase .contenedor-facturas {
-        grid-template-columns: repeat(2, 1fr);
-        padding: 3rem 2rem;
-    }
-
-    .mi-clase .carrito-factura {
-        padding: 1rem;
-    }
-
-    .mi-clase .factura-contenedor {
-        align-items: center;
-    }
-
-    .mi-clase .factura-contenedor p span {
-        text-align: center;
-    }
-}
-
-/* footer */
-.mi-clase * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Open Sans', sans-serif;
-}
-
-.mi-clase .pie-pagina {
-    width: 100%;
-    background-color: #a2aeb8c4;
-}
-
-.mi-clase .pie-pagina .grupo-1 {
-    width: 100%;
-    max-width: 1200px;
-    margin: auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 50px;
-    padding: 45px 0px;
-}
-
-.mi-clase .pie-pagina .grupo-1 .box figure {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.mi-clase .pie-pagina .grupo-1 .box figure img {
-    width: 250px;
-}
-
-.mi-clase .pie-pagina .grupo-1 .box h2 {
-    color: #fff;
-    margin-bottom: 25px;
-    font-size: 20px;
-}
-
-.mi-clase .pie-pagina .grupo-1 .box p {
-    color: #efefef;
-    margin-bottom: 10px;
-}
-
-.mi-clase .pie-pagina .grupo-1 .red-social a {
-    display: inline-block;
-    text-decoration: none;
-    width: 45px;
-    height: 45px;
-    line-height: 45px;
-    color: #fff;
-    margin-right: 10px;
-    background-color: #a2aeb8c4;
-    text-align: center;
-    transition: all 300ms ease;
-}
-
-.mi-clase .pie-pagina .grupo-1 .red-social a:hover {
-    color: rgb(0, 0, 0);
-}
-
-.mi-clase .pie-pagina .grupo-2 {
-    background-color: #a2aeb8c4;
-    padding: 15px 10px;
-    text-align: center;
-    color: #fff;
-}
-
-.mi-clase .pie-pagina .grupo-2 small {
-    font-size: 15px;
-}
-
-@media screen and (max-width: 800px) {
-    .mi-clase .pie-pagina .grupo-1 {
-        width: 90%;
-        grid-template-columns: repeat(1, 1fr);
-        grid-gap: 30px;
-        padding: 35px 0px;
-    }
-}
-
 
 /*CCS PERFIL DEL CLIENTE - TIENDA*/
 
@@ -1339,11 +727,11 @@
 }
 
 .busquedadeproductostienda .eliminar:hover {
-    background-color: #ff4b4b;
+    background-color: #515fbb;
 }
 
 .busquedadeproductostienda .eliminar:active {
-    background-color: #c32b2b;
+    background-color: #515fbb;
 }
 
 .busquedadeproductostienda .logo {
@@ -1382,3 +770,141 @@
     color: #494B4D;
     font-weight: bold;
 }
+
+/*PAGINA DE ARRANQUE HOME*/
+
+
+    .mi-estilo {
+        font-family: 'Arial', sans-serif;
+    }
+    .mi-estilo .hero-section {
+        background-image: linear-gradient(100deg, rgba(0, 0, 0, 0.62), #00000020), url('/static/myapp/img/fondo_canasta.jpg');
+        background-size: cover;
+        text-align: center;
+        padding: 100px 20px;
+        color: white;
+    }
+    .mi-estilo .hero-section h1 {
+        font-size: 42px;
+        margin-bottom: 10px;
+    }
+    .mi-estilo .hero-section p {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+    .mi-estilo .cta-button {
+        background-color: #3d7df3;
+        padding: 10px 20px;
+        border-radius: 5px;
+        color: white;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    .mi-estilo .cta-button:hover {
+        background-color: #515fbb;
+    }
+
+    .mi-estilo .beneficios {
+        display: flex;
+        justify-content: space-around;
+        padding: 40px 20px;
+        background-color: #f7f7f7;
+    }
+    .mi-estilo .beneficio-item {
+        text-align: center;
+        padding: 20px;
+        max-width: 200px;
+    }
+    .mi-estilo .beneficio-item i {
+        font-size: 40px;
+        color: #3d7df3;
+        margin-bottom: 10px;
+    }
+    .mi-estilo .beneficio-item p {
+        font-size: 14px;
+        color: #777;
+    }
+
+    .mi-estilo .productos-destacados {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    .mi-estilo .productos-destacados h2 {
+        font-size: 36px;
+        margin-bottom: 40px;
+    }
+    .mi-estilo .productos-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .mi-estilo .categorias {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    .mi-estilo .categorias h2 {
+        font-size: 36px;
+        margin-bottom: 40px;
+    }
+    .mi-estilo .categorias-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    .mi-estilo .categoria-item {
+        text-align: center;
+    }
+    .mi-estilo .categoria-item i {
+        font-size: 40px;
+        color: #3d7df3;
+        margin-bottom: 10px;
+    }
+    .mi-estilo .categoria-item p {
+        font-size: 14px;
+        color: #777;
+    }
+
+    .mi-estilo .mapa-interactivo {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    .mi-estilo #mapa {
+        height: 400px;
+        width: 100%;
+        background-color: #ccc;
+    }
+
+    .mi-estilo .pie-pagina {
+        background-color: rgba(34, 34, 34, 0.49);
+        color: white;
+        padding: 40px 20px;
+    }
+    .mi-estilo .pie-pagina .grupo-1 {
+        display: flex;
+        justify-content: space-between;
+    }
+    .mi-estilo .pie-pagina .box {
+        width: 30%;
+    }
+    .mi-estilo .pie-pagina figure img {
+        width: 150px; /* Ajuste de tamaño de imagen */
+    }
+    .mi-estilo .red-social a {
+        font-size: 24px;
+        margin: 0 10px;
+        color: #fff;
+        transition: color 0.3s ease;
+    }
+    .mi-estilo .red-social a:hover {
+        color: rgba(81, 95, 187, 0.63);
+    }
+    .mi-estilo .mapa-interactivo {
+        text-align: center;
+        padding: 40px 0;
+    }
+    .mi-estilo #mapa {
+        height: 400px;
+        width: 100%;
+        margin: 20px 0;
+    }
