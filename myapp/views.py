@@ -194,11 +194,40 @@ def perfil_tienda(request):
 
     return render(request, 'tiendas/perfil.html', {'tienda': tienda, 'direccion': direccion})
 
+
 @login_required
 def index_cliente(request):
+    # Obtener el perfil del cliente autenticado
     cliente = get_object_or_404(Cliente, perfil__user=request.user)
-    return render(request, 'clientes/index.html', {'cliente': cliente, 'user': request.user})
 
+    # Obtener productos destacados (ejemplo, los 5 primeros productos disponibles en cualquier tienda)
+    productos_destacados = ProductosTiendas.objects.all()[:5]
+
+    # Obtener promociones activas
+    promociones = Promocion.objects.filter(activo=True).order_by('fecha_fin')[:5]
+
+    # Obtener el carrito de compras del cliente (en este caso podrías tener un modelo de carrito, si no lo tienes, puedes usar Orden)
+    ordenes_pendientes = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.PENDIENTE)
+    carrito = ordenes_pendientes.first() if ordenes_pendientes.exists() else None
+
+    # Obtener el historial de compras del cliente
+    compras = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.COMPLETADA).order_by('-fecha_creacion')[:5]
+
+    # Generar recomendaciones simples (ejemplo: productos más vendidos, productos en oferta, etc.)
+    recomendaciones = ProductosTiendas.objects.all()[:5]
+
+    # Contexto que pasamos al template
+    context = {
+        'cliente': cliente,
+        'user': request.user,
+        'productos_destacados': productos_destacados,
+        'promociones': promociones,
+        'carrito': carrito,
+        'compras': compras,
+        'recomendaciones': recomendaciones,
+    }
+
+    return render(request, 'clientes/index.html', context)
 @login_required
 def index_administrador(request):
 
@@ -267,21 +296,6 @@ def eliminarPrductosTiendas(request, id):
     productosTiendas.delete()
     messages.success(request, 'Producto eliminado correctamente.')
     return redirect('productos')
-# @login_required
-# def index_producto(request):
-#     perfil = get_object_or_404(Perfil, user=request.user)
-#     tienda = get_object_or_404(Tienda, perfil=perfil)
-#
-#     proveedores = Proveedor.objects.filter(tienda=tienda)
-#     productos = Producto.objects.all()
-#     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
-#
-#     return render(request, 'productos/index.html', {
-#         # 'categorias': categorias,
-#         'productos': productos,
-#         'productos_tiendas': productos_tiendas,
-#         'proveedores': proveedores
-#     })
 
 
 @login_required
@@ -548,11 +562,14 @@ def busqueda_tiendas(request):
 @login_required
 def busqueda_productos(request, tienda_id):
     tienda = get_object_or_404(Tienda, id=tienda_id)
-    productosTiendas = ProductosTiendas.objects.filter(tienda=tienda, estado='activo').select_related('producto', 'proveedor')
+
+    productosTiendas = ProductosTiendas.objects.filter(tienda=tienda, estado='activo').select_related('producto', 'proveedor').prefetch_related('promociones')
+
     context = {
         'tienda': tienda,
         'productosTiendas': productosTiendas
     }
+
     return render(request, 'productos/busqueda.html', context)
 
 
@@ -906,14 +923,6 @@ def promocion(request):
     # Consulta las promociones y productos aplicables
     promociones = Promocion.objects.filter(tienda=tienda)
 
-    # # Imprimir para depuración
-    # for promocion in promociones:
-    #     print(promocion.nombre)
-    #     for producto_tienda in promocion.productos_aplicables.all():
-    #         print(f"Producto: {producto_tienda.producto.nombre}, "
-    #               f"Categoría: {producto_tienda.producto.categoria.nombre}, "
-    #               f"Descripción: {producto_tienda.producto.descripcion}")
-    #
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
     return render(request, 'tiendas/promocion.html', {
@@ -932,31 +941,20 @@ def editar_promocion(request, id):
     if request.method == 'POST':
         form = PromocionForm(request.POST, instance=promocion)
 
-        if form.is_valid():
-            # Obtener el descuento del formulario
-            descuento_input = request.POST.get('descuento', '')
-
-            try:
-                # Reemplaza la coma por un punto y convierte a Decimal
-                if descuento_input:
-                    # Quita los puntos y cambia la coma por un punto
-                    descuento_decimal = Decimal(descuento_input.replace('.', '').replace(',', '.'))
-                    form.cleaned_data['descuento'] = descuento_decimal
-
-                # Si todo está bien, guarda la promoción
+        try:
+            if form.is_valid():
                 form.save()
                 return redirect('promocion')
-
-            except (ValueError, ValidationError):
-                form.add_error('descuento', 'Ingrese un número válido.')
-                # Renderizar el formulario de nuevo en caso de error
-                context = {
-                    'form': form,
-                    'promocion': promocion,
-                    'productos_tiendas': productos_tiendas,
-                    'productos_aplicables_ids': list(promocion.productos_aplicables.values_list('id', flat=True)),
-                }
-                return render(request, 'tiendas/editar_promocion.html', context)
+        except (ValueError, ValidationError):
+            form.add_error('descuento', 'Ingrese un número válido.')
+            # Renderizar el formulario de nuevo en caso de error
+            context = {
+                'form': form,
+                'promocion': promocion,
+                'productos_tiendas': productos_tiendas,
+                'productos_aplicables_ids': list(promocion.productos_aplicables.values_list('id', flat=True)),
+            }
+            return render(request, 'tiendas/editar_promocion.html', context)
 
     else:
         form = PromocionForm(instance=promocion)
@@ -972,6 +970,7 @@ def editar_promocion(request, id):
     }
     return render(request, 'tiendas/editar_promocion.html', context)
 
+
 def eliminar_promocion(request, id):
     promocion = get_object_or_404(Promocion, id=id)
 
@@ -984,3 +983,24 @@ def eliminar_promocion(request, id):
     # Si la solicitud no es POST, redirige o muestra error
     messages.error(request, "Acción no permitida.")
     return redirect('promocion')
+
+def historial_compra(request):
+    cliente = get_object_or_404(Cliente, perfil__user=request.user)
+
+    # Filtrar órdenes pendientes
+    ordenes_pendientes = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.PENDIENTE)
+    carrito = ordenes_pendientes.first() if ordenes_pendientes.exists() else None
+
+    # Obtener las últimas 5 órdenes completadas
+    compras = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.COMPLETADA).order_by('-fecha_creacion')[:5]
+
+    # Preparar el contexto para la plantilla
+    context = {
+        'cliente': cliente,
+        'user': request.user,
+        'carrito': carrito,
+        'compras': compras,
+        'ordenes_pendientes': ordenes_pendientes,  # Agregar las órdenes pendientes
+    }
+
+    return render(request, 'otros/historial_p.html', context)

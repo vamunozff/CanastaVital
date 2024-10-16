@@ -163,7 +163,7 @@ class PromocionForm(forms.ModelForm):
         fields = [
             'nombre',
             'descripcion',
-            'descuento',
+            'descuento_porcentaje',
             'fecha_inicio',
             'fecha_fin',
             'codigo_promocional',
@@ -176,22 +176,15 @@ class PromocionForm(forms.ModelForm):
         widgets = {
             'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'fecha_fin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'productos_aplicables': forms.SelectMultiple(attrs={'class': 'form-control'}),  # O CheckboxSelectMultiple
+            'productos_aplicables': forms.SelectMultiple(attrs={'class': 'form-control'}),
         }
 
-    def clean_descuento(self):
-        descuento = self.cleaned_data.get('descuento')
-        if descuento:
-            # Verifica si el descuento es un string para convertirlo correctamente
-            if isinstance(descuento, str):
-                descuento = descuento.replace('.', '').replace(',', '.')
-            try:
-                descuento_decimal = Decimal(descuento)
-            except InvalidOperation:
-                raise forms.ValidationError("El valor del descuento no es válido.")
+    def clean_descuento_porcentaje(self):
+        descuento = self.cleaned_data.get('descuento_porcentaje')
+        if descuento is not None:
+            if not isinstance(descuento, int):
+                raise forms.ValidationError("El descuento debe ser un número entero.")
 
-            if descuento_decimal < 0:
-                raise forms.ValidationError("El descuento no puede ser negativo.")
-
-            return descuento_decimal
+            if descuento < 0 or descuento > 100:
+                raise forms.ValidationError("El porcentaje de descuento debe estar entre 0 y 100.")
         return descuento

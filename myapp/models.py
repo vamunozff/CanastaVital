@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.db import models, IntegrityError
 from django.core.validators import RegexValidator
+from django.utils import timezone
+import uuid
 
 class Rol(models.Model):
     NOMBRE_ROLES = [
@@ -216,9 +218,9 @@ class Promocion(models.Model):
     productos_aplicables = models.ManyToManyField('ProductosTiendas', related_name='promociones')
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(null=True, blank=True)
-    descuento = models.DecimalField(max_digits=10, decimal_places=2)
-    fecha_inicio = models.DateTimeField(default=timezone.now)
-    fecha_fin = models.DateField()
+    descuento_porcentaje = models.IntegerField(help_text="Porcentaje de descuento (ej: 20%)")
+    fecha_inicio = models.DateTimeField(default=timezone.now)  # Asegúrate de que sea DateTimeField
+    fecha_fin = models.DateTimeField()  # Cambia a DateTimeField
     activo = models.BooleanField(default=True)
     codigo_promocional = models.CharField(max_length=50, unique=True, blank=True, null=True)
     condiciones = models.TextField(blank=True, null=True)
@@ -229,24 +231,39 @@ class Promocion(models.Model):
         if self.cantidad_minima is not None and self.cantidad_maxima is not None:
             if self.cantidad_minima > self.cantidad_maxima:
                 raise ValidationError("La cantidad mínima no puede ser mayor que la cantidad máxima.")
-        if self.descuento < 0:
-            raise ValidationError("El descuento no puede ser un valor negativo.")
+        if self.descuento_porcentaje < 0 or self.descuento_porcentaje > 100:
+            raise ValidationError("El descuento debe estar entre 0 y 100.")
+
     def save(self, *args, **kwargs):
         if not self.codigo_promocional:
             self.codigo_promocional = str(uuid.uuid4())[:8]
 
-        # Desactivar si la promoción ha caducado
-        if self.fecha_fin and timezone.now().date() > self.fecha_fin:
+        now = timezone.now()
+        print(f"Ahora: {now}, Fecha Inicio: {self.fecha_inicio}, Fecha Fin: {self.fecha_fin}")
+
+        if self.fecha_inicio <= now <= self.fecha_fin:
+            self.activo = True
+        else:
             self.activo = False
+        print(f"Activo: {self.activo}")
 
         self.clean()
         super(Promocion, self).save(*args, **kwargs)
+
+        # Activar promociones válidas
+        self.activar_promociones_validas()
+
+    @classmethod
+    def activar_promociones_validas(cls):
+        now = timezone.now()
+        cls.objects.filter(fecha_inicio__lte=now, fecha_fin__gte=now).update(activo=True)
 
     class Meta:
         db_table = 'Promocion'
         ordering = ['-fecha_inicio']
         verbose_name = 'Promoción'
         verbose_name_plural = 'Promociones'
+
 
 class AtencionCliente(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='atencion_cliente')

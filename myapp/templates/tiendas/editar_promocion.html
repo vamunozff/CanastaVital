@@ -15,14 +15,12 @@
             </button>
         </div>
 
-        <!-- Mensajes de error no relacionados con campos específicos -->
         {% if form.non_field_errors %}
             <div class="alert alert-danger">
                 {{ form.non_field_errors }}
             </div>
         {% endif %}
 
-        <!-- Campo Nombre -->
         <div class="form-group mb-3">
             <label for="nombre">Nombre</label>
             <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="nombre" name="nombre" value="{{ promocion.nombre }}" required>
@@ -33,29 +31,27 @@
             {% endif %}
         </div>
 
-        <!-- Campo Descripción -->
 {% load humanize %}
 
-<div class="form-group">
-    <label for="descuento">Descuento (COP)</label>
-    <input type="text" class="form-control {% if form.descuento.errors %}is-invalid{% endif %}"
-           id="descuento" name="descuento" value="{{ promocion.descuento|floatformat:2 }}" required
-           oninput="formatCurrency(this)">
+        <div class="form-group">
+            <label for="descripcion">Descrpción</label>
+            <input type="text" class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}"
+                   id="descripcion" name="descripcion" value="{{ promocion.descripcion }}" required
+                   oninput="formatCurrency(this)">
 
-    {% if form.descuento.errors %}
-        <div class="invalid-feedback">
-            {{ form.descuento.errors }}
-        </div>
-    {% endif %}
-</div>
-
-        <!-- Campo Descuento -->
-        <div class="form-group mb-3">
-            <label for="descuento">Descuento (COP)</label>
-            <input type="text" class="form-control {% if form.descuento.errors %}is-invalid{% endif %}" id="descuento" name="descuento" value="{{ promocion.descuento|floatformat:2|intcomma }}" required oninput="formatCurrency(this)">
-            {% if form.descuento.errors %}
+            {% if form.descripcion.errors %}
                 <div class="invalid-feedback">
-                    {{ form.descuento.errors }}
+                    {{ form.descripcion.errors }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="descuento_porcentaje">Descuento porcentaje</label>
+            <input type="text" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ promocion.descuento_porcentaje }}%" required>
+            {% if form.descuento_porcentaje.errors %}
+                <div class="invalid-feedback">
+                    {{ form.descuento_porcentaje.errors }}
                 </div>
             {% endif %}
         </div>
@@ -87,7 +83,6 @@
             </div>
         </div>
 
-        <!-- Código Promocional -->
         <div class="form-group mb-3">
             <label for="codigo_promocional">Código Promocional (Opcional)</label>
             <input type="text" class="form-control {% if form.codigo_promocional.errors %}is-invalid{% endif %}" id="codigo_promocional" name="codigo_promocional" value="{{ promocion.codigo_promocional }}">
@@ -98,7 +93,6 @@
             {% endif %}
         </div>
 
-        <!-- Condiciones -->
         <div class="form-group mb-3">
             <label for="condiciones">Condiciones</label>
             <textarea class="form-control {% if form.condiciones.errors %}is-invalid{% endif %}" id="condiciones" name="condiciones" rows="3">{{ promocion.condiciones }}</textarea>
@@ -109,7 +103,6 @@
             {% endif %}
         </div>
 
-        <!-- Cantidades -->
         <div class="row mb-3">
             <div class="col-md-6">
                 <div class="form-group">
@@ -136,7 +129,6 @@
             </div>
         </div>
 
-        <!-- Productos Aplicables -->
         <div class="form-group mb-3">
             <label for="id_productos_aplicables">Productos Aplicables</label>
             <select multiple class="form-control" id="id_productos_aplicables" name="productos_aplicables" required>
@@ -156,40 +148,18 @@
 </div>
 
 <script>
-    function formatCurrency(input) {
-        // Elimina todo excepto dígitos
-        let value = input.value.replace(/\D/g, '');
-
-        if (value) {
-            // Convierte el valor a formato decimal
-            let decimalValue = (value / 100).toFixed(2);
-            // Formatea el valor para mostrarlo en el campo de entrada
-            input.value = decimalValue.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Formato con puntos
-        } else {
-            input.value = ''; // Si no hay valor, limpiar el campo
-        }
-    }
-
-    function handleInputChange(input) {
-        // Asegúrate de que solo se guarde el número
-        let value = input.value.replace(/\D/g, ''); // Solo números
-        input.value = value; // Guarda solo el número
-    }
-</script>
-
-<script>
 function eliminarPromocion(id) {
     if (confirm('¿Estás seguro de que deseas eliminar esta promoción?')) {
         fetch(`{% url 'eliminar_promocion' 0 %}`.replace('0', id), {
             method: 'POST',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}',  // Asegúrate de que este valor esté disponible
-                'Content-Type': 'application/json'  // Aunque no es estrictamente necesario aquí
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
             }
         })
         .then(response => {
             if (response.ok) {
-                window.location.reload();  // Recargar la página para reflejar los cambios
+                window.location.reload();
             } else {
                 alert('Error al eliminar la promoción.');
             }

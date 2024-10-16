@@ -1,9 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}Panel de Cliente{% endblock %}
-
 {% block content %}
 
-    <h3>Bienvenido: {{ user.first_name }} {{ user.last_name }}</h3>
-    <label>Ingreso como cliente</label>
+<div class="container">
+    <h3 class="text-center mb-4">¡Bienvenido, {{ user.first_name }} {{ user.last_name }}!</h3>
+</div>
+
+    <!-- Bootstrap JS y dependencias -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rTGO8nWjdZ+0yOnn7vT/0k/1hmc8cP3dY7FlcH9dC5aRmrC+4B" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-JZ70Z20q36/nN8BppXjZ2q2h9P1iQtZp+1TkKZ6Qe2R6aFDfmbKn/QVp1FStY1s" crossorigin="anonymous"></script>
 
 {% endblock %}

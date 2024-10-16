@@ -21,18 +21,11 @@
             {% endif %}
             <p class="nombre-producto">{{ producto_tienda.producto.nombre }}</p>
             <p class="descripcion-producto">{{ producto_tienda.producto.descripcion }}</p>
-            <p class="precio-producto">${{ producto_tienda.precio_unitario|floatformat:2 }}</p>
-
-            {% for promocion in producto_tienda.promociones.all %}
-                {% if promocion.activo %}  <!-- Verifica si la promoción está activa -->
-                    <p style="color: green; font-weight: bold;">Descuento: {{ promocion.descuento_porcentaje }}%</p>
-                {% endif %}
-            {% endfor %}
-
+            <p class="precio-producto">${{ producto_tienda.precio_unitario|floatformat:2 }}</p> <!-- Formato de precio -->
             <p class="cantidad-producto">
                 {% if producto_tienda.cantidad > 0 %}
                     Cantidad disponible: {{ producto_tienda.cantidad }}
-                    <button class="agregar-al-carrito btn btn-primary" data-product-id="{{ producto_tienda.id }}">Agregar al carrito</button>
+                    <button class="agregar-al-carrito" data-product-id="{{ producto_tienda.id }}">Agregar al carrito</button>
                 {% else %}
                     <span style="color: red;">No disponible</span>
                 {% endif %}
@@ -88,6 +81,15 @@
                     </tr>
                 </tbody>
             </table>
+<br>
+
+<div class="form-group row">
+    <label for="codigoPromocional" class="col-sm-2 col-form-label">Ingrese su código promocional:</label>
+    <div class="col-sm-10">
+        <input type="text" class="form-control" id="codigoPromocional" placeholder="Código promocional">
+        <button id="aplicar-promocion" class="btn btn-primary mt-2">Aplicar</button>
+    </div>
+</div>
 
         </div>
 

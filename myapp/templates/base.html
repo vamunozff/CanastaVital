@@ -103,13 +103,13 @@
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
+                    <a href="/historial_compra/" class="sidebar-link">
                         <i class="bi bi-clock-history"></i>
                         <span>Historial de pedidos</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
+                    <a href="/confirmar_pago/" class="sidebar-link">
                         <i class="bi bi-bag-check-fill"></i>
                         <span>Carrito de compras</span>
                     </a>
@@ -247,6 +247,9 @@
                                 </a>
                                 {% endif %}
                         {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
+{#                            <button id="boton-carrito" class="btn btn-primary boton-carrito" data-toggle="modal" data-target="#modalCarrito">#}
+{#                                <i class="fas fa-shopping-cart"></i> Ver Carrito#}
+{#                            </button>#}
                                 <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
                                     <img src="{{ user.perfil.cliente.imagen_perfil.url }}" class="avatar img-fluid" alt="perfil cliente {{ user.username }}">
                                 </a>

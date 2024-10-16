@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Historial de compra{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4 class="text-center mb-4">Historial de Compras</h4>
+
+    <h5>Compras Completadas</h5>
+    {% if compras %}
+    <div class="list-group">
+        {% for compra in compras %}
+        <a href="#" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">Orden #{{ compra.id }}</h5>
+                <small class="text-muted">Fecha: {{ compra.fecha_creacion|date:"d/m/Y" }}</small>
+            </div>
+            <p class="mb-1">Tienda: <strong>{{ compra.tienda.nombre }}</strong></p>
+            <p>Total: ${{ compra.total }}</p>
+            <p>Estado: {{ compra.get_estado_display }}</p>
+
+            <!-- Mostrar productos de la orden -->
+            <h6>Productos:</h6>
+            <ul>
+                {% for producto in compra.productos_orden.all %}
+                <li>
+                    {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
+                </li>
+                {% endfor %}
+            </ul>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No ha realizado compras aún.</p>
+    {% endif %}
+
+    <h5 class="mt-4">Órdenes Pendientes</h5>
+    {% if ordenes_pendientes %}
+    <div class="list-group">
+        {% for orden in ordenes_pendientes %}
+        <a href="#" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">Orden #{{ orden.id }}</h5>
+                <small class="text-muted">Fecha: {{ orden.fecha_creacion|date:"d/m/Y" }}</small>
+            </div>
+            <p class="mb-1">Tienda: <strong>{{ orden.tienda.nombre }}</strong></p>
+            <p>Total: ${{ orden.total }}</p>
+            <p>Estado: {{ orden.get_estado_display }}</p>
+
+            <!-- Mostrar productos de la orden -->
+            <h6>Productos:</h6>
+            <ul>
+                {% for producto in orden.productos_orden.all %}
+                <li>
+                    {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
+                </li>
+                {% endfor %}
+            </ul>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No tiene órdenes pendientes.</p>
+    {% endif %}
+</div>
+{% endblock %}

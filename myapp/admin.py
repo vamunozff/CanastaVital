@@ -144,7 +144,7 @@ class CiudadAdmin(admin.ModelAdmin):
 @admin.register(Promocion)
 class PromocionAdmin(admin.ModelAdmin):
     list_display = (
-        'nombre', 'tienda', 'descuento', 'fecha_inicio', 'fecha_fin',
+        'nombre', 'tienda', 'get_descuento_porcentaje', 'fecha_inicio', 'fecha_fin',
         'activo', 'cantidad_minima', 'cantidad_maxima', 'get_productos_aplicables'
     )
     list_filter = ('tienda', 'activo', 'fecha_inicio', 'fecha_fin')
@@ -155,7 +155,7 @@ class PromocionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'nombre', 'tienda', 'descripcion', 'descuento', 'fecha_inicio',
+                'nombre', 'tienda', 'descripcion', 'descuento_porcentaje', 'fecha_inicio',
                 'fecha_fin', 'activo', 'codigo_promocional', 'condiciones',
                 'productos_aplicables', 'cantidad_minima', 'cantidad_maxima'
             )
@@ -167,12 +167,14 @@ class PromocionAdmin(admin.ModelAdmin):
             return False
         return super().has_change_permission(request, obj)
 
-    # Método para mostrar productos aplicables en la lista
     def get_productos_aplicables(self, obj):
         return ", ".join([str(producto) for producto in obj.productos_aplicables.all()])
     get_productos_aplicables.short_description = 'Productos Aplicables'
 
-    # Agregar acciones personalizadas si es necesario
+    def get_descuento_porcentaje(self, obj):
+        return f"{obj.descuento_porcentaje}%"
+    get_descuento_porcentaje.short_description = 'Descuento'
+
     actions = ['activar_promociones', 'desactivar_promociones']
 
     def activar_promociones(self, request, queryset):
@@ -182,6 +184,7 @@ class PromocionAdmin(admin.ModelAdmin):
     def desactivar_promociones(self, request, queryset):
         queryset.update(activo=False)
         self.message_user(request, "Las promociones seleccionadas han sido desactivadas.")
+
 
 @admin.register(MetodoPago)
 class MetodoPagoAdmin(admin.ModelAdmin):

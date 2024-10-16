@@ -44,4 +44,5 @@ urlpatterns = [
     path('promocion/', views.promocion, name='promocion'),
     path('promocion/editar/<int:id>/', views.editar_promocion, name='editar_promocion'),
     path('promocion/eliminar/<int:id>/', views.eliminar_promocion, name='eliminar_promocion'),
+    path('historial_compra/', views.historial_compra, name='historial_compra'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
