@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import completar_registro, hello, index_administrador, index_tienda, logout_view, register, home, perfil_cliente, categoria, index_producto, index_proveedor, asignar_proveedor, perfil_tienda, index_cliente, login_view, busqueda_tiendas, busqueda_productos, get_datos
+from .views import completar_registro, hello, eliminar_proveedor, index_administrador, index_tienda, logout_view, register, home, perfil_cliente, categoria, index_producto, index_proveedor, asignar_proveedor, perfil_tienda, index_cliente, login_view, busqueda_tiendas, busqueda_productos, get_datos, unauthorized
 from . import views
 from django.views.generic import RedirectView
 from django.conf import settings
@@ -45,4 +45,8 @@ urlpatterns = [
     path('promocion/editar/<int:id>/', views.editar_promocion, name='editar_promocion'),
     path('promocion/eliminar/<int:id>/', views.eliminar_promocion, name='eliminar_promocion'),
     path('historial_compra/', views.historial_compra, name='historial_compra'),
+    path('inventario/', views.inventario, name='inventario'),
+    path('ordenes/', views.ordenes, name='ordenes'),
+    path('unauthorized/', unauthorized, name='unauthorized'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

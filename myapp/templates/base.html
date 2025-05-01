@@ -1,19 +1,17 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Base{% endblock %}</title>
-    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-{#    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">#}
-{#    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">#}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
 <body>
@@ -23,125 +21,128 @@
                 <button class="toggle-btn" type="button">
                     <i class="bi bi-house"></i>
                 </button>
-                {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
                 <div class="sidebar-logo">
-                    <a href="/index_tienda/">Inicio</a>
+                    <a href="/">Inicio</a>
                 </div>
-                {% endif %}
-                {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
-                    <div class="sidebar-logo">
-                    <a href="/index_cliente/">Inicio</a>
-                </div>
-                {% endif %}
             </div>
             <ul class="sidebar-nav">
-
-                <!-- Opciones para la tienda -->
-                {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
-                    <li class="sidebar-item">
-                        <a href="/perfil_tienda/" class="sidebar-link">
-                            <i class="bi bi-person-circle"></i>
-                            <span>Perfil</span>
-                        </a>
+                <!-- Opciones específicas por rol -->
+                {% if user.is_authenticated %}
+                    {% if request.session.groups == 'Tienda' %}
+                        <li class="sidebar-item">
+                            <a href="/perfil_tienda/" class="sidebar-link">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Perfil</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/index_proveedor/" class="sidebar-link">
+                                <i class="bi bi-people-fill"></i>
+                                <span>Proveedor</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/index_producto/" class="sidebar-link">
+                                <i class="bi bi-bag-check-fill"></i>
+                                <span>Productos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/promocion/" class="sidebar-link">
+                                <i class="bi bi-currency-exchange"></i>
+                                <span>Promociones y ofertas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <i class="lni lni-popup"></i>
+                                <span>Gestión de inventario</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/direccion/" class="sidebar-link">
+                                <i class="bi bi-save2"></i>
+                                <span>Direcciones guardadas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/index_producto/" class="sidebar-link">
+                                <i class="bi bi-pie-chart-fill"></i>
+                                <span>Análisis y reportes</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/index_producto/" class="sidebar-link">
+                                <i class="bi bi-gear-fill"></i>
+                                <span>Config. Métodos de pago</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
+                                data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span>Opciones</span>
+                            </a>
+                            <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                                <li class="sidebar-item">
+                                    <a href="/ordenes/" class="sidebar-link">Ordenes</a>
+                                </li>
+                                <li class="sidebar-item">
+                                    <a href="#" class="sidebar-link">factura</a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% elif request.session.groups == 'Cliente' %}
+                        <li class="sidebar-item">
+                            <a href="/perfil_cliente/" class="sidebar-link">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Perfil</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/busqueda_tiendas/" class="sidebar-link">
+                                <i class="bi bi-people-fill"></i>
+                                <span>Tiendas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/historial_compra/" class="sidebar-link">
+                                <i class="bi bi-clock-history"></i>
+                                <span>Historial de pedidos</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="/confirmar_pago/" class="sidebar-link">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                                <span>Carrito de compras</span>
+                            </a>
+                        </li>
                     </li>
                     <li class="sidebar-item">
-                        <a href="/index_proveedor/" class="sidebar-link">
-                            <i class="bi bi-people-fill"></i>
-                            <span>Proveedor</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="/index_producto/" class="sidebar-link">
-                            <i class="bi bi-bag-check-fill"></i>
-                            <span>Productos</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="/promocion/" class="sidebar-link">
+                        <a href="" class="sidebar-link">
                             <i class="bi bi-currency-exchange"></i>
-                            <span>Promociones y ofertas</span>
+                            <span>Ofertas y promociones</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
-                        <i class="lni lni-popup"></i>
-                        <span>Gestión de inventario</span>
-                    </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="/direccion/" class="sidebar-link">
-                            <i class="bi bi-save2"></i>
-                            <span>Direcciones guardadas</span>
+                        <a href="" class="sidebar-link">
+                            <i class="bi bi-border-width"></i>
+                            <span>Seguimiento de pedidos</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
-                        <a href="/index_producto/" class="sidebar-link">
-                            <i class="bi bi-pie-chart-fill"></i>
-                            <span>Análisis y reportes</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="/index_producto/" class="sidebar-link">
-                            <i class="bi bi-gear-fill"></i>
-                            <span>Confi. Metodos de pago</span>
-                        </a>
-                    </li>
-                {% endif %}
-
-                <!-- Opciones para el cliente -->
-                {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
-                    <li class="sidebar-item">
-                        <a href="/perfil_cliente/" class="sidebar-link">
-                            <i class="bi bi-person-circle"></i>
-                            <span>Perfil</span>
-                        </a>
-                    </li>
-                <li class="sidebar-item">
-                    <a href="/busqueda_tiendas/" class="sidebar-link">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Tiendas</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="/historial_compra/" class="sidebar-link">
-                        <i class="bi bi-clock-history"></i>
-                        <span>Historial de pedidos</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="/confirmar_pago/" class="sidebar-link">
-                        <i class="bi bi-bag-check-fill"></i>
-                        <span>Carrito de compras</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
-                        <i class="bi bi-currency-exchange"></i>
-                        <span>Ofertas y promociones</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="" class="sidebar-link">
-                        <i class="bi bi-border-width"></i>
-                        <span>Seguimiento de pedidos</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="/direccion/" class="sidebar-link">
-                        <i class="bi bi-save2"></i>
-                        <span>Direcciones guardadas</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a href="#" class="sidebar-link">
-                        <i class="bi bi-person-gear"></i>
-                        <span>Atención al cliente</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                            <!-- Opciones para la administrador -->
-                {% if user.is_authenticated and user.perfil.rol.nombre == 'administrador' %}
+                        <li class="sidebar-item">
+                            <a href="/direccion/" class="sidebar-link">
+                                <i class="bi bi-save2"></i>
+                                <span>Direcciones guardadas</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link">
+                                <i class="bi bi-person-gear"></i>
+                                <span>Atención al cliente</span>
+                            </a>
+                        </li>
+                    {% elif request.session.groups == 'Administrador' %}
                     <li class="sidebar-item">
                         <a href="" class="sidebar-link">
                             <i class="bi bi-person-circle"></i>
@@ -205,6 +206,8 @@
                             <span>Confi. Metodos de pago</span>
                         </a>
                     </li>
+
+                    {% endif %}
                 {% endif %}
 
                 <!-- Opciones comunes a todos los roles -->
@@ -230,6 +233,9 @@
                     <i class="lni lni-exit"></i>
                     <span>Salir</span>
                 </a>
+                <form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: none;">
+                    {% csrf_token %}
+                </form>
             </div>
         </aside>
 
@@ -241,49 +247,39 @@
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item dropdown">
-                        {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
-                                <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-                                    <img src="{{ user.perfil.tienda.logo_url.url }}" class="avatar img-fluid" alt="Logo de la tienda {{ user.username }}">
+                            {% if user.is_authenticated %}
+                                <a href="#" class="nav-link dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {% if request.session.groups == 'Tienda' %}
+                                        {% if user.tienda.logo_url %}
+                                            <img src="{{ user.tienda.logo_url.url }}" class="avatar img-fluid rounded-circle" alt="Logo de la tienda {{ user.tienda.nombre }}">
+                                        {% else %}
+                                            <img src="{% static 'myapp/img/Default.png' %}" class="avatar img-fluid rounded-circle" alt="Imagen predeterminada">
+                                        {% endif %}
+                                    {% elif request.session.groups == 'Cliente' %}
+                                        {% if user.cliente.imagen_perfil %}
+                                            <img src="{{ user.cliente.imagen_perfil.url }}" class="avatar img-fluid rounded-circle" alt="Perfil del cliente {{ user.username }}">
+                                        {% else %}
+                                            <img src="{% static 'myapp/img/Default.png' %}" class="avatar img-fluid rounded-circle" alt="Imagen predeterminada">
+                                        {% endif %}
+                                    {% else %}
+                                        <img src="{% static 'myapp/img/Default.png' %}" class="avatar img-fluid rounded-circle" alt="Imagen predeterminada">
+                                    {% endif %}
                                 </a>
-                                {% endif %}
-                        {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
-{#                            <button id="boton-carrito" class="btn btn-primary boton-carrito" data-toggle="modal" data-target="#modalCarrito">#}
-{#                                <i class="fas fa-shopping-cart"></i> Ver Carrito#}
-{#                            </button>#}
-                                <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-                                    <img src="{{ user.perfil.cliente.imagen_perfil.url }}" class="avatar img-fluid" alt="perfil cliente {{ user.username }}">
-                                </a>
-                                {% endif %}
-                            <div class="dropdown-menu dropdown-menu-end rounded">
-                                <!-- Opciones para la tienda -->
-                                {% if user.is_authenticated and user.perfil.rol.nombre == 'tienda' %}
-                                <a href="/perfil_tienda/" class="dropdown-item">
-                                    <i class="bi bi-person-check"></i>
-                                    <span>Perfil</span>
-                                </a>
-                                {% endif %}
-                            <!-- Opciones para la Cliente -->
-                                {% if user.is_authenticated and user.perfil.rol.nombre == 'cliente' %}
-                                <a href="/perfil_cliente/" class="dropdown-item">
-                                    <i class="bi bi-person-check"></i>
-                                    <span>Perfil</span>
-                                </a>
-                                {% endif %}
-                            <!-- Opciones para la administrador -->
-                                {% if user.is_authenticated and user.perfil.rol.nombre == 'administrador' %}
-                                <a href="" class="dropdown-item">
-                                    <i class="bi bi-person-check"></i>
-                                    <span>Perfil</span>
-                                </a>
-                                {% endif %}
-                                <form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: none;">
-                                    {% csrf_token %}
-                                </form>
-                                <a href="#" class="dropdown-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                    <i class="lni lni-timer"></i>
-                                    <span>Salir</span>
-                                </a>
-                            </div>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a href="/perfil/" class="dropdown-item">
+                                            <i class="bi bi-person-check"></i>
+                                            <span>Perfil</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class="dropdown-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                            <i class="lni lni-timer"></i>
+                                            <span>Salir</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            {% endif %}
                         </li>
                     </ul>
                 </div>
@@ -295,15 +291,7 @@
     </div>
 
     <script src="{% static 'myapp/js/base.js' %}"></script>
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-{#    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>#}
-{#    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>#}
-
-{#    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>#}
-{#    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>#}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
 </body>
 
 </html>

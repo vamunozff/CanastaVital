@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
         itemsCarrito.push({
             id: idProductoTienda,  // Cambiar a producto_tienda_id
             nombre: nombreProducto,
-            precio: parseFloat(precioProducto.replace('$', '').replace(',', '')), // Eliminar el símbolo $ y la coma
+            precio: parseFloat(precioProducto.replace(/[^0-9.]/g, '')),
             cantidad: 1
         });
     }
@@ -56,35 +56,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Función para actualizar la tabla del carrito
     function actualizarTablaCarrito() {
-        // Limpiar la tabla del carrito
         cuerpoTablaCarrito.innerHTML = '';
-
-        // Calcular subtotal
         let subtotal = 0;
+    
         itemsCarrito.forEach(item => {
-            subtotal += item.precio * item.cantidad;
+            const precioTotal = parseFloat((item.precio * item.cantidad).toFixed(2));
+            subtotal += precioTotal;
+    
             const fila = document.createElement('tr');
             fila.innerHTML = `
                 <td>${item.nombre}</td>
                 <td>${item.cantidad}</td>
                 <td>$${item.precio.toFixed(2)}</td>
-                <td>$${(item.precio * item.cantidad).toFixed(2)}</td>
+                <td>$${precioTotal.toFixed(2)}</td>
                 <td><button class="actualizar-btn btn btn-primary"><i class="fas fa-sync-alt"></i></button></td>
                 <td><button class="eliminar-btn btn btn-danger" data-product-id="${item.id}"><i class="fas fa-trash-alt"></i></button></td>
-
             `;
             cuerpoTablaCarrito.appendChild(fila);
         });
 
         // Calcular IVA y total
         const iva = 0.19;
-        const ivaMonto = subtotal * iva;
-        const total = subtotal + ivaMonto;
+        const ivaMonto = parseFloat((subtotal * iva).toFixed(2));
+        const total = parseFloat((subtotal + ivaMonto).toFixed(2));
+    
         document.getElementById('subtotal-carrito').textContent = subtotal.toFixed(2);
         document.getElementById('iva-carrito').textContent = ivaMonto.toFixed(2);
         document.getElementById('total-carrito').textContent = total.toFixed(2);
-
-        // Asignar eventos de eliminación de productos
+    
         const botonesEliminar = document.querySelectorAll('.eliminar-btn');
         botonesEliminar.forEach(boton => boton.addEventListener('click', eliminarDelCarrito));
     }

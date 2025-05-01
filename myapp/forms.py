@@ -7,6 +7,7 @@ from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from datetime import date
 
 class CustomUserCreationForm(UserCreationForm):
     
@@ -50,21 +51,12 @@ class ClienteForm(forms.ModelForm):
             'imagen_perfil': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
-    # Validación personalizada para la fecha de nacimiento
     def clean_fecha_nacimiento(self):
-        fecha = self.cleaned_data['fecha_nacimiento']
-        if fecha and fecha > datetime.date.today():
+        fecha = self.cleaned_data.get('fecha_nacimiento')
+        if fecha and fecha > date.today():
             raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
         return fecha
 
-    # Validación personalizada para la fecha de nacimiento
-    def clean_fecha_nacimiento(self):
-        fecha = self.cleaned_data['fecha_nacimiento']
-        if fecha and fecha > datetime.date.today():
-            raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
-        return fecha
-
-    # Validación personalizada para el número de documento
     def clean_numero_documento(self):
         numero_documento = self.cleaned_data['numero_documento']
         if len(numero_documento) < 6:
@@ -95,19 +87,26 @@ class DireccionForm(forms.ModelForm):
         model = Direccion
         fields = ['direccion', 'ciudad', 'departamento', 'codigo_postal', 'principal']
 
+    def __init__(self, *args, **kwargs):
+        self.cliente = kwargs.pop('cliente', None)
+        self.tienda = kwargs.pop('tienda', None)
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         cleaned_data = super().clean()
         principal = cleaned_data.get("principal")
-        cliente = self.instance.cliente
-        tienda = self.instance.tienda
+
+        # Validar que el formulario esté asociado a un cliente o tienda
+        if not self.cliente and not self.tienda:
+            raise forms.ValidationError("La dirección debe estar asociada a un cliente o una tienda.")
 
         if principal:
-
-            if cliente and Direccion.objects.filter(cliente=cliente, principal=True).exclude(pk=self.instance.pk).exists():
+            # Validar que no haya más de una dirección principal para el cliente
+            if self.cliente and Direccion.objects.filter(cliente=self.cliente, principal=True).exclude(pk=self.instance.pk).exists():
                 raise forms.ValidationError("Este cliente ya tiene una dirección principal.")
 
-            # Verificar si ya hay una dirección principal para esa tienda
-            if tienda and Direccion.objects.filter(tienda=tienda, principal=True).exclude(pk=self.instance.pk).exists():
+            # Validar que no haya más de una dirección principal para la tienda
+            if self.tienda and Direccion.objects.filter(tienda=self.tienda, principal=True).exclude(pk=self.instance.pk).exists():
                 raise forms.ValidationError("Esta tienda ya tiene una dirección principal.")
 
         return cleaned_data
@@ -150,7 +149,6 @@ class OrdenForm(forms.ModelForm):
         return total
 
     def save(self, commit=True):
-        # Personaliza el método save si necesitas realizar acciones adicionales
         instance = super().save(commit=False)
         if commit:
             instance.save()

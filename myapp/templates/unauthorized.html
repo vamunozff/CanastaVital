@@ -1,0 +1,9 @@
+{% extends 'base.html' %}  {# Si usas una plantilla base, extiéndela #}
+
+{% block content %}
+    <div class="container text-center mt-5">
+        <h1>Acceso no autorizado</h1>
+        <p>No tienes permiso para acceder a esta página.</p>
+        <a href="{% url 'home' %}" class="btn btn-primary">Volver al inicio</a>
+    </div>
+{% endblock %}

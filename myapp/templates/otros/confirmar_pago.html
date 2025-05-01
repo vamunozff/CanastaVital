@@ -23,8 +23,11 @@
                         </tr>
                     </thead>
                     <tbody id="cuerpo-tabla-carrito">
-                        <!-- Los productos del carrito se insertarán dinámicamente aquí -->
+                        <tr id="mensaje-vacio">
+                            <td colspan="5" class="text-center">Tu carrito está vacío.</td>
+                        </tr>
                     </tbody>
+                    
                 </table>
                 <!-- Totales -->
                 <div class="row">
@@ -54,6 +57,18 @@
         <div id="mensaje-error" class="alert alert-danger" role="alert" style="display: none;">
             Ocurrió un error al procesar el pago. Inténtalo de nuevo.
         </div>
+
+        <!-- Método de Pago -->
+        <div class="form-group">
+            <label for="metodo_pago">Método de pago</label>
+            <select id="metodo_pago" name="metodo_pago" class="form-control">
+                <option value="">Seleccione un método de pago</option>
+                {% for metodo_pago in metodos_pago %}
+                    <option value="{{ metodo_pago.id }}">{{ metodo_pago.nombre }}</option>
+                {% endfor %}
+            </select>            
+        </div>
+
 
         <!-- Mostrar direcciones registradas -->
         <div id="direcciones-container" class="mb-4">
@@ -144,7 +159,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Incluir dependencias de Bootstrap JS y jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 

@@ -1,12 +1,12 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('direccionForm');
 
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();  // Evita el envío tradicional del formulario
+    form.addEventListener('submit', function (event) {
+        event.preventDefault(); // Evita el envío tradicional del formulario
 
-        const formData = new FormData(form);  // Captura los datos del formulario
+        const formData = new FormData(form);
 
-        fetch(registrarDireccionUrl,  {
+        fetch(registrarDireccionUrl, {
             method: 'POST',
             body: formData,
             headers: {
@@ -16,24 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Si la dirección se registró con éxito, muestra una alerta de SweetAlert
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Dirección registrada!',
-                    text: 'La nueva dirección ha sido registrada correctamente.',
-                    confirmButtonText: 'Aceptar'
-                }).then(() => {
-                    // Cerrar el modal, resetear el formulario y recargar la página
-                    $('#modalNuevaDireccion').modal('hide');
-                    form.reset();
-                    window.location.reload();  // Recargar la página después de la confirmación
-                });
+                // Recargar la página tras un registro exitoso
+                window.location.reload();
             } else {
-                // Si hubo un error en la validación, muestra los errores
+                // Mostrar errores si el formulario no es válido
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al registrar',
-                    text: 'Error: ' + data.message,
+                    text: data.message,
                     confirmButtonText: 'Reintentar'
                 });
             }
@@ -49,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-
 
 document.addEventListener('DOMContentLoaded', function() {
     var deptCreate = document.getElementById('id_departamento');
@@ -95,3 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+
+$('#modalNuevaDireccion').on('hidden.bs.modal', function () {
+    $(this).find(':focus').blur();  // Eliminar el foco del botón de cierre
+});
+

@@ -1,37 +1,20 @@
 from django.contrib import admin
-from .models import Rol, Perfil, Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Departamento, Ciudad, Orden, ProductoOrden
+from .models import Categoria, Producto, ProductosTiendas, Proveedor,Cliente, Tienda, Promocion, MetodoPago, AtencionCliente, Direccion, Departamento, Ciudad, Orden, ProductoOrden
 from django.utils.html import mark_safe, format_html
 
-@admin.register(Rol)
-class RolAdmin(admin.ModelAdmin):
-    list_display = ('nombre',)
-    search_fields = ('nombre',)
-    list_filter = ('nombre',)
-    ordering = ('nombre',)
-
-@admin.register(Perfil)
-class PerfilAdmin(admin.ModelAdmin):
-    list_display = ('user', 'rol_nombre')
-    search_fields = ('user__username', 'rol__nombre')
-    list_filter = ('rol',)
-    ordering = ('user__username',)
-
-    def rol_nombre(self, obj):
-        return obj.rol.nombre
-    rol_nombre.short_description = 'Rol'
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('perfil_usuario', 'tipo_documento', 'numero_documento', 'telefono', 'fecha_registro')
-    search_fields = ('perfil__user__username', 'numero_documento', 'telefono')
+    list_display = ('usuario', 'tipo_documento', 'numero_documento', 'telefono', 'fecha_registro')
+    search_fields = ('usuario__username', 'numero_documento', 'telefono')
     list_filter = ('tipo_documento', 'fecha_registro')
-    ordering = ('perfil__user__username',)
+    ordering = ('usuario__username',)
 
     fieldsets = (
-        (None, {
-            'fields': ('perfil', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil')
+        ('Información del Cliente', {
+            'fields': ('usuario', 'telefono', 'fecha_nacimiento', 'tipo_documento', 'numero_documento', 'imagen_perfil')
         }),
-        ('Información de registro', {
+        ('Información de Registro', {
             'fields': ('fecha_registro',),
         }),
     )
@@ -39,22 +22,22 @@ class ClienteAdmin(admin.ModelAdmin):
     readonly_fields = ('fecha_registro',)
     list_editable = ('telefono', 'tipo_documento')
 
-    def perfil_usuario(self, obj):
-        return obj.perfil.user.username
-    perfil_usuario.short_description = 'Usuario'
+    def usuario(self, obj):
+        return obj.usuario.username
+    usuario.short_description = 'Usuario'
 
 @admin.register(Tienda)
 class TiendaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'perfil_usuario', 'telefono', 'fecha_registro', 'logo_preview')
-    search_fields = ('nombre', 'perfil__user__username', 'telefono')
+    list_display = ('nombre', 'usuario', 'telefono', 'fecha_registro', 'logo_preview')
+    search_fields = ('nombre', 'usuario__username', 'telefono')
     list_filter = ('fecha_registro',)
     ordering = ('nombre',)
 
     fieldsets = (
-        (None, {
-            'fields': ('perfil', 'nombre', 'telefono', 'horarios', 'descripcion', 'logo_url')
+        ('Información de la Tienda', {
+            'fields': ('usuario', 'nombre', 'telefono', 'horarios', 'descripcion', 'logo_url')
         }),
-        ('Información de registro', {
+        ('Información de Registro', {
             'fields': ('fecha_registro',),
         }),
     )
@@ -62,9 +45,9 @@ class TiendaAdmin(admin.ModelAdmin):
     readonly_fields = ('fecha_registro',)
     list_editable = ('telefono',)
 
-    def perfil_usuario(self, obj):
-        return obj.perfil.user.username
-    perfil_usuario.short_description = 'Usuario'
+    def usuario(self, obj):
+        return obj.usuario.username
+    usuario.short_description = 'Usuario'
 
     def logo_preview(self, obj):
         if obj.logo_url:
@@ -74,7 +57,7 @@ class TiendaAdmin(admin.ModelAdmin):
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'descripcion')
+    list_display = ('nombre', 'descripcion', 'icono')
     search_fields = ('nombre',)
 
 @admin.register(Producto)
@@ -157,7 +140,7 @@ class PromocionAdmin(admin.ModelAdmin):
             'fields': (
                 'nombre', 'tienda', 'descripcion', 'descuento_porcentaje', 'fecha_inicio',
                 'fecha_fin', 'activo', 'codigo_promocional', 'condiciones',
-                'productos_aplicables', 'cantidad_minima', 'cantidad_maxima'
+                'productos_aplicables', 'cantidad_minima', 'cantidad_maxima', 'imagen'
             )
         }),
     )
@@ -178,20 +161,28 @@ class PromocionAdmin(admin.ModelAdmin):
     actions = ['activar_promociones', 'desactivar_promociones']
 
     def activar_promociones(self, request, queryset):
-        queryset.update(activo=True)
-        self.message_user(request, "Las promociones seleccionadas han sido activadas.")
+        updated = queryset.update(activo=True)
+        self.message_user(request, f"{updated} promociones activadas correctamente.")
+    activar_promociones.short_description = "Activar promociones seleccionadas"
 
     def desactivar_promociones(self, request, queryset):
-        queryset.update(activo=False)
-        self.message_user(request, "Las promociones seleccionadas han sido desactivadas.")
-
+        updated = queryset.update(activo=False)
+        self.message_user(request, f"{updated} promociones desactivadas correctamente.")
+    desactivar_promociones.short_description = "Desactivar promociones seleccionadas"
 
 @admin.register(MetodoPago)
 class MetodoPagoAdmin(admin.ModelAdmin):
-    list_display = ('cliente', 'tipo', 'metodo_pago', 'detalles')
-    search_fields = ('cliente__user__username', 'tipo', 'detalles', 'metodo_pago')
-    list_filter = ('metodo_pago', 'cliente')
-    ordering = ('cliente', 'tipo')
+    list_display = ('id', 'nombre', 'descripcion')  
+    search_fields = ('nombre',) 
+    list_filter = ()  
+    ordering = ('nombre',)  
+    list_per_page = 25 
+
+    # Opcional: Si necesitas manejar un editor más amplio para la descripción
+    formfield_overrides = {
+        # Puedes usar Textarea para que el campo 'descripcion' sea más cómodo de editar
+        'descripcion': {'widget': admin.widgets.AdminTextareaWidget},
+    } 
 
 @admin.register(AtencionCliente)
 class AtencionClienteAdmin(admin.ModelAdmin):

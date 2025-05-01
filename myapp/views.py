@@ -7,8 +7,8 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import logout
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.models import User
-from .models import Rol, Perfil, Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden, Ciudad, Departamento, Categoria
+from django.contrib.auth.models import User, Group
+from .models import Producto, ProductosTiendas, Proveedor, Cliente, Tienda, Promocion, Direccion, Orden, ProductoOrden, Ciudad, Departamento, Categoria, MetodoPago
 from django.contrib import messages
 from .forms import ProductosTiendasForm, PromocionForm
 from django.db import transaction
@@ -23,34 +23,53 @@ from django.template.loader import render_to_string
 import logging
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from functools import wraps
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, login as auth_login
 
 # Create your views here.
 def hello(request):
     return HttpResponse("Bienvenido <a href='index.html'>Ingresar</a>")
 
+
+@csrf_exempt
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
 
+        # Autenticar al usuario
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             auth_login(request, user)
-            messages.success(request, 'Inicio de sesión exitoso.')
+            roles = []
+            if user.groups.filter(name='Cliente').exists():
+                roles.append({'nombre': 'Cliente', 'url': '/index_cliente'})
+            if user.groups.filter(name='Tienda').exists():
+                roles.append({'nombre': 'Tienda', 'url': '/index_tienda'})
+            if user.groups.filter(name='Administrador').exists():
+                roles.append({'nombre': 'Administrador', 'url': '/index_administrador'})
 
-            if user.perfil.rol.nombre == 'administrador':
-                return redirect('index_administrador')
-            elif user.perfil.rol.nombre == 'tienda':
-                return redirect('index_tienda')
-            elif user.perfil.rol.nombre == 'cliente':
-                return redirect('index_cliente')
-        else:
+            # Si el usuario tiene un solo rol, redirigir automáticamente
+            if len(roles) == 1:
+                return JsonResponse({'redirect': roles[0]['url']})
 
-            messages.error(request, 'Credenciales incorrectas. Por favor intenta nuevamente.')
-            return redirect('login')
+            # Si el usuario tiene múltiples roles, devolver los roles como JSON
+            if len(roles) > 1:
+                return JsonResponse({'roles': roles})
 
-    return render(request, 'registration/login.html')
+            # Si no tiene roles válidos
+            return JsonResponse({'error': 'No tienes un rol asignado. Por favor, contacta al administrador.'}, status=403)
+
+        # Si las credenciales son incorrectas
+        return JsonResponse({'error': 'Credenciales incorrectas. Por favor, intenta nuevamente.'}, status=403)
+
+    elif request.method == 'GET':
+        return render(request, 'registration/login.html')
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
 
 @user_is_tienda
 def vista_tienda(request):
@@ -65,32 +84,54 @@ def unauthorized(request):
     return render(request, 'unauthorized.html', {'message': 'No tienes permiso para acceder a esta página.'})
 
 def home(request):
-    return render(request, 'inicio/home.html')
-
-def completar_registro(request):
-    return render(request, 'registration/confirmar_completar.html')
-
+    categorias = Categoria.objects.all()
+    return render(request, 'inicio/home.html',  {'categorias': categorias})
 
 @login_required
-def index_tienda(request):
-    perfil = request.user.perfil
-    tienda = perfil.tienda
+def completar_registro(request):
+    perfil_id = request.session.get('perfil_id')
+    print(f"Perfil ID en sesión: {perfil_id}")
 
-    # Datos de inventario
+    if not perfil_id:
+        messages.error(request, "No tienes un perfil asociado. Por favor contacta a un administrador.")
+        return redirect('verificar_registro')
+
+    perfil = get_object_or_404(Perfil, id=perfil_id)
+    print(f"Perfil encontrado: {perfil}")
+
+    if not perfil.rol:
+        messages.error(request, "Tu perfil no tiene un rol asignado. Por favor contacta a un administrador.")
+        return redirect('verificar_registro')
+
+    return render(request, 'registration/confirmar_completar.html', {'perfil': perfil})
+
+@login_required
+@user_is_tienda
+def index_tienda(request):
+    # Configurar el grupo en la sesión
+    request.session['groups'] = 'Tienda'
+
+    # Verificar que el usuario pertenece al grupo "Tienda"
+    if not request.user.groups.filter(name='Tienda').exists():
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('unauthorized')
+
+    # Obtener la tienda asociada al usuario
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada.")
+        return redirect('unauthorized')
+
+    # Calcular estadísticas de la tienda
     total_productos = tienda.productos_tiendas.count()
     productos_sin_stock = tienda.productos_tiendas.filter(cantidad=0).count()
-
-    # Datos de pedidos
     pedidos_pendientes = Orden.objects.filter(tienda=tienda, estado='pendiente').count()
 
-    # Datos de ventas
     now = timezone.now()
     ventas_hoy = Orden.objects.filter(tienda=tienda, fecha_venta__date=now).aggregate(Sum('total'))['total__sum'] or 0
-    ventas_semana = \
-    Orden.objects.filter(tienda=tienda, fecha_venta__gte=now - timedelta(days=7)).aggregate(Sum('total'))[
-        'total__sum'] or 0
+    ventas_semana = Orden.objects.filter(tienda=tienda, fecha_venta__gte=now - timedelta(days=7)).aggregate(Sum('total'))['total__sum'] or 0
 
-    # Obtener promociones y proveedores
     promociones_activas = Promocion.objects.filter(tienda=tienda, activo=True)
     proveedores_activos = Proveedor.objects.filter(tienda=tienda)
 
@@ -108,7 +149,6 @@ def index_tienda(request):
 
     return render(request, 'tiendas/index.html', context)
 
-
 def logout_view(request):
     logout(request)
     messages.success(request, 'Has cerrado sesión exitosamente.')
@@ -117,26 +157,44 @@ def logout_view(request):
 # @csrf_exempt
 from django.shortcuts import redirect
 
+from django.contrib.auth.models import Group
+
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
 
         if form.is_valid():
-            user = form.save(commit=False)
-            user.first_name = request.POST.get('first_name')
-            user.last_name = request.POST.get('last_name')
-            user.email = form.cleaned_data['email']
-            user.save()
+            try:
+                # Crear el usuario
+                user = form.save(commit=False)
+                user.first_name = request.POST.get('first_name', '').strip()
+                user.last_name = request.POST.get('last_name', '').strip()
+                user.email = form.cleaned_data['email']
+                user.save()
 
-            rol_name = request.POST.get('rol')
-            rol = Rol.objects.get(nombre=rol_name)
-            Perfil.objects.create(user=user, rol=rol)
+                # Asignar el usuario al grupo "Cliente"
+                cliente_group = Group.objects.get(name='Cliente')  # Asegúrate de que el grupo "Cliente" exista
+                user.groups.add(cliente_group)
 
-            login(request, user)
-            return redirect('completar_registro')
-        else:
-            # No es necesario manejar los errores manualmente aquí, ya que se manejarán en el HTML
-            return render(request, 'registration/register.html', {'form': form})
+                # Crear el modelo Cliente asociado al usuario
+                Cliente.objects.create(
+                    usuario=user,
+                    telefono=request.POST.get('telefono', '').strip(),
+                    fecha_nacimiento=request.POST.get('fecha_nacimiento', None)
+                )
+
+                # Iniciar sesión automáticamente después del registro
+                login(request, user)
+                messages.success(request, 'Registro exitoso. Bienvenido.')
+                return redirect('index_cliente')
+
+            except Group.DoesNotExist:
+                messages.error(request, 'El grupo "Cliente" no existe. Por favor, contacta al administrador.')
+            except Exception as e:
+                messages.error(request, f'Ocurrió un error: {str(e)}')
+
+        messages.error(request, 'Por favor, corrija los errores en el formulario.')
+        return render(request, 'registration/register.html', {'form': form})
 
     elif request.method == 'GET':
         form = CustomUserCreationForm()
@@ -145,10 +203,16 @@ def register(request):
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 
-@user_is_cliente
 @login_required
+@login_required
+@user_is_cliente
 def perfil_cliente(request):
-    perfil = get_object_or_404(Perfil, user=request.user)
+    perfil_id = request.session.get('perfil_id')  # Asegurar que perfil_id está definido
+    if not perfil_id:
+        messages.error(request, "No tienes un perfil de cliente activo.")
+        return redirect('verificar_registro')
+
+    perfil = get_object_or_404(Perfil, id=perfil_id)
     cliente = get_object_or_404(Cliente, perfil=perfil)
 
     if request.method == 'POST':
@@ -156,9 +220,10 @@ def perfil_cliente(request):
         if cliente_form.is_valid():
             cliente_form.save()
             messages.success(request, 'Perfil actualizado exitosamente.')
-            return redirect('perfil')
+            return redirect('perfil_cliente')
         else:
-            messages.error(request, 'Error al actualizar el perfil.')
+            messages.error(request, 'Error al actualizar el perfil. Verifica los campos.')
+
     else:
         cliente_form = ClienteForm(instance=cliente)
 
@@ -168,68 +233,67 @@ def perfil_cliente(request):
         'user': request.user
     })
 
+
+
 @login_required
+@user_is_tienda
 def perfil_tienda(request):
-
+    # Obtener la tienda asociada al usuario
     try:
-        tienda = request.user.perfil.tienda
+        tienda = Tienda.objects.get(usuario=request.user)
     except Tienda.DoesNotExist:
-
-        tienda = Tienda.objects.create(perfil=request.user.perfil)
-        messages.success(request, "Tu tienda ha sido creada exitosamente.")
+        messages.error(request, "No tienes una tienda asociada.")
+        return redirect('unauthorized')
 
     if request.method == 'POST':
+        # Actualizar los datos de la tienda
         tienda.nombre = request.POST.get('nombre', tienda.nombre)
         tienda.horarios = request.POST.get('horarios', tienda.horarios)
         tienda.telefono = request.POST.get('telefono', tienda.telefono)
         tienda.descripcion = request.POST.get('descripcion', tienda.descripcion)
 
+        # Actualizar el logo si se sube un archivo
         if 'logo_url' in request.FILES:
             tienda.logo_url = request.FILES['logo_url']
 
         tienda.save()
         messages.success(request, "Datos de la tienda actualizados exitosamente.")
+        return redirect('perfil_tienda')
 
-    direccion = tienda.direcciones.first()
+    # Obtener la dirección principal de la tienda (si existe)
+    direccion = Direccion.objects.filter(tienda=tienda).first()
 
     return render(request, 'tiendas/perfil.html', {'tienda': tienda, 'direccion': direccion})
 
 
 @login_required
+@user_is_cliente
 def index_cliente(request):
-    # Obtener el perfil del cliente autenticado
-    cliente = get_object_or_404(Cliente, perfil__user=request.user)
+    # Configurar el grupo en la sesión
+    request.session['groups'] = 'Cliente'
 
-    # Obtener productos destacados (ejemplo, los 5 primeros productos disponibles en cualquier tienda)
-    productos_destacados = ProductosTiendas.objects.all()[:5]
+    # Verificar que el usuario pertenece al grupo "Cliente"
+    if not request.user.groups.filter(name='Cliente').exists():
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('unauthorized')
 
-    # Obtener promociones activas
-    promociones = Promocion.objects.filter(activo=True).order_by('fecha_fin')[:5]
+    # Obtener promociones activas y categorías
+    promociones_activas = Promocion.objects.filter(activo=True).order_by('fecha_fin')
+    categorias = Categoria.objects.all()
 
-    # Obtener el carrito de compras del cliente (en este caso podrías tener un modelo de carrito, si no lo tienes, puedes usar Orden)
-    ordenes_pendientes = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.PENDIENTE)
-    carrito = ordenes_pendientes.first() if ordenes_pendientes.exists() else None
-
-    # Obtener el historial de compras del cliente
-    compras = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.COMPLETADA).order_by('-fecha_creacion')[:5]
-
-    # Generar recomendaciones simples (ejemplo: productos más vendidos, productos en oferta, etc.)
-    recomendaciones = ProductosTiendas.objects.all()[:5]
-
-    # Contexto que pasamos al template
-    context = {
-        'cliente': cliente,
-        'user': request.user,
-        'productos_destacados': productos_destacados,
-        'promociones': promociones,
-        'carrito': carrito,
-        'compras': compras,
-        'recomendaciones': recomendaciones,
+    # Contexto para enviar al template
+    contexto = {
+        'promociones': promociones_activas,
+        'categorias': categorias
     }
 
-    return render(request, 'clientes/index.html', context)
+    return render(request, 'clientes/index.html', contexto)
+
 @login_required
+@user_is_administrador
 def index_administrador(request):
+    # Configurar el grupo en la sesión
+    request.session['groups'] = 'Administrador'
 
     return render(request, 'administrador/index.html')
 
@@ -237,25 +301,35 @@ def categoria(request):
     return render(request, 'categorias/categorias.html')
 
 @login_required
+@user_is_tienda
 def asignarProducto(request):
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para asignar productos.")
+        return redirect("index_producto")
+
     if request.method == 'POST':
         try:
+            # Obtener los datos del formulario
             producto_id = int(request.POST.get('txtProducto_id'))
             proveedor_id = int(request.POST.get('txtProveedor_id'))
-            precio_unitario = request.POST.get('txtPrecioUnitario')
+            precio_unitario = Decimal(request.POST.get('txtPrecioUnitario'))
             cantidad = int(request.POST.get('txtCantidad'))
             estado = request.POST.get('txtEstado')
-            imagen = request.FILES.get('logo_url')
+            imagen = request.FILES.get('logo_url', None)
 
+            # Si no se proporciona una imagen, usar una imagen predeterminada
             default_image_path = 'productos_tiendas/Default.jpg'
-            tienda = get_object_or_404(Tienda, perfil__user=request.user)
-
             if not imagen:
                 imagen = default_image_path
 
+            # Obtener el producto y el proveedor
             producto = get_object_or_404(Producto, id=producto_id)
-            proveedor = get_object_or_404(Proveedor, id=proveedor_id)
+            proveedor = get_object_or_404(Proveedor, id=proveedor_id, tienda=tienda)
 
+            # Crear un nuevo producto asociado a la tienda
             nuevo_producto_tienda = ProductosTiendas(
                 producto=producto,
                 proveedor=proveedor,
@@ -266,18 +340,21 @@ def asignarProducto(request):
                 imagen=imagen
             )
 
+            # Validar y guardar el nuevo producto
             nuevo_producto_tienda.full_clean()
             nuevo_producto_tienda.save()
 
-            messages.success(request, 'Producto asignado correctamente.')
-            return redirect('index_producto')
+            messages.success(request, "Producto asignado correctamente.")
+            return redirect("index_producto")
 
         except ValueError:
-            messages.error(request, 'Por favor, ingrese un valor numérico válido para cantidad o precio.')
+            messages.error(request, "Por favor, ingrese valores válidos para los campos numéricos.")
+        except ValidationError as ve:
+            messages.error(request, f"Error de validación: {ve}")
         except Exception as e:
-            messages.error(request, f'Error al asignar el producto: {str(e)}')
+            messages.error(request, f"Error al asignar el producto: {str(e)}")
 
-    tienda = get_object_or_404(Tienda, perfil__user=request.user)
+    # Obtener los proveedores y productos asociados a la tienda
     proveedores = Proveedor.objects.filter(tienda=tienda).distinct()
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
@@ -299,66 +376,80 @@ def eliminarPrductosTiendas(request, id):
 
 
 @login_required
+@user_is_tienda
 def index_producto(request):
-    perfil = get_object_or_404(Perfil, user=request.user)
-    tienda = get_object_or_404(Tienda, perfil=perfil)
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar productos.")
+        return redirect("unauthorized")
 
-    proveedores = Proveedor.objects.filter(tienda=tienda)
+    # Obtener los productos asociados a la tienda
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda).order_by("producto__nombre")
+
+    # Obtener todos los productos disponibles
     productos = Producto.objects.all()
-    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda).order_by('producto__nombre')
 
-    paginator = Paginator(productos_tiendas, 10)
-    page_number = request.GET.get('page')
+    # Obtener los proveedores asociados a la tienda
+    proveedores = Proveedor.objects.filter(tienda=tienda)
+
+    # Paginar los productos de la tienda
+    paginator = Paginator(productos_tiendas, 10)  # Mostrar 10 productos por página
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'productos/index.html', {
-        'productos': productos,
-        'productos_tiendas': page_obj,
-        'proveedores': proveedores
+    # Renderizar la plantilla con los productos y proveedores
+    return render(request, "productos/index.html", {
+        "productos_tiendas": page_obj,
+        "productos": productos,
+        "proveedores": proveedores,
     })
+
 
 @login_required
 def buscar_producto(request):
-    query = request.GET.get('q', '')  # Si no hay búsqueda, devolvemos cadena vacía
+    query = request.GET.get('q', '')
     perfil = get_object_or_404(Perfil, user=request.user)
     tienda = get_object_or_404(Tienda, perfil=perfil)
 
-    # Filtrar los productos por nombre que coincidan con la búsqueda
     productos_tiendas = ProductosTiendas.objects.filter(
         tienda=tienda,
-        producto__nombre__icontains=query  # Búsqueda por coincidencia parcial
+        producto__nombre__icontains=query
     )
-
-    # Renderizar solo el cuerpo de la tabla (tbody)
     html = render_to_string('productos/_product_table.html', {
         'productos_tiendas': productos_tiendas
     })
     return JsonResponse({'html': html})
 
 @login_required
+@user_is_tienda
 def actualizar_producto(request, id):
+    # Obtener el producto asociado a la tienda
     producto_tienda = get_object_or_404(ProductosTiendas, id=id)
 
-    # Verificar que el producto pertenezca a la tienda del usuario
-    if producto_tienda.tienda != request.user.perfil.tienda:
-        messages.error(request, 'No tienes permiso para actualizar este producto.')
-        return redirect('index_producto')
+    # Verificar que el producto pertenece a la tienda del usuario
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar productos.")
+        return redirect("index_producto")
 
-    if request.method == 'POST':
+    if producto_tienda.tienda != tienda:
+        messages.error(request, "No tienes permiso para actualizar este producto.")
+        return redirect("index_producto")
+
+    if request.method == "POST":
+        # Procesar el formulario enviado
         form = ProductosTiendasForm(request.POST, request.FILES, instance=producto_tienda)
-
         if form.is_valid():
             form.save()
-            messages.success(request, '¡Producto actualizado!')
-            return redirect('index_producto')
+            messages.success(request, "¡Producto actualizado correctamente!")
+            return redirect("index_producto")
         else:
-            # Print errors for debugging
-            for field in form:
-                print(f"Errores en el campo {field.label}: {field.errors}")
-            print("Errores generales del formulario:", form.non_field_errors())
-            messages.error(request, 'Por favor, corrija los errores en el formulario.')
-
+            messages.error(request, "Por favor, corrija los errores en el formulario.")
     else:
+        # Mostrar el formulario con los datos actuales del producto
         form = ProductosTiendasForm(instance=producto_tienda)
 
     # Obtener promociones activas para este producto
@@ -366,14 +457,15 @@ def actualizar_producto(request, id):
         productos_aplicables=producto_tienda,
         activo=True,
         fecha_inicio__lte=timezone.now(),
-        fecha_fin__gte=timezone.now()
+        fecha_fin__gte=timezone.now(),
     )
 
-    return render(request, 'productos/actualizar.html', {
-        'form': form,
-        'producto_tienda': producto_tienda,
-        'promociones_activas': promociones_activas,  # Pasar promociones activas al contexto
+    return render(request, "productos/actualizar.html", {
+        "form": form,
+        "producto_tienda": producto_tienda,
+        "promociones_activas": promociones_activas,
     })
+
 
 @login_required
 def eliminar_producto(request, id):
@@ -383,27 +475,43 @@ def eliminar_producto(request, id):
         messages.success(request, '¡Producto eliminado correctamente!')
         return redirect('index_producto')
     return redirect('index_producto')
+
 @login_required
+@user_is_tienda
 def index_proveedor(request):
-    perfil = get_object_or_404(Perfil, user=request.user)
-    tienda = get_object_or_404(Tienda, perfil=perfil)
-    proveedores = Proveedor.objects.filter(tienda=tienda)
-    return render(request, 'proveedor/index.html',{'proveedores': proveedores})
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar proveedores.")
+        return redirect("unauthorized")  # Asegúrate de tener esta vista o URL definida.
 
+    # Filtrar proveedores asociados a la tienda del usuario
+    proveedores = Proveedor.objects.filter(tienda=tienda)
+
+    # Renderizar la plantilla con los proveedores
+    return render(request, "proveedor/index.html", {"proveedores": proveedores})
 
 @login_required
+@user_is_tienda
 def asignar_proveedor(request):
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, 'No tienes una tienda asociada para gestionar proveedores.')
+        return redirect('index_proveedor')
+
     if request.method == 'POST':
+        # Obtener los datos del formulario
+        razon_social = request.POST.get('txtRazonSocial')
+        email = request.POST.get('txtEmail')
+        telefono = request.POST.get('numTelefono')
+        direccion = request.POST.get('txtDireccion')
+        estado = request.POST.get('txtEstado')
+
         try:
-            razon_social = request.POST.get('txtRazonSocial')
-            email = request.POST.get('txtEmail')
-            telefono = request.POST.get('numTelefono')
-            direccion = request.POST.get('txtdireccion')
-            estado = request.POST.get('txtEstado')
-
-            perfil = Perfil.objects.get(user=request.user)
-            tienda = Tienda.objects.get(perfil=perfil)
-
+            # Crear un nuevo proveedor asociado a la tienda
             nuevo_proveedor = Proveedor(
                 tienda=tienda,
                 razon_social=razon_social,
@@ -412,104 +520,121 @@ def asignar_proveedor(request):
                 direccion=direccion,
                 estado=estado
             )
-
-            nuevo_proveedor.full_clean()
-            nuevo_proveedor.save()
+            nuevo_proveedor.full_clean()  # Validar los datos
+            nuevo_proveedor.save()  # Guardar el proveedor en la base de datos
 
             messages.success(request, 'Proveedor registrado correctamente.')
             return redirect('index_proveedor')
-
-        except ValueError as ve:
-            messages.error(request, f'Error de valor al asignar el proveedor: {str(ve)}')
-        except Tienda.DoesNotExist:
-            messages.error(request, 'No se encontró una tienda asociada al usuario.')
+        except ValidationError as ve:
+            messages.error(request, f'Error de validación: {ve}')
         except Exception as e:
-            messages.error(request, f'Error al asignar el proveedor: {str(e)}')
+            messages.error(request, f'Error al registrar el proveedor: {str(e)}')
 
-    perfil = Perfil.objects.get(user=request.user)
-    tienda = Tienda.objects.get(perfil=perfil)
+    # Obtener la lista de proveedores asociados a la tienda
     proveedores = Proveedor.objects.filter(tienda=tienda)
 
     return render(request, 'proveedor/index.html', {'proveedores': proveedores})
 
 @login_required
-def eliminar_proveedor(request, id):
-    proveedor = get_object_or_404(Proveedor, id=id)
-
-    if request.method == "POST":
-        proveedor.delete()
-        messages.success(request, '¡Proveedor eliminado correctamente!')
-        return redirect('index_proveedor')
-
-    return redirect('index_proveedor')
-
-@login_required
+@user_is_tienda
 def actualizar_proveedor(request, id):
     proveedor = get_object_or_404(Proveedor, id=id)
 
+    # Verificar que el proveedor pertenece a la tienda del usuario
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar proveedores.")
+        return redirect("index_proveedor")
+
+    if proveedor.tienda != tienda:
+        messages.error(request, "No tienes permiso para actualizar este proveedor.")
+        return redirect("index_proveedor")
+
     if request.method == 'POST':
         try:
+            # Obtener los datos del formulario
             razon_social = request.POST.get('txtRazonSocial')
             email = request.POST.get('txtEmail')
             telefono = request.POST.get('numTelefono')
-            direccion = request.POST.get('txtdireccion')
+            direccion = request.POST.get('txtDireccion')
             estado = request.POST.get('txtEstado')
 
-            if proveedor.tienda.perfil.user != request.user:
-                messages.error(request, 'No tienes permiso para actualizar este proveedor.')
-                return redirect('index_proveedor')
-
+            # Actualizar los datos del proveedor
             proveedor.razon_social = razon_social
             proveedor.email = email
             proveedor.telefono = telefono
             proveedor.direccion = direccion
             proveedor.estado = estado
 
+            # Validar y guardar los cambios
             proveedor.full_clean()
             proveedor.save()
 
-            messages.success(request, '¡Proveedor actualizado correctamente!')
-            return redirect('index_proveedor')
+            messages.success(request, "¡Proveedor actualizado correctamente!")
+            return redirect("index_proveedor")
 
         except ValueError:
-            messages.error(request, 'Por favor, ingrese valores válidos.')
+            messages.error(request, "Por favor, ingrese valores válidos.")
         except Exception as e:
-            messages.error(request, f'Error al actualizar el proveedor: {str(e)}')
+            messages.error(request, f"Error al actualizar el proveedor: {str(e)}")
 
-    return render(request, 'proveedor/actualizar.html', {
-        'proveedor': proveedor,
-    })
+    return render(request, "proveedor/actualizar.html", {"proveedor": proveedor})
 
+@login_required
+@user_is_tienda
+def eliminar_proveedor(request, id):
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar proveedores.")
+        return redirect("index_proveedor")
+
+    # Buscar el proveedor asociado a la tienda
+    proveedor = get_object_or_404(Proveedor, id=id, tienda=tienda)
+
+    if request.method == 'POST':
+        proveedor.delete()
+        messages.success(request, "Proveedor eliminado correctamente.")
+        return redirect("index_proveedor")
+
+    messages.error(request, "Acción no permitida.")
+    return redirect("index_proveedor")
 
 @login_required
 def register_cliente(request):
-    if request.method == 'POST':
-        cliente_form = ClienteForm(request.POST, request.FILES)
+    cliente_form = ClienteForm(request.POST or None, request.FILES or None)
 
+    if request.method == 'POST':
         if cliente_form.is_valid():
             try:
-                perfil = Perfil.objects.get(user=request.user)  # Verificar que el perfil existe
+                # Verifica si el usuario ya tiene un cliente registrado
+                if Cliente.objects.filter(perfil__user=request.user).exists():
+                    messages.warning(request, 'Ya tienes un cliente registrado.')
+                    return redirect('index_cliente')
+
+                # Obtiene el perfil asociado al usuario
+                perfil = Perfil.objects.get(user=request.user)
+
+                # Crea y guarda el cliente
+                cliente = cliente_form.save(commit=False)
+                cliente.perfil = perfil
+                cliente.save()
+
+                messages.success(request, 'El cliente se ha registrado exitosamente.')
+                return redirect('index_cliente')
             except Perfil.DoesNotExist:
                 messages.error(request, 'No se encontró el perfil asociado. Por favor, complete el registro primero.')
-                return redirect('index_cliente')  # Redirigir si no hay perfil
-
-            cliente = cliente_form.save(commit=False)  # Guardar cliente sin comprometer aún en la DB
-            cliente.perfil = perfil  # Asignar el perfil al cliente
-            cliente.save()  # Guardar el cliente en la base de datos
-            messages.success(request, 'El cliente se ha registrado exitosamente.')
-            return redirect('index_cliente')  # Redirigir al index_cliente
-
+                return redirect('index_cliente')
         else:
+            # Itera sobre los errores del formulario y los agrega a los mensajes
             for field, error_list in cliente_form.errors.items():
+                field_name = cliente_form.fields[field].label
                 for error in error_list:
-                    messages.error(request, f'Error en {field}: {error}')
+                    messages.error(request, f'Error en "{field_name}": {error}')
 
-    else:
-        cliente_form = ClienteForm()
-
-    context = {
-        'cliente_form': cliente_form
-    }
+    context = {'cliente_form': cliente_form}
     return render(request, 'registration/confirmar_completar.html', context)
 
 @login_required
@@ -519,22 +644,21 @@ def register_tienda(request):
 
         if tienda_form.is_valid():
             try:
-                perfil = Perfil.objects.get(user=request.user)  # Verifica si el perfil existe
+                perfil = Perfil.objects.get(user=request.user)
             except Perfil.DoesNotExist:
                 messages.error(request, 'No se encontró el perfil asociado. Por favor, complete el registro primero.')
                 return redirect('index_tienda')
 
-            # Validar que el usuario tenga el rol de "tienda"
             if perfil.rol.nombre != 'tienda':
                 messages.error(request, 'No tiene permiso para registrar una tienda.')
                 return redirect('index_tienda')
 
-            tienda = tienda_form.save(commit=False)  # Guarda la tienda sin comprometerla aún
-            tienda.perfil = perfil  # Asociar la tienda al perfil del usuario
-            tienda.save()  # Guardar la tienda en la base de datos
+            tienda = tienda_form.save(commit=False)
+            tienda.perfil = perfil
+            tienda.save()
 
             messages.success(request, 'La tienda se ha registrado exitosamente.')
-            return redirect('index_tienda')  # Redirigir al index de tiendas
+            return redirect('index_tienda')
 
         else:
             for field, error_list in tienda_form.errors.items():
@@ -542,7 +666,7 @@ def register_tienda(request):
                     messages.error(request, f'Error en {field}: {error}')
 
     else:
-        tienda_form = TiendaForm()  # Inicializar el formulario si es GET
+        tienda_form = TiendaForm()
 
     context = {
         'tienda_form': tienda_form
@@ -559,6 +683,7 @@ def busqueda_tiendas(request):
         tiendas = Tienda.objects.all()
 
     return render(request, 'tiendas/busqueda.html', {'tiendas': tiendas})
+
 @login_required
 def busqueda_productos(request, tienda_id):
     tienda = get_object_or_404(Tienda, id=tienda_id)
@@ -583,68 +708,111 @@ def promociones_activas(request, tienda_id):
     }
     return render(request, 'promociones/activas.html', context)
 
+
 @login_required
 def confirmar_pago(request):
+    # Buscar el perfil del usuario con rol de cliente
+    perfil_cliente = request.user.perfil_set.filter(rol__nombre="cliente").first()
+    
+    if not perfil_cliente:
+        return JsonResponse({'error': 'No tienes un perfil de cliente asociado.'}, status=400)
 
-    perfil = request.user.perfil
-    cliente = getattr(perfil, 'cliente', None)
-
+    # Verificar que existe un cliente asociado a ese perfil
+    cliente = Cliente.objects.filter(perfil=perfil_cliente).first()
+    
     if not cliente:
-        return JsonResponse({'error': 'No tienes un perfil de cliente asociado.'})
+        return JsonResponse({'error': 'No tienes un cliente asociado a tu perfil.'}, status=400)
 
+    # Obtener direcciones del cliente
     direcciones = Direccion.objects.filter(cliente=cliente)
-    form = DireccionForm()
-    direccion_principal = Direccion.objects.filter(cliente=cliente, principal=True).first()
-
+    direccion_principal = direcciones.filter(principal=True).first()
     departamentos = Departamento.objects.all()
-    ciudad = Ciudad.objects.all()
+    metodos_pago = MetodoPago.objects.all()
+
+    # Filtrar ciudades según el departamento de la dirección principal
+    ciudades = Ciudad.objects.filter(departamento=direccion_principal.departamento) if direccion_principal else Ciudad.objects.all()
 
     if request.method == 'POST':
-        carrito = request.session.get('carrito', [])
+        try:
+            data = json.loads(request.body)
 
-        if not carrito:
-            return JsonResponse({'error': 'El carrito está vacío.'})
+            # Validar método de pago
+            metodo_pago_id = data.get('metodo_pago_id')
+            metodo_pago = MetodoPago.objects.filter(id=metodo_pago_id).first()
+            if not metodo_pago:
+                return JsonResponse({'error': 'El método de pago seleccionado no es válido.'}, status=400)
 
-        productos_en_tienda = []
-        error = None
+            # Obtener carrito de la sesión
+            carrito = request.session.get('carrito', [])
+            if not carrito:
+                return JsonResponse({'error': 'El carrito está vacío, agrega productos antes de continuar.'}, status=400)
 
-        for item in carrito:
-            try:
-                producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
-                productos_en_tienda.append({
-                    'producto': producto_tienda,
-                    'nombre': producto_tienda.producto.nombre,
-                    'cantidad': item['cantidad'],
-                    'precio_unitario': producto_tienda.precio_unitario,
-                    'subtotal': producto_tienda.precio_unitario * item['cantidad']
-                })
-            except ProductosTiendas.DoesNotExist:
-                error = f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'
-                break
+            # Validar productos del carrito
+            productos_en_tienda = []
+            errores = []
+            for item in carrito:
+                try:
+                    producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
+                    productos_en_tienda.append({
+                        'producto': producto_tienda,
+                        'nombre': producto_tienda.producto.nombre,
+                        'cantidad': item['cantidad'],
+                        'precio_unitario': producto_tienda.precio_unitario,
+                        'subtotal': producto_tienda.precio_unitario * item['cantidad']
+                    })
+                except ProductosTiendas.DoesNotExist:
+                    errores.append(f'El producto con ID {item["producto_tienda_id"]} no está disponible.')
 
-        if error:
-            return JsonResponse({'error': error})
+            if errores:
+                return JsonResponse({'error': errores}, status=400)
 
-        total = sum(item['subtotal'] for item in productos_en_tienda)
+            # Validar dirección de envío
+            direccion_envio_id = data.get('direccion_envio_id')
+            direccion_envio = Direccion.objects.filter(id=direccion_envio_id, cliente=cliente).first()
+            if not direccion_envio:
+                return JsonResponse({'error': 'La dirección seleccionada no es válida.'}, status=400)
 
-        context = {
-            'direcciones': direcciones,
-            'direccion_principal': direccion_principal,
-            'productos_en_tienda': productos_en_tienda,
-            'total': total,
-            'form': form,
-            'departamentos': departamentos,
-            'ciudad': ciudad,
-        }
+            # Calcular totales
+            subtotal = sum(item['subtotal'] for item in productos_en_tienda)
+            iva = subtotal * 0.12  # 12% de IVA
+            total = subtotal + iva
 
-        return render(request, 'otros/confirmar_pago.html', context)
+            # Crear orden
+            orden = Orden.objects.create(
+                cliente=cliente,
+                direccion_envio=direccion_envio,
+                metodo_pago=metodo_pago,
+                subtotal=subtotal,
+                iva=iva,
+                total=total,
+            )
 
-    return render(request, 'otros/confirmar_pago.html', {
+            # Agregar productos a la orden
+            for producto in productos_en_tienda:
+                ProductosOrden.objects.create(
+                    orden=orden,
+                    producto_tienda_id=producto['producto'].id,
+                    cantidad=producto['cantidad'],
+                    precio_unitario=producto['precio_unitario']
+                )
+
+            return JsonResponse({'success': True, 'orden_id': orden.id})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Datos inválidos en la solicitud.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Ocurrió un error al procesar la orden: {str(e)}'}, status=500)
+
+    # Contexto para GET
+    context = {
         'direcciones': direcciones,
         'direccion_principal': direccion_principal,
         'departamentos': departamentos,
-        'ciudad': ciudad,
-    })
+        'ciudades': ciudades,
+        'metodos_pago': metodos_pago,
+    }
+    return render(request, 'otros/confirmar_pago.html', context)
+
 
 # @csrf_exempt
 @login_required
@@ -679,7 +847,6 @@ def crear_orden(request):
         try:
             data = json.loads(request.body)
 
-            # Obtener el perfil del usuario y luego el cliente
             perfil = get_object_or_404(Perfil, user=request.user)
             cliente = get_object_or_404(Cliente, perfil=perfil)
 
@@ -738,18 +905,15 @@ def crear_orden(request):
                             precio_unitario=precio_unitario
                         )
 
-                        # Actualizar el stock del producto
                         producto_tienda.cantidad -= cantidad
                         producto_tienda.save()
 
                     except ProductosTiendas.DoesNotExist:
                         return JsonResponse({'success': False, 'error': f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'})
 
-                # Actualizar el subtotal y guardar la orden
                 orden.subtotal = subtotal_orden
                 orden.save()
 
-            # Retornar una respuesta exitosa
             return JsonResponse({'success': True, 'orden_id': orden.id})
 
         except Direccion.DoesNotExist:
@@ -762,93 +926,82 @@ def crear_orden(request):
 
 @login_required
 def direccion(request):
-    try:
-        # Intentamos obtener el perfil del cliente si existe
-        cliente = Cliente.objects.get(perfil__user=request.user)
+    # Inicializar variables para cliente y tienda
+    cliente = None
+    tienda = None
+    direcciones = None
+
+    # Verificar si el usuario es un cliente
+    if hasattr(request.user, 'cliente'):
+        cliente = request.user.cliente
         direcciones = Direccion.objects.filter(cliente=cliente)
-    except Cliente.DoesNotExist:
-        cliente = None
-        direcciones = None
 
-    try:
-        # Intentamos obtener el perfil de la tienda si existe
-        tienda = Tienda.objects.get(perfil__user=request.user)
-        direcciones_tienda = Direccion.objects.filter(tienda=tienda)
-    except Tienda.DoesNotExist:
-        tienda = None
-        direcciones_tienda = None
+    # Verificar si el usuario es una tienda
+    elif hasattr(request.user, 'tienda'):
+        tienda = request.user.tienda
+        direcciones = Direccion.objects.filter(tienda=tienda)
 
-    # Procesamos el formulario de nueva dirección
+    # Manejar el formulario de creación o actualización de direcciones
     if request.method == 'POST':
         form = DireccionForm(request.POST)
         if form.is_valid():
             direccion = form.save(commit=False)
-            # Si el usuario es un cliente, asignamos la dirección al cliente
             if cliente:
                 direccion.cliente = cliente
-            # Si el usuario es una tienda, asignamos la dirección a la tienda
             elif tienda:
                 direccion.tienda = tienda
             direccion.save()
+            messages.success(request, 'Dirección registrada exitosamente.')
             return redirect('direccion')
+        else:
+            messages.error(request, 'Por favor, corrija los errores en el formulario.')
+
     else:
         form = DireccionForm()
 
-    # Unimos ambas listas de direcciones, si existen
-    todas_direcciones = list(direcciones or []) + list(direcciones_tienda or [])
-
+    # Renderizar la plantilla con las direcciones y el formulario
     return render(request, 'otros/direccion.html', {
         'form': form,
-        'direcciones': todas_direcciones,
+        'direcciones': direcciones,
     })
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def registrar_direccion(request):
     if request.method == 'POST':
-        form = DireccionForm(request.POST)
+        # Obtener el cliente o la tienda asociados al usuario actual
+        cliente = getattr(request.user, 'cliente', None)
+        tienda = getattr(request.user, 'tienda', None)
+
+        # Pasar el cliente o la tienda al formulario
+        form = DireccionForm(request.POST, cliente=cliente, tienda=tienda)
         if form.is_valid():
-            try:
-                direccion = form.save(commit=False)
-                perfil = request.user.perfil
-                cliente = getattr(perfil, 'cliente', None)
-                tienda = getattr(perfil, 'tienda', None)
+            direccion = form.save(commit=False)
 
-                if cliente:
-                    direccion.cliente = cliente
-                    # Verificar si es la dirección principal y actualizar las otras
-                    if direccion.principal:
-                        Direccion.objects.filter(cliente=cliente, principal=True).update(principal=False)
-                    direccion.save()
-                    return JsonResponse({'success': True}, status=200)
+            # Asociar la dirección al cliente o tienda
+            if cliente:
+                direccion.cliente = cliente
+            elif tienda:
+                direccion.tienda = tienda
+            else:
+                return JsonResponse({'success': False, 'message': 'No se encontró un perfil asociado (cliente o tienda).'}, status=400)
 
-                elif tienda:
-                    direccion.tienda = tienda
-                    # Verificar si es la dirección principal y actualizar las otras
-                    if direccion.principal:
-                        Direccion.objects.filter(tienda=tienda, principal=True).update(principal=False)
-                    direccion.save()
-                    return JsonResponse({'success': True}, status=200)
-
-                else:
-                    return JsonResponse({'success': False, 'message': 'No se encontró un perfil asociado (cliente o tienda).'},
-                                        status=400)
-            except Exception as e:
-                print(str(e))
-                return JsonResponse({'success': False, 'message': 'Ocurrió un error al registrar la dirección.'},
-                                    status=500)
+            direccion.save()
+            return JsonResponse({'success': True, 'message': 'Dirección registrada exitosamente.'})
+            
         else:
-            return JsonResponse({'success': False, 'message': 'El formulario no es válido.'}, status=400)
+            # Devolver los errores específicos del formulario
+            return JsonResponse({'success': False, 'message': 'El formulario no es válido.', 'errors': form.errors}, status=400)
     return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
-
 
 @login_required
 def eliminar_direccion(request, direccion_id):
-    perfil = get_object_or_404(Perfil, user=request.user)
+    # Verificar si el usuario es un cliente o tienda
+    cliente = getattr(request.user, 'cliente', None)
+    tienda = getattr(request.user, 'tienda', None)
 
-    # Verificar si el perfil es de un cliente o de una tienda
-    cliente = getattr(perfil, 'cliente', None)
-    tienda = getattr(perfil, 'tienda', None)
-
+    # Buscar la dirección asociada al cliente o tienda
     if cliente:
         direccion = get_object_or_404(Direccion, id=direccion_id, cliente=cliente)
     elif tienda:
@@ -857,11 +1010,13 @@ def eliminar_direccion(request, direccion_id):
         messages.error(request, 'No se encontró un perfil asociado para eliminar la dirección.')
         return redirect('direccion')
 
+    # Eliminar la dirección si el método es POST
     if request.method == 'POST':
         direccion.delete()
         messages.success(request, 'Dirección eliminada correctamente.')
         return redirect('direccion')
 
+    # Redirigir si no es un método POST
     return redirect('direccion')
 
 @login_required
@@ -902,74 +1057,84 @@ def get_datos(request):
 
 
 @login_required
+@user_is_tienda
 def promocion(request):
-    perfil = get_object_or_404(Perfil, user=request.user)
-    tienda = get_object_or_404(Tienda, perfil=perfil)
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar promociones.")
+        return redirect("index_tienda")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = PromocionForm(request.POST)
         if form.is_valid():
             nueva_promocion = form.save(commit=False)
-            nueva_promocion.tienda = tienda
+            nueva_promocion.tienda = tienda  # Asociar la promoción a la tienda del usuario
             nueva_promocion.save()
-            form.save_m2m()
-
-            messages.success(request, '¡Promoción registrada exitosamente!')
-
-            return redirect('promocion')
+            form.save_m2m()  # Guardar las relaciones ManyToMany
+            messages.success(request, "¡Promoción registrada exitosamente!")
+            return redirect("promocion")
+        else:
+            messages.error(request, "Por favor, corrija los errores en el formulario.")
     else:
         form = PromocionForm()
 
-    # Consulta las promociones y productos aplicables
+    # Obtener las promociones asociadas a la tienda
     promociones = Promocion.objects.filter(tienda=tienda)
 
+    # Obtener los productos asociados a la tienda
     productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
 
-    return render(request, 'tiendas/promocion.html', {
-        'promociones': promociones,
-        'productos_tiendas': productos_tiendas,
-        'form': form,  # Asegúrate de pasar el formulario al contexto
+    # Obtener todas las categorías
+    categorias = Categoria.objects.all()
+
+    return render(request, "tiendas/promocion.html", {
+        "promociones": promociones,
+        "productos_tiendas": productos_tiendas,
+        "categorias": categorias,
+        "form": form,
+        "tienda": tienda,
     })
 
 @login_required
+@user_is_tienda
 def editar_promocion(request, id):
-    perfil = get_object_or_404(Perfil, user=request.user)
-    tienda = get_object_or_404(Tienda, perfil=perfil)
-    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
-    promocion = get_object_or_404(Promocion, id=id)
+    # Verificar que el usuario tiene una tienda asociada
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar promociones.")
+        return redirect("promocion")
 
-    if request.method == 'POST':
+    # Buscar la promoción y validar que pertenece a la tienda del usuario
+    promocion = get_object_or_404(Promocion, id=id, tienda=tienda)
+
+    if request.method == "POST":
         form = PromocionForm(request.POST, instance=promocion)
-
-        try:
-            if form.is_valid():
-                form.save()
-                return redirect('promocion')
-        except (ValueError, ValidationError):
-            form.add_error('descuento', 'Ingrese un número válido.')
-            # Renderizar el formulario de nuevo en caso de error
-            context = {
-                'form': form,
-                'promocion': promocion,
-                'productos_tiendas': productos_tiendas,
-                'productos_aplicables_ids': list(promocion.productos_aplicables.values_list('id', flat=True)),
-            }
-            return render(request, 'tiendas/editar_promocion.html', context)
-
+        if form.is_valid():
+            form.save()
+            messages.success(request, "¡Promoción actualizada exitosamente!")
+            return redirect("promocion")
+        else:
+            messages.error(request, "Por favor, corrija los errores en el formulario.")
     else:
         form = PromocionForm(instance=promocion)
 
-    # Obtener los IDs de los productos aplicables
-    productos_aplicables_ids = promocion.productos_aplicables.values_list('id', flat=True)
+    # Obtener los productos asociados a la tienda
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
+
+    # Obtener los IDs de los productos aplicables a la promoción
+    productos_aplicables_ids = list(promocion.productos_aplicables.values_list("id", flat=True))
 
     context = {
-        'form': form,
-        'promocion': promocion,
-        'productos_tiendas': productos_tiendas,
-        'productos_aplicables_ids': list(productos_aplicables_ids),
+        "form": form,
+        "promocion": promocion,
+        "productos_tiendas": productos_tiendas,
+        "productos_aplicables_ids": productos_aplicables_ids,
     }
-    return render(request, 'tiendas/editar_promocion.html', context)
 
+    return render(request, "tiendas/editar_promocion.html", context)
 
 def eliminar_promocion(request, id):
     promocion = get_object_or_404(Promocion, id=id)
@@ -980,27 +1145,48 @@ def eliminar_promocion(request, id):
         messages.success(request, "Promoción eliminada correctamente.")
         return redirect('promocion')
 
-    # Si la solicitud no es POST, redirige o muestra error
     messages.error(request, "Acción no permitida.")
     return redirect('promocion')
 
 def historial_compra(request):
     cliente = get_object_or_404(Cliente, perfil__user=request.user)
 
-    # Filtrar órdenes pendientes
     ordenes_pendientes = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.PENDIENTE)
     carrito = ordenes_pendientes.first() if ordenes_pendientes.exists() else None
 
-    # Obtener las últimas 5 órdenes completadas
     compras = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.COMPLETADA).order_by('-fecha_creacion')[:5]
 
-    # Preparar el contexto para la plantilla
     context = {
         'cliente': cliente,
         'user': request.user,
         'carrito': carrito,
         'compras': compras,
-        'ordenes_pendientes': ordenes_pendientes,  # Agregar las órdenes pendientes
+        'ordenes_pendientes': ordenes_pendientes,
     }
 
     return render(request, 'otros/historial_p.html', context)
+
+def inventario(request):
+    return render(request, 'otros/inventario.html')
+
+@login_required
+def ordenes(request):
+    # Obtener los perfiles del usuario que sean de tipo "tienda"
+    perfiles = Perfil.objects.filter(user=request.user, rol__nombre="tienda")
+
+    # Obtener todas las tiendas asociadas a esos perfiles
+    tiendas_usuario = Tienda.objects.filter(perfil__in=perfiles)
+
+    if not tiendas_usuario.exists():
+        messages.error(request, "No tienes ninguna tienda registrada para gestionar órdenes.")
+        return redirect("index_tienda")
+
+    # Filtrar órdenes de todas las tiendas asociadas al usuario
+    ordenes_no_completadas = Orden.objects.filter(tienda__in=tiendas_usuario).exclude(estado=Orden.Estado.COMPLETADA)
+    ordenes_completadas = Orden.objects.filter(tienda__in=tiendas_usuario, estado=Orden.Estado.COMPLETADA)
+
+    return render(request, "productos/ordenes.html", {
+        "ordenes_no_completadas": ordenes_no_completadas,
+        "ordenes_completadas": ordenes_completadas,
+    })
+

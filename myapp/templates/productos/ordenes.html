@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <h1>Órdenes Pendientes o Procesando</h1>
+
+    {% if mensaje %}
+        <div class="alert alert-warning">
+            {{ mensaje }}
+        </div>
+    {% endif %}
+        
+     <div class="row mb-4">
+            <!-- Barra de búsqueda -->
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" id="search-input" class="form-control" placeholder="Buscar por codigo de orden...">
+                    <button class="btn btn-primary" type="button" id="search-button">
+                        <i class="fas fa-search"></i> <!-- Ícono de lupa -->
+                    </button>
+                </div>
+            </div>
+        
+            <!-- Filtro por estado -->
+            <div class="col-md-3">
+                <select class="form-select" id="filter-status">
+                    <option value="">Filtrar por estado</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Procesado">Procesado</option>
+                </select>
+            </div>
+        
+            <div class="col-md-3">
+                <button id="btn-completadas" class="btn btn-primary">Órdenes Completadas</button>
+            </div>
+        </div>
+
+    <!-- Tabla de órdenes no completadas -->
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-dark text-center">
+            <tr>
+                <th scope="col">ID</th>
+                <th>Cliente</th>
+                <th>Productos</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Fecha de Creación</th>
+                <th>Dirección de Envío</th>
+                <th>Método de Pago</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for orden in ordenes_no_completadas %}
+                <tr>
+                    <td>{{ orden.id }}</td>
+                    <td>
+                        <a href="#" class="cliente-info text-primary fw-bold"
+                       data-id="{{ orden.cliente.perfil.user.id }}"
+                       data-first_name="{{ orden.cliente.perfil.user.first_name }}"
+                       data-last_name="{{ orden.cliente.perfil.user.last_name }}"
+                       data-telefono="{{ orden.cliente.telefono }}"
+                       data-tipo_documento="{{ orden.cliente.tipo_documento }}"
+                       data-numero_documento="{{ orden.cliente.numero_documento }}">
+                       {{ orden.cliente.perfil.user.username }}
+                        </a>
+                    </td>
+                    <td>
+                        <ul>
+                            {% for producto in orden.productos_orden.all %}
+                                <li>
+                                    {{ producto.producto_tienda.producto.nombre }} - 
+                                    Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>{{ orden.get_estado_display }}</td>
+                    <td>${{ orden.total }}</td>
+                    <td>{{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ orden.direccion_envio }}</td>
+                    <td>{{ orden.metodo_pago|capfirst }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8">No hay órdenes pendientes o en proceso.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+        <!-- Modal Cliente -->
+        <div class="modal fade" id="clienteModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detalles del Cliente</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
+                        <p><strong>Apellido:</strong> <span id="ClienteApellido"></span></p>
+                        <p><strong>Teléfono:</strong> <span id="ClienteTelefono"></span></p>
+                        <p><strong>Tipo de Documento:</strong> <span id="clienteTipoDocumento"></span></p>
+                        <p><strong>N° documento:</strong> <span id="clienteNumeroDocumento"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Tabla de órdenes completadas, inicialmente oculta -->
+    <h3>Órdenes Completadas</h3>
+    <div id="tabla-completadas" style="display: none;">
+
+        <div class="row mb-4">
+            <!-- Barra de búsqueda -->
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" id="search-input" class="form-control" placeholder="Buscar por codigo de orden...">
+                    <button class="btn btn-primary" type="button" id="search-button">
+                        <i class="fas fa-search"></i> <!-- Ícono de lupa -->
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Productos</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Fecha de Creación</th>
+                    <th>Dirección de Envío</th>
+                    <th>Método de Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orden in ordenes_completadas %}
+                    <tr>
+                        <td>{{ orden.id }}</td>
+                        <td>{{ orden.cliente.perfil.user.username }}</td>
+                        <td>
+                            <ul>
+                                {% for producto in orden.productos_orden.all %}
+                                    <li>
+                                        {{ producto.producto_tienda.producto.nombre }} - 
+                                        Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>{{ orden.get_estado_display }}</td>
+                        <td>${{ orden.total }}</td>
+                        <td>{{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}</td>
+                        <td>{{ orden.direccion_envio }}</td>
+                        <td>{{ orden.metodo_pago|capfirst }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">No hay órdenes completadas.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Función para alternar la visibilidad de las órdenes completadas
+        document.getElementById('btn-completadas').onclick = function() {
+            var tablaCompletadas = document.getElementById('tabla-completadas');
+            if (tablaCompletadas.style.display === "none") {
+                tablaCompletadas.style.display = "block";
+            } else {
+                tablaCompletadas.style.display = "none";
+            }
+        };
+
+        // Script del Modal Cliente -->
+        document.addEventListener('DOMContentLoaded', function() {
+            const clienteModal  = new bootstrap.Modal(document.getElementById('clienteModal'));
+
+            document.querySelectorAll('.cliente-info').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('clienteNombre').innerText = `${item.getAttribute('data-first_name')}`;
+                    document.getElementById('ClienteApellido').innerText = `${item.getAttribute('data-last_name')}`;
+                    document.getElementById('ClienteTelefono').innerText = `${item.getAttribute('data-telefono')}`;
+                    document.getElementById('clienteTipoDocumento').innerText = `${item.getAttribute('data-tipo_documento')}`;
+                    document.getElementById('clienteNumeroDocumento').innerText = `${item.getAttribute('data-numero_documento')}`;
+                    clienteModal.show();
+                });
+            });
+        });
+
+    </script>
+{% endblock %}

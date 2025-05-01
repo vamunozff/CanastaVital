@@ -3,22 +3,9 @@
 
 <div class="">
     <h1 class="mb-2">Promociones</h1>
-    <button class="btn btn-primary newUser" data-toggle="modal" data-target="#registroPromocionModal">
+    <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#registroPromocionModal">
         Registrar Nueva Promoción
     </button>
-
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
 
 <br><br>
     <div class="row mb-4">
@@ -155,8 +142,8 @@
                 const precio = item.getAttribute('data-precio');
                 const cantidad = item.getAttribute('data-cantidad');
                 const estado = item.getAttribute('data-estado');
-                const categoria = item.getAttribute('producto-categoria');
-                const descripcion = item.getAttribute('producto-descripcion')
+                const categoria = item.getAttribute('data-categoria');
+                const descripcion = item.getAttribute('data-descripcion')
 
                 // Actualiza el contenido del modal con la información del producto
                 document.getElementById('producto-nombre').innerText = nombre;
@@ -220,7 +207,7 @@
 
                     <div class="form-group">
                         <label for="descuento_porcentaje">Descuento Porsentaje</label>
-                        <input type="number" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ form.descuento_porcentaje.value }}" placeholder="20" required>
+                        <input type="number" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ form.descuento_porcentaje.value }}" placeholder="20%" required>
                         {% if form.descuento_porcentaje.errors %}
                             <div class="invalid-feedback">
                                 {% for error in form.descuento_porcentaje.errors %}

@@ -45,10 +45,10 @@
                 </div>
             {% endif %}
         </div>
-
+<br>
         <div class="form-group mb-3">
             <label for="descuento_porcentaje">Descuento porcentaje</label>
-            <input type="text" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ promocion.descuento_porcentaje }}%" required>
+            <input type="number" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ promocion.descuento_porcentaje }}" required>
             {% if form.descuento_porcentaje.errors %}
                 <div class="invalid-feedback">
                     {{ form.descuento_porcentaje.errors }}

@@ -1,0 +1,22 @@
+{% extends 'inicio/base_home.html' %}
+{% block content %}
+
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow-lg p-4 border-0" style="max-width: 450px; width: 100%;">
+        <div class="card-body text-center">
+            <h3 class="mb-4 text-primary fw-bold">Selecciona tu Perfil</h3>
+            <p class="text-muted">Elige el perfil con el que deseas ingresar:</p>
+            <ul class="list-group list-unstyled mt-3">
+                {% for perfil in perfiles %}
+                    <li class="mb-3">
+                        <a href="{% url 'seleccionar_perfil' perfil.id %}" class="btn btn-lg btn-outline-primary w-100 rounded-pill shadow-sm">
+                            <i class="fas fa-user-circle me-2"></i> Ingresar como {{ perfil.rol.nombre|capfirst }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

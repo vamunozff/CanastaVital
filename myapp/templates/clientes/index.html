@@ -1,13 +1,112 @@
 {% extends 'base.html' %}
 {% block title %}Panel de Cliente{% endblock %}
+{% load static %}
 {% block content %}
-
 <div class="container">
     <h3 class="text-center mb-4">¡Bienvenido, {{ user.first_name }} {{ user.last_name }}!</h3>
+<style>
+    .carousel-inner img {
+        height: 400px;
+        object-fit: cover;
+        width: 100%;
+    }
+    .carousel-inner p, h5 {
+       color: #0e2238;
+    }
+</style>
+
+    {% if promociones %}
+        <div id="carrusel-promociones" class="carousel slide mb-5" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {% for promocion in promociones %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <img src="{% if promocion.imagen %}{{ promocion.imagen.url }}{% else %}{% static 'img/fondo_canasta.jpg' %}{% endif %}"
+                             class="d-block w-100" alt="Imagen de {{ promocion.nombre }}">
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5>{{ promocion.nombre }}</h5>
+                            <p>{{ promocion.descripcion }}</p>
+                            <p><strong>Descuento:</strong> {{ promocion.descuento_porcentaje }}%</p>
+                            <p><strong>Válido hasta:</strong> {{ promocion.fecha_fin|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Controles del carrusel -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#carrusel-promociones" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carrusel-promociones" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+            </button>
+        </div>
+    {% else %}
+        <p class="text-center">No hay promociones activas en este momento.</p>
+    {% endif %}
+</div>
+<h4 class="mb-4">Categorías</h4>
+<div class="dashboard-cards">
+    {% for categoria in categorias %}
+        <div class="card">
+            <div class="card-icon">
+                <i class="{{ categoria.icono }}"></i>
+            </div>
+            <div class="card-content">
+                <h3>{{ categoria.nombre }}</h3>
+                <p>{{ categoria.descripcion }}</p>
+            </div>
+        </div>
+    {% endfor %}
 </div>
 
-    <!-- Bootstrap JS y dependencias -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rTGO8nWjdZ+0yOnn7vT/0k/1hmc8cP3dY7FlcH9dC5aRmrC+4B" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-JZ70Z20q36/nN8BppXjZ2q2h9P1iQtZp+1TkKZ6Qe2R6aFDfmbKn/QVp1FStY1s" crossorigin="anonymous"></script>
+      <style>
 
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.dashboard-header p {
+    font-size: 1.2rem;
+    color: #555;
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.card-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.card-content p {
+    font-size: 1rem;
+    color: #555;
+}
+
+    </style>
 {% endblock %}

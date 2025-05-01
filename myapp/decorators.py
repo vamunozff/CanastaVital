@@ -1,33 +1,33 @@
 # decorators.py
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
+from functools import wraps
+from myapp.models import Cliente
 
 def user_is_tienda(view_func):
-    @login_required
-    def _wrapped_view(request, *args, **kwargs):
-
-        if hasattr(request.user, 'perfil') and request.user.perfil.rol.nombre == 'tienda':
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if request.user.groups.filter(name='Tienda').exists():
             return view_func(request, *args, **kwargs)
-        else:
-            return redirect('unauthorized')
-    return _wrapped_view
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('unauthorized')
+    return wrapper
 
 def user_is_cliente(view_func):
-    @login_required
-    def _wrapped_view(request, *args, **kwargs):
-
-        if hasattr(request.user, 'perfil') and request.user.perfil.rol.nombre == 'cliente':
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if request.user.groups.filter(name='Cliente').exists():
             return view_func(request, *args, **kwargs)
-        else:
-            return redirect('unauthorized')
-    return _wrapped_view
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('unauthorized')
+    return wrapper
 
 def user_is_administrador(view_func):
-    @login_required
-    def _wrapped_view(request, *args, **kwargs):
-
-        if hasattr(request.user, 'perfil') and request.user.perfil.rol.nombre == 'administrador':
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if request.user.groups.filter(name='Administrador').exists():
             return view_func(request, *args, **kwargs)
-        else:
-            return redirect('unauthorized')
-    return _wrapped_view
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('unauthorized')
+    return wrapper

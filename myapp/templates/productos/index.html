@@ -4,18 +4,7 @@
 <main>
     <section class="p-3">
         <h1>Productos Asignados</h1>
-
-        <!-- Alert Messages -->
-        {% if messages %}
-            <div class="container mt-3">
-                {% for message in messages %}
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <strong class="text-dark">{{ message }}</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+    <title>{% block title %}Productos{% endblock %}</title>
 
         <div class="row">
             <div class="col-12">
@@ -145,7 +134,7 @@
 
     </section>
 
-    <!-- Modal Form -->
+    <!-- Modal para asignar producto -->
     <div class="modal fade" id="userForm">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">

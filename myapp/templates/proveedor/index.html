@@ -23,15 +23,37 @@
             {% endfor %}
           </div>
         {% endif %}
+
         <div class="row">
             <div class="col-12">
                 <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Registrar proveedor</button>
             </div>
         </div>
+<br>
+        <div class="row mb-4">
+    <!-- Barra de búsqueda -->
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" id="search-input" class="form-control" placeholder="Buscar proveedor...">
+            <button class="btn btn-primary" type="button" id="search-button">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
 
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
+    <!-- Filtro por estado -->
+    <div class="col-md-3">
+        <select class="form-select" id="filter-status">
+            <option value="">Filtrar por estado</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+        </select>
+    </div>
+</div>
+
+            <div class="table-responsive mt-4">
+                <table class="table table-hover table-bordered align-middle">
+                    <thead class="table-dark text-center">
                         <tr>
                             <th>#</th>
                             <th>Razon Social</th>
@@ -44,14 +66,18 @@
                     </thead>
                     <tbody>
                         {% for proveedor in proveedores %}
-                        <tr>
+                        <tr class="text-center">
                             <td>{{ forloop.counter }}</td>
                             <td><a href="{% url 'actualizar_proveedor' proveedor.id %}">{{ proveedor.razon_social }}</a></td>
                             <td>{{ proveedor.email }}</td>
                             <td>{{ proveedor.telefono }}</td>
                             <td>{{ proveedor.direccion }}</td>
-                            <td>{{ proveedor.estado }}</td>
-                            <td>{{ proveedor.fecha_registro }}</td>
+                            <td>
+                                <span class="badge {% if proveedor.estado == 'activo' %} bg-success {% else %} bg-danger {% endif %}">
+                                    {{ proveedor.estado|capfirst }}
+                                </span>
+                            </td>
+                            <td>{{ proveedor.fecha_registro|date:"d M Y" }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -86,7 +112,7 @@
                             </div>
                             <div>
                                 <label for="city" class="form-label">Dirección:</label>
-                                <input class="form-control" type="text" id="txtdireccion" name="txtdireccion" required>
+                                <input class="form-control" type="text" id="txtDireccion" name="txtDireccion" required>
                             </div>
                             <div>
                                 <label for="phone" class="form-label">Estado:</label>
@@ -108,4 +134,24 @@
   </main>
   </body>
 </html>
+
+<script>
+    // Esperar a que el DOM esté completamente cargado
+    document.addEventListener("DOMContentLoaded", function () {
+      // Selecciona todas las alertas
+      const alerts = document.querySelectorAll('.alert');
+  
+      alerts.forEach(function (alert) {
+        // Espera 5 segundos (5000 ms) y luego las oculta
+        setTimeout(function () {
+          // Si la alerta aún existe en el DOM
+          if (alert) {
+            let fade = new bootstrap.Alert(alert);
+            fade.close();  // Cierra con animación
+          }
+        }, 5000); // 5 segundos
+      });
+    });
+  </script>
+  
 {% endblock %}

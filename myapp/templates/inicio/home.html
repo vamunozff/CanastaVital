@@ -52,24 +52,53 @@
     <!-- Categorías -->
     <section class="categorias">
         <h2>Nuestras Categorías</h2>
-        <div class="categorias-grid">
-            <div class="categoria-item">
-                <i class="fa fa-apple-alt"></i>
-                <p>Frutas y verduras</p>
+<div class="dashboard-cards">
+    {% for categoria in categorias %}
+        <div class="card">
+            <div class="card-icon">
+                <i class="{{ categoria.icono }}"></i>
             </div>
-            <div class="categoria-item">
-                <i class="fa fa-drumstick-bite"></i>
-                <p>Carnes y pescados</p>
-            </div>
-            <div class="categoria-item">
-                <i class="fa fa-egg"></i>
-                <p>Lácteos y huevos</p>
-            </div>
-            <div class="categoria-item">
-                <i class="fa fa-bread-slice"></i>
-                <p>Panadería y cereales</p>
+            <div class="card-content">
+                <h3>{{ categoria.nombre }}</h3>
             </div>
         </div>
+    {% endfor %}
+</div>
+
+      <style>
+
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+    gap: 10px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 9px;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 2rem;
+    color: #3498db;
+    margin-bottom: 2px;
+}
+
+.card-content h3 {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+    </style>
     </section>
 
     <!-- Pie de página -->
