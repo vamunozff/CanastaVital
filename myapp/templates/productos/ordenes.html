@@ -50,18 +50,18 @@
             </tr>
         </thead>
         <tbody>
-            {% for orden in ordenes_no_completadas %}
+            {% for orden in ordenes_pendientes %}
                 <tr>
                     <td>{{ orden.id }}</td>
                     <td>
                         <a href="#" class="cliente-info text-primary fw-bold"
-                       data-id="{{ orden.cliente.perfil.user.id }}"
-                       data-first_name="{{ orden.cliente.perfil.user.first_name }}"
-                       data-last_name="{{ orden.cliente.perfil.user.last_name }}"
-                       data-telefono="{{ orden.cliente.telefono }}"
-                       data-tipo_documento="{{ orden.cliente.tipo_documento }}"
-                       data-numero_documento="{{ orden.cliente.numero_documento }}">
-                       {{ orden.cliente.perfil.user.username }}
+                        data-id="{{ orden.cliente.usuario.id }}"
+                        data-first_name="{{ orden.cliente.usuario.first_name }}"
+                        data-last_name="{{ orden.cliente.usuario.last_name }}"
+                        data-telefono="{{ orden.cliente.telefono }}"
+                        data-tipo_documento="{{ orden.cliente.tipo_documento }}"
+                        data-numero_documento="{{ orden.cliente.numero_documento }}">
+                        {{ orden.cliente.usuario.username }}
                         </a>
                     </td>
                     <td>
@@ -87,7 +87,6 @@
             {% endfor %}
         </tbody>
     </table>
-
 
         <!-- Modal Cliente -->
         <div class="modal fade" id="clienteModal">
@@ -141,7 +140,7 @@
                 {% for orden in ordenes_completadas %}
                     <tr>
                         <td>{{ orden.id }}</td>
-                        <td>{{ orden.cliente.perfil.user.username }}</td>
+                        <td>{{ orden.cliente.usuario.username }}</td>
                         <td>
                             <ul>
                                 {% for producto in orden.productos_orden.all %}

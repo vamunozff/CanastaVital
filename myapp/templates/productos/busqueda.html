@@ -32,7 +32,19 @@
             <p class="cantidad-producto">
                 {% if producto_tienda.cantidad > 0 %}
                     Cantidad disponible: {{ producto_tienda.cantidad }}
-                    <button class="agregar-al-carrito btn btn-primary" data-product-id="{{ producto_tienda.id }}">Agregar al carrito</button>
+                    {% for promocion in producto_tienda.promociones.all %}
+                        {% if promocion.activo %}
+                            {% with descuento=promocion.descuento_porcentaje %}
+                                <button class="agregar-al-carrito btn btn-primary"
+                                    data-product-id="{{ producto_tienda.id }}"
+                                    data-descuento="{{ descuento }}">Agregar al carrito</button>
+                            {% endwith %}
+                        {% endif %}
+                    {% empty %}
+                        <button class="agregar-al-carrito btn btn-primary"
+                            data-product-id="{{ producto_tienda.id }}"
+                            data-descuento="0">Agregar al carrito</button>
+                    {% endfor %}
                 {% else %}
                     <span style="color: red;">No disponible</span>
                 {% endif %}
@@ -45,57 +57,55 @@
 
     <div id='contenedor-carrito' class="deslizador cerrar">
         <button id="cerrar-carrito">X</button>
-        <!-- Título del modal -->
-    <h2 class="titulo-modal">Productos en el carrito</h2>
+        <!-- modal de los productos en el carrito -->
+        <h2 class="titulo-modal">Productos en el carrito</h2>
         <div id='carrito'>
             <div id="contenedor-productos-carrito">
                 <table id="tabla-carrito">
                     <thead id="encabezado-tabla-carrito">
-                        <tr>
-                            <th class="columna-nombre">Nombre del producto</th>
-                            <th class="columna-cantidad">Cantidad</th>
-                            <th class="columna-precio">Precio</th>
-                            <th class="columna-precio-actualizado">Precio actualizado</th>
-                            <th class="columna-actualizar">Actualizar</th>
-                            <th class="columna-eliminar">Eliminar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpo-tabla-carrito"></tbody>
+    <tr>
+        <th class="columna-nombre">Nombre del producto</th>
+        <th class="columna-cantidad">Cantidad</th>
+        <th class="columna-precio">Precio unitario</th>
+        <th class="columna-descuento">Descuento</th>
+        <th class="columna-precio-actualizado">Precio actualizado</th>
+        <th class="columna-precio-total">Precio total</th>
+        <th class="columna-opciones">Opciones</th>
+    </tr>
+</thead>
+<tbody id="cuerpo-tabla-carrito"></tbody>
                 </table>
             </div>
         </div>
         <div id='controles-monto'>
-            <table>
-                <tbody>
-                    <tr id='fila-subtotal'>
-                        <td id="subtotal-label">Subtotal:</td>
-                        <td id="subtotal-carrito">0.00</td>
-                    </tr>
-                    <tr id='fila-iva'>
-                        <td id="iva-label">IVA (19%):</td>
-                        <td id="iva-carrito">0.00</td>
-                    </tr>
-                    <tr id='fila-total'>
-                        <td id="total-label">Total:</td>
-                        <td id="total-carrito">0.00</td>
-                    </tr>
-                    <tr id="fila-promocion-pago">
-                        <td id="contenedor-promocion">
-                        </td>
-                        <td>
-                            <button id="pagar" class="btn btn-success">Pagar</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-        </div>
-
+    <table>
+        <tbody>
+            <tr id='fila-subtotal'>
+                <td id="subtotal-label">Subtotal:</td>
+                <td id="subtotal-carrito">0.00</td>
+            </tr>
+            <tr id='fila-iva'>
+                <td id="iva-label">IVA (19%):</td>
+                <td id="iva-carrito">0.00</td>
+            </tr>
+            <tr id='fila-total'>
+                <td id="total-label">Total:</td>
+                <td id="total-carrito">0.00</td>
+            </tr>
+            <tr id="fila-promocion-pago">
+                <td id="contenedor-promocion"></td>
+                <td class="d-flex justify-content-end align-items-center gap-2">
+                    <button id="vaciar-carrito" class="btn btn-danger me-2">
+                        <i class="fas fa-trash"></i> Vaciar todo
+                    </button>
+                    <button id="pagar" class="btn btn-success ms-2">Pagar</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
     </div>
     <div id="superposicion-carrito"></div>
 
-    </div>
-
     <script src="{% static 'myapp/js/busqueda.js' %}"></script>
-
 {% endblock %}

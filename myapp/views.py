@@ -20,13 +20,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
-import logging
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from functools import wraps
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login as auth_login
+from django.http import HttpResponse
+import logging  # <-- Agrega esta línea para importar logging
 
 # Create your views here.
 def hello(request):
@@ -74,36 +69,22 @@ def login_view(request):
 @user_is_tienda
 def vista_tienda(request):
     return render(request, 'tienda.html')
+
 @user_is_cliente
 def vista_cliente(request):
     return render(request, 'cliente.html')
+
 @user_is_administrador
 def vista_para_administrador(request):
     return render(request, 'administrador.html')
+
 def unauthorized(request):
     return render(request, 'unauthorized.html', {'message': 'No tienes permiso para acceder a esta página.'})
 
 def home(request):
     categorias = Categoria.objects.all()
-    return render(request, 'inicio/home.html',  {'categorias': categorias})
+    return render(request, 'inicio/index.html',  {'categorias': categorias})
 
-@login_required
-def completar_registro(request):
-    perfil_id = request.session.get('perfil_id')
-    print(f"Perfil ID en sesión: {perfil_id}")
-
-    if not perfil_id:
-        messages.error(request, "No tienes un perfil asociado. Por favor contacta a un administrador.")
-        return redirect('verificar_registro')
-
-    perfil = get_object_or_404(Perfil, id=perfil_id)
-    print(f"Perfil encontrado: {perfil}")
-
-    if not perfil.rol:
-        messages.error(request, "Tu perfil no tiene un rol asignado. Por favor contacta a un administrador.")
-        return redirect('verificar_registro')
-
-    return render(request, 'registration/confirmar_completar.html', {'perfil': perfil})
 
 @login_required
 @user_is_tienda
@@ -204,35 +185,55 @@ def register(request):
 
 
 @login_required
-@login_required
 @user_is_cliente
 def perfil_cliente(request):
-    perfil_id = request.session.get('perfil_id')  # Asegurar que perfil_id está definido
-    if not perfil_id:
-        messages.error(request, "No tienes un perfil de cliente activo.")
-        return redirect('verificar_registro')
-
-    perfil = get_object_or_404(Perfil, id=perfil_id)
-    cliente = get_object_or_404(Cliente, perfil=perfil)
+    try:
+        cliente = Cliente.objects.get(usuario=request.user)
+    except Cliente.DoesNotExist:
+        messages.error(request, "No tienes un perfil de cliente asociado.")
+        return redirect('home')
 
     if request.method == 'POST':
-        cliente_form = ClienteForm(request.POST, request.FILES, instance=cliente)
+        # Crear un diccionario con los datos del formulario para el modelo Cliente
+        cliente_data = {
+            'telefono': request.POST.get('telefono', ''),
+            'fecha_nacimiento': request.POST.get('fecha_nacimiento', None),
+            'numero_documento': request.POST.get('numero_documento', ''),
+            'tipo_documento': cliente.tipo_documento  # Mantener el tipo de documento actual
+        }
+        
+        # Manejar la imagen de perfil si se proporciona
+        if 'imagen_perfil' in request.FILES:
+            cliente_data['imagen_perfil'] = request.FILES['imagen_perfil']
+        
+        # Actualizar datos del modelo Cliente
+        cliente_form = ClienteForm(cliente_data, request.FILES, instance=cliente)
+        
         if cliente_form.is_valid():
-            cliente_form.save()
-            messages.success(request, 'Perfil actualizado exitosamente.')
-            return redirect('perfil_cliente')
+            with transaction.atomic():  # Usar transacción para garantizar que ambos modelos se actualicen o ninguno
+                cliente_form.save()
+                
+                # Actualizar datos del modelo User
+                request.user.first_name = request.POST.get('first_name', request.user.first_name)
+                request.user.last_name = request.POST.get('last_name', request.user.last_name)
+                request.user.save()
+                
+                messages.success(request, "Perfil actualizado correctamente.")
+                return redirect('perfil_cliente')
         else:
-            messages.error(request, 'Error al actualizar el perfil. Verifica los campos.')
-
+            # Mostrar errores específicos del formulario
+            for field, errors in cliente_form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error en {field}: {error}")
     else:
         cliente_form = ClienteForm(instance=cliente)
 
-    return render(request, 'clientes/perfil.html', {
-        'cliente_form': cliente_form,
+    context = {
         'cliente': cliente,
-        'user': request.user
-    })
-
+        'user': request.user,
+        'cliente_form': cliente_form,
+    }
+    return render(request, 'clientes/perfil.html', context)
 
 
 @login_required
@@ -408,10 +409,13 @@ def index_producto(request):
 
 
 @login_required
+@user_is_tienda
 def buscar_producto(request):
     query = request.GET.get('q', '')
-    perfil = get_object_or_404(Perfil, user=request.user)
-    tienda = get_object_or_404(Tienda, perfil=perfil)
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        return JsonResponse({'html': '<tr><td colspan="5">No tienes una tienda asociada.</td></tr>'})
 
     productos_tiendas = ProductosTiendas.objects.filter(
         tienda=tienda,
@@ -602,76 +606,6 @@ def eliminar_proveedor(request, id):
     messages.error(request, "Acción no permitida.")
     return redirect("index_proveedor")
 
-@login_required
-def register_cliente(request):
-    cliente_form = ClienteForm(request.POST or None, request.FILES or None)
-
-    if request.method == 'POST':
-        if cliente_form.is_valid():
-            try:
-                # Verifica si el usuario ya tiene un cliente registrado
-                if Cliente.objects.filter(perfil__user=request.user).exists():
-                    messages.warning(request, 'Ya tienes un cliente registrado.')
-                    return redirect('index_cliente')
-
-                # Obtiene el perfil asociado al usuario
-                perfil = Perfil.objects.get(user=request.user)
-
-                # Crea y guarda el cliente
-                cliente = cliente_form.save(commit=False)
-                cliente.perfil = perfil
-                cliente.save()
-
-                messages.success(request, 'El cliente se ha registrado exitosamente.')
-                return redirect('index_cliente')
-            except Perfil.DoesNotExist:
-                messages.error(request, 'No se encontró el perfil asociado. Por favor, complete el registro primero.')
-                return redirect('index_cliente')
-        else:
-            # Itera sobre los errores del formulario y los agrega a los mensajes
-            for field, error_list in cliente_form.errors.items():
-                field_name = cliente_form.fields[field].label
-                for error in error_list:
-                    messages.error(request, f'Error en "{field_name}": {error}')
-
-    context = {'cliente_form': cliente_form}
-    return render(request, 'registration/confirmar_completar.html', context)
-
-@login_required
-def register_tienda(request):
-    if request.method == 'POST':
-        tienda_form = TiendaForm(request.POST, request.FILES)
-
-        if tienda_form.is_valid():
-            try:
-                perfil = Perfil.objects.get(user=request.user)
-            except Perfil.DoesNotExist:
-                messages.error(request, 'No se encontró el perfil asociado. Por favor, complete el registro primero.')
-                return redirect('index_tienda')
-
-            if perfil.rol.nombre != 'tienda':
-                messages.error(request, 'No tiene permiso para registrar una tienda.')
-                return redirect('index_tienda')
-
-            tienda = tienda_form.save(commit=False)
-            tienda.perfil = perfil
-            tienda.save()
-
-            messages.success(request, 'La tienda se ha registrado exitosamente.')
-            return redirect('index_tienda')
-
-        else:
-            for field, error_list in tienda_form.errors.items():
-                for error in error_list:
-                    messages.error(request, f'Error en {field}: {error}')
-
-    else:
-        tienda_form = TiendaForm()
-
-    context = {
-        'tienda_form': tienda_form
-    }
-    return render(request, 'registration/confirmar_completar.html', context)
 
 
 @login_required
@@ -688,13 +622,13 @@ def busqueda_tiendas(request):
 def busqueda_productos(request, tienda_id):
     tienda = get_object_or_404(Tienda, id=tienda_id)
 
-    productosTiendas = ProductosTiendas.objects.filter(tienda=tienda, estado='activo').select_related('producto', 'proveedor').prefetch_related('promociones')
-
+    productosTiendas = ProductosTiendas.objects.filter(
+        tienda=tienda, estado='activo'
+    ).select_related('producto', 'proveedor').prefetch_related('promociones')
     context = {
         'tienda': tienda,
         'productosTiendas': productosTiendas
     }
-
     return render(request, 'productos/busqueda.html', context)
 
 
@@ -708,20 +642,17 @@ def promociones_activas(request, tienda_id):
     }
     return render(request, 'promociones/activas.html', context)
 
-
 @login_required
 def confirmar_pago(request):
-    # Buscar el perfil del usuario con rol de cliente
-    perfil_cliente = request.user.perfil_set.filter(rol__nombre="cliente").first()
-    
-    if not perfil_cliente:
-        return JsonResponse({'error': 'No tienes un perfil de cliente asociado.'}, status=400)
+    # Verificar que el usuario pertenece al grupo "Cliente"
+    if not request.user.groups.filter(name='Cliente').exists():
+        return JsonResponse({'error': 'No tienes permiso para realizar esta acción.'}, status=403)
 
-    # Verificar que existe un cliente asociado a ese perfil
-    cliente = Cliente.objects.filter(perfil=perfil_cliente).first()
-    
-    if not cliente:
-        return JsonResponse({'error': 'No tienes un cliente asociado a tu perfil.'}, status=400)
+    # Verificar que existe un cliente asociado al usuario
+    try:
+        cliente = Cliente.objects.get(usuario=request.user)
+    except Cliente.DoesNotExist:
+        return JsonResponse({'error': 'No tienes un cliente asociado a tu cuenta.'}, status=400)
 
     # Obtener direcciones del cliente
     direcciones = Direccion.objects.filter(cliente=cliente)
@@ -789,12 +720,15 @@ def confirmar_pago(request):
 
             # Agregar productos a la orden
             for producto in productos_en_tienda:
-                ProductosOrden.objects.create(
+                ProductoOrden.objects.create(
                     orden=orden,
                     producto_tienda_id=producto['producto'].id,
                     cantidad=producto['cantidad'],
                     precio_unitario=producto['precio_unitario']
                 )
+
+            # Vaciar el carrito después de confirmar el pago
+            request.session['carrito'] = []
 
             return JsonResponse({'success': True, 'orden_id': orden.id})
 
@@ -812,7 +746,6 @@ def confirmar_pago(request):
         'metodos_pago': metodos_pago,
     }
     return render(request, 'otros/confirmar_pago.html', context)
-
 
 # @csrf_exempt
 @login_required
@@ -840,17 +773,20 @@ def crear_direccion(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
-# @csrf_exempt
 @login_required
 def crear_orden(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
-            perfil = get_object_or_404(Perfil, user=request.user)
-            cliente = get_object_or_404(Cliente, perfil=perfil)
+            # Obtener el cliente asociado al usuario actual
+            try:
+                cliente = Cliente.objects.get(usuario=request.user)
+            except Cliente.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'No tienes un cliente asociado a tu cuenta.'}, status=400)
 
             direccion_envio_id = data.get('direccion_envio_id')
+            metodo_pago_id = data.get('metodo_pago_id')  # <-- Asegúrate de recibirlo
             subtotal = float(data.get('subtotal', 0))
             iva = float(data.get('iva', 0))
             total = float(data.get('total', 0))
@@ -859,8 +795,19 @@ def crear_orden(request):
             if not productos:
                 return JsonResponse({'success': False, 'error': 'El carrito está vacío.'})
 
-            direccion_envio = Direccion.objects.get(id=direccion_envio_id, cliente=cliente)
+            # Validar dirección de envío
+            try:
+                direccion_envio = Direccion.objects.get(id=direccion_envio_id, cliente=cliente)
+            except Direccion.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Dirección de envío no encontrada.'})
 
+            # Validar método de pago
+            try:
+                metodo_pago = MetodoPago.objects.get(id=metodo_pago_id)
+            except MetodoPago.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Método de pago no válido.'})
+
+            # Validar que todos los productos pertenezcan a la misma tienda
             tienda_ids = set()
             for item in productos:
                 try:
@@ -876,11 +823,11 @@ def crear_orden(request):
             tienda = Tienda.objects.get(id=tienda_id)
 
             with transaction.atomic():
-
                 orden = Orden.objects.create(
                     cliente=cliente,
                     tienda=tienda,
                     direccion_envio=direccion_envio,
+                    metodo_pago=metodo_pago,  # <-- Aquí se asigna el método de pago
                     subtotal=0,
                     iva=iva,
                     total=total,
@@ -923,7 +870,6 @@ def crear_orden(request):
 
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
-
 @login_required
 def direccion(request):
     # Inicializar variables para cliente y tienda
@@ -931,15 +877,18 @@ def direccion(request):
     tienda = None
     direcciones = None
 
-    # Verificar si el usuario es un cliente
-    if hasattr(request.user, 'cliente'):
+    # Determinar el grupo activo del usuario
+    grupo_activo = request.session.get('groups', None)
+
+    if grupo_activo == 'Cliente' and hasattr(request.user, 'cliente'):
         cliente = request.user.cliente
         direcciones = Direccion.objects.filter(cliente=cliente)
-
-    # Verificar si el usuario es una tienda
-    elif hasattr(request.user, 'tienda'):
+    elif grupo_activo == 'Tienda' and hasattr(request.user, 'tienda'):
         tienda = request.user.tienda
         direcciones = Direccion.objects.filter(tienda=tienda)
+    else:
+        messages.error(request, "No se pudo determinar el grupo activo. Por favor, selecciona un rol.")
+        return redirect('home')
 
     # Manejar el formulario de creación o actualización de direcciones
     if request.method == 'POST':
@@ -955,7 +904,6 @@ def direccion(request):
             return redirect('direccion')
         else:
             messages.error(request, 'Por favor, corrija los errores en el formulario.')
-
     else:
         form = DireccionForm()
 
@@ -969,31 +917,74 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def registrar_direccion(request):
+    # Verificar si la solicitud viene de la página de confirmación de pago
+    referer = request.META.get('HTTP_REFERER', '')
+    es_confirmacion_pago = 'confirmar_pago' in referer
+    
+    # Determinar el grupo activo del usuario desde la sesión
+    grupo_activo = request.session.get('groups', None)
+    
+    # Obtener cliente y tienda (si existen)
+    cliente = getattr(request.user, 'cliente', None)
+    tienda = getattr(request.user, 'tienda', None)
+    
+    # Si estamos en la página de confirmación de pago, siempre usamos el perfil de cliente
+    if es_confirmacion_pago and cliente:
+        usar_perfil = 'Cliente'
+    # De lo contrario, usamos el grupo activo
+    elif grupo_activo in ['Cliente', 'Tienda']:
+        usar_perfil = grupo_activo
+    else:
+        messages.error(request, "No se pudo determinar el perfil a usar. Por favor, selecciona un rol.")
+        return redirect('direccion')
+    
+    # Determinar qué perfil usar para la dirección
+    perfil_cliente = cliente if usar_perfil == 'Cliente' else None
+    perfil_tienda = tienda if usar_perfil == 'Tienda' else None
+    
     if request.method == 'POST':
-        # Obtener el cliente o la tienda asociados al usuario actual
-        cliente = getattr(request.user, 'cliente', None)
-        tienda = getattr(request.user, 'tienda', None)
-
-        # Pasar el cliente o la tienda al formulario
-        form = DireccionForm(request.POST, cliente=cliente, tienda=tienda)
+        # Pasar cliente o tienda al formulario según corresponda
+        form = DireccionForm(request.POST, cliente=perfil_cliente, tienda=perfil_tienda)
         if form.is_valid():
             direccion = form.save(commit=False)
-
-            # Asociar la dirección al cliente o tienda
-            if cliente:
-                direccion.cliente = cliente
-            elif tienda:
-                direccion.tienda = tienda
-            else:
-                return JsonResponse({'success': False, 'message': 'No se encontró un perfil asociado (cliente o tienda).'}, status=400)
-
-            direccion.save()
-            return JsonResponse({'success': True, 'message': 'Dirección registrada exitosamente.'})
             
+            # Asociar la dirección al perfil correspondiente
+            if perfil_cliente:
+                direccion.cliente = perfil_cliente
+                direccion.tienda = None  # Asegurarse de que no esté asociada a una tienda
+            elif perfil_tienda:
+                direccion.tienda = perfil_tienda
+                direccion.cliente = None  # Asegurarse de que no esté asociada a un cliente
+            
+            direccion.save()
+            
+            # Si la solicitud es AJAX, devolver respuesta JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Dirección registrada exitosamente.',
+                    'direccion_id': direccion.id
+                })
+            
+            messages.success(request, "Dirección registrada exitosamente.")
+            return redirect('direccion')
         else:
-            # Devolver los errores específicos del formulario
-            return JsonResponse({'success': False, 'message': 'El formulario no es válido.', 'errors': form.errors}, status=400)
-    return JsonResponse({'success': False, 'message': 'Método no permitido.'}, status=405)
+            # Mostrar errores del formulario
+            print(form.errors)  # Imprime los errores en la consola para depuración
+            
+            # Si la solicitud es AJAX, devolver errores como JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Por favor, corrija los errores en el formulario.',
+                    'errors': form.errors
+                }, status=400)
+            
+            messages.error(request, "Por favor, corrija los errores en el formulario.")
+    else:
+        form = DireccionForm(cliente=perfil_cliente, tienda=perfil_tienda)
+    
+    return render(request, 'otros/direccion.html', {'form': form})
 
 @login_required
 def eliminar_direccion(request, direccion_id):
@@ -1148,13 +1139,23 @@ def eliminar_promocion(request, id):
     messages.error(request, "Acción no permitida.")
     return redirect('promocion')
 
+@login_required
+@user_is_cliente
 def historial_compra(request):
-    cliente = get_object_or_404(Cliente, perfil__user=request.user)
+    try:
+        # Obtener el cliente asociado al usuario actual
+        cliente = Cliente.objects.get(usuario=request.user)
+    except Cliente.DoesNotExist:
+        messages.error(request, "No tienes un perfil de cliente asociado.")
+        return redirect('home')
 
-    ordenes_pendientes = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.PENDIENTE)
+    # Órdenes por estado
+    compras = Orden.objects.filter(cliente=cliente, estado='completada').order_by('-fecha_creacion')
+    ordenes_pendientes = Orden.objects.filter(cliente=cliente, estado='pendiente').order_by('-fecha_creacion')
+    ordenes_procesando = Orden.objects.filter(cliente=cliente, estado='procesando').order_by('-fecha_creacion')
+    ordenes_canceladas = Orden.objects.filter(cliente=cliente, estado='cancelada').order_by('-fecha_creacion')
+
     carrito = ordenes_pendientes.first() if ordenes_pendientes.exists() else None
-
-    compras = Orden.objects.filter(cliente=cliente, estado=Orden.Estado.COMPLETADA).order_by('-fecha_creacion')[:5]
 
     context = {
         'cliente': cliente,
@@ -1162,6 +1163,8 @@ def historial_compra(request):
         'carrito': carrito,
         'compras': compras,
         'ordenes_pendientes': ordenes_pendientes,
+        'ordenes_procesando': ordenes_procesando,
+        'ordenes_canceladas': ordenes_canceladas,
     }
 
     return render(request, 'otros/historial_p.html', context)
@@ -1169,24 +1172,64 @@ def historial_compra(request):
 def inventario(request):
     return render(request, 'otros/inventario.html')
 
+
 @login_required
+@user_is_tienda
 def ordenes(request):
-    # Obtener los perfiles del usuario que sean de tipo "tienda"
-    perfiles = Perfil.objects.filter(user=request.user, rol__nombre="tienda")
-
-    # Obtener todas las tiendas asociadas a esos perfiles
-    tiendas_usuario = Tienda.objects.filter(perfil__in=perfiles)
-
-    if not tiendas_usuario.exists():
-        messages.error(request, "No tienes ninguna tienda registrada para gestionar órdenes.")
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar órdenes.")
         return redirect("index_tienda")
 
-    # Filtrar órdenes de todas las tiendas asociadas al usuario
-    ordenes_no_completadas = Orden.objects.filter(tienda__in=tiendas_usuario).exclude(estado=Orden.Estado.COMPLETADA)
-    ordenes_completadas = Orden.objects.filter(tienda__in=tiendas_usuario, estado=Orden.Estado.COMPLETADA)
+    ordenes_pendientes = Orden.objects.filter(tienda=tienda, estado='pendiente').order_by('-fecha_creacion')
+    ordenes_completadas = Orden.objects.filter(tienda=tienda, estado='completada').order_by('-fecha_creacion')
+
+    paginator_pendientes = Paginator(ordenes_pendientes, 10)
+    paginator_completadas = Paginator(ordenes_completadas, 10)
+
+    page_number_pendientes = request.GET.get('pendientes_page')
+    page_number_completadas = request.GET.get('completadas_page')
+
+    page_obj_pendientes = paginator_pendientes.get_page(page_number_pendientes)
+    page_obj_completadas = paginator_completadas.get_page(page_number_completadas)
+
+    # Depuración
+    print("Pendientes:", ordenes_pendientes.count())
+    print("Completadas:", ordenes_completadas.count())
 
     return render(request, "productos/ordenes.html", {
-        "ordenes_no_completadas": ordenes_no_completadas,
-        "ordenes_completadas": ordenes_completadas,
+        "ordenes_pendientes": page_obj_pendientes,
+        "ordenes_completadas": page_obj_completadas,
+        "tienda": tienda,
     })
+
+def agregar_al_carrito(request, producto_tienda_id):
+    producto = get_object_or_404(ProductoTienda, id=producto_tienda_id)
+    cart = Cart(request.session)
+    cart.add(producto, price=producto.precio_unitario, quantity=1)
+    return redirect('confirmar_pago')  # O la vista que prefieras
+
+@login_required
+@user_is_cliente
+def descargar_factura(request, orden_id):
+    try:
+        import weasyprint
+    except ImportError:
+        return HttpResponse("El módulo weasyprint no está instalado o no está correctamente configurado en el sistema. Consulta https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation", status=500)
+
+    orden = get_object_or_404(Orden, id=orden_id, cliente__usuario=request.user)
+    productos = orden.productos_orden.all()
+
+    html_string = render_to_string('otros/factura_pdf.html', {
+        'orden': orden,
+        'productos': productos,
+        'cliente': orden.cliente,
+        'fecha': orden.fecha_creacion,
+    })
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="factura_orden_{orden.id}.pdf"'
+    weasyprint.HTML(string=html_string).write_pdf(response)
+    return response
 

@@ -44,7 +44,7 @@ class Cliente(models.Model):
     )
     numero_documento = models.CharField(max_length=50, default='Sin número')
     fecha_registro = models.DateTimeField(auto_now_add=True)
-    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Defaut.jpg')
+    imagen_perfil = models.ImageField(upload_to='imagenes_clientes/', default='default/Default.png')
 
     def __str__(self):
         return f'{self.usuario.username} - {self.numero_documento}'

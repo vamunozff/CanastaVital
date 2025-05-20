@@ -89,4 +89,3 @@ document.addEventListener('DOMContentLoaded', function() {
 $('#modalNuevaDireccion').on('hidden.bs.modal', function () {
     $(this).find(':focus').blur();  // Eliminar el foco del botón de cierre
 });
-

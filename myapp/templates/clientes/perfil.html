@@ -12,8 +12,8 @@
                 <div class="perfil-usuario-header">
                     <div class="perfil-usuario-portada">
                         <div class="perfil-usuario-avatar">
-                            <img src="{% if cliente.imagen_perfil %}{{ cliente.imagen_perfil.url }}{% else %}{% static 'myapp/img/Default.jpg' %}{% endif %}" alt="Logo de {{ cliente.nombre }}">
-
+                            <img src="{% if cliente.imagen_perfil %}{{ cliente.imagen_perfil.url }}{% else %}{% static 'default/Default.png' %}{% endif %}" alt="Imagen de perfil de {{ cliente.usuario.username  }}">
+                            
                             <button type="button" class="boton-avatar">
                                 <i class="far fa-image"></i>
                             </button>
@@ -76,29 +76,32 @@
                     <!-- Form for updating data -->
                     <form method="post" enctype="multipart/form-data" action="{% url 'perfil_cliente' %}">
                         {% csrf_token %}
-                        <!-- Add your form fields here -->
                         <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ user.first_name }}" disabled>
+                            <label for="first_name" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
                         </div>
                         <div class="mb-3">
-                            <label for="direccion" class="form-label">Apellido</label>
-                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ user.last_name }}" disabled>
+                            <label for="last_name" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
                         </div>
                         <div class="mb-3">
-                            <label for="horarios" class="form-label">Tipo de Documento</label>
-                            <input type="text" class="form-control" id="horarios" name="horarios" value="{{ cliente.tipo_documento }}" disabled>
+                            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ cliente.fecha_nacimiento|date:'Y-m-d' }}">
                         </div>
                         <div class="mb-3">
-                            <label for="telefono" class="form-label">N° Documento</label>
-                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ cliente.numero_documento }}" disabled>
+                            <label for="tipo_documento" class="form-label">Tipo de Documento</label>
+                            <input type="text" class="form-control" id="tipo_documento" name="tipo_documento" value="{{ cliente.tipo_documento }}" disabled>
                         </div>
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">Teléfono</label>
-                            <input type="number"  class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono }}">
+                            <label for="numero_documento" class="form-label">N° Documento</label>
+                            <input type="text" class="form-control" id="numero_documento" name="numero_documento" value="{{ cliente.numero_documento }}">
                         </div>
                         <div class="mb-3">
-                            <label for="imagen_perfil" class="form-label">Logo</label>
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="imagen_perfil" class="form-label">Imagen de Perfil</label>
                             <input type="file" class="form-control" id="imagen_perfil" name="imagen_perfil">
                         </div>
                         <button type="submit" class="btn btn-primary">Guardar cambios</button>
