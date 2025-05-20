@@ -788,6 +788,7 @@ def crear_orden(request):
             direccion_envio_id = data.get('direccion_envio_id')
             metodo_pago_id = data.get('metodo_pago_id')  # <-- Asegúrate de recibirlo
             subtotal = float(data.get('subtotal', 0))
+            descuento = float(data.get('descuento', 0))  # <-- Recibe el descuento aplicado
             iva = float(data.get('iva', 0))
             total = float(data.get('total', 0))
             productos = data.get('productos', [])
@@ -822,29 +823,40 @@ def crear_orden(request):
             tienda_id = tienda_ids.pop()
             tienda = Tienda.objects.get(id=tienda_id)
 
+            # Buscar promoción activa para los productos del carrito
+            promocion_aplicada = None
+            if productos:
+                # Busca la primera promoción activa que aplique a algún producto del carrito
+                for item in productos:
+                    producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'])
+                    promocion = producto_tienda.promociones.filter(activo=True).order_by('-fecha_inicio').first()
+                    if promocion:
+                        promocion_aplicada = promocion
+                        break
+
             with transaction.atomic():
                 orden = Orden.objects.create(
                     cliente=cliente,
                     tienda=tienda,
                     direccion_envio=direccion_envio,
-                    metodo_pago=metodo_pago,  # <-- Aquí se asigna el método de pago
-                    subtotal=0,
+                    metodo_pago=metodo_pago,
+                    subtotal=subtotal,
                     iva=iva,
                     total=total,
+                    promocion=promocion_aplicada,  # Relaciona la promoción aplicada
+                    # descuento=descuento,  # Solo si tienes un campo descuento en Orden
                     estado='pendiente'
                 )
 
-                subtotal_orden = 0
-
+                # Ya no recalcular subtotal_orden, solo guardar productos
                 for item in productos:
                     try:
                         producto_tienda = ProductosTiendas.objects.get(id=item['producto_tienda_id'], estado='activo')
                         cantidad = int(item['cantidad'])
                         precio_unitario = float(item['precio_unitario'])
-                        subtotal_producto = cantidad * precio_unitario
-                        subtotal_orden += subtotal_producto
+                        # subtotal_producto = cantidad * precio_unitario  # No sumar aquí
+                        # subtotal_orden += subtotal_producto
 
-                        # Crear ProductoOrden
                         ProductoOrden.objects.create(
                             orden=orden,
                             producto_tienda=producto_tienda,
@@ -858,8 +870,7 @@ def crear_orden(request):
                     except ProductosTiendas.DoesNotExist:
                         return JsonResponse({'success': False, 'error': f'Producto en tienda con ID {item["producto_tienda_id"]} no encontrado o inactivo.'})
 
-                orden.subtotal = subtotal_orden
-                orden.save()
+                # No actualizar orden.subtotal aquí, ya se guardó correctamente
 
             return JsonResponse({'success': True, 'orden_id': orden.id})
 
@@ -1205,10 +1216,17 @@ def ordenes(request):
     })
 
 def agregar_al_carrito(request, producto_tienda_id):
-    producto = get_object_or_404(ProductoTienda, id=producto_tienda_id)
+    producto = get_object_or_404(ProductosTiendas, id=producto_tienda_id)
+    # Buscar promoción activa para este producto (si existe)
+    promocion = producto.promociones.filter(activo=True).order_by('-fecha_inicio').first()
+    descuento = promocion.descuento_porcentaje if promocion else 0
+    precio_final = float(producto.precio_unitario)
+    if descuento > 0:
+        precio_final = precio_final * (1 - descuento / 100)
+    # Aquí deberías usar tu lógica de carrito, por ejemplo:
     cart = Cart(request.session)
-    cart.add(producto, price=producto.precio_unitario, quantity=1)
-    return redirect('confirmar_pago')  # O la vista que prefieras
+    cart.add(producto, price=precio_final, quantity=1, descuento=descuento)
+    return redirect('confirmar_pago') 
 
 @login_required
 @user_is_cliente

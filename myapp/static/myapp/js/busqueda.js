@@ -55,14 +55,17 @@ document.addEventListener("DOMContentLoaded", function () {
     function actualizarTablaCarrito() {
         cuerpoTablaCarrito.innerHTML = '';
         let subtotal = 0;
+        let descuentoTotal = 0;
 
         itemsCarrito.forEach(item => {
             const precioUnitario = parseFloat(item.precio).toFixed(2);
             const descuento = item.descuento || 0;
             const descuentoTexto = descuento > 0 ? descuento + '%' : '—';
             const precioActualizado = descuento > 0 ? (item.precio * (1 - descuento / 100)).toFixed(2) : precioUnitario;
-            const precioTotal = (precioActualizado * item.cantidad).toFixed(2);
-            subtotal += parseFloat(precioTotal);
+            const precioTotalOriginal = (item.precio * item.cantidad).toFixed(2);
+            const descuentoAplicado = descuento > 0 ? ((item.precio * (descuento / 100)) * item.cantidad) : 0;
+            subtotal += parseFloat(precioTotalOriginal);
+            descuentoTotal += descuentoAplicado;
 
             const fila = document.createElement('tr');
             fila.innerHTML = `
@@ -71,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>$${precioUnitario}</td>
                 <td>${descuentoTexto}</td>
                 <td>$${precioActualizado}</td>
-                <td>$${precioTotal}</td>
+                <td>$${(precioActualizado * item.cantidad).toFixed(2)}</td>
                 <td>
                     <button class="btn btn-outline-secondary btn-sm btn-menos" data-product-id="${item.id}" title="Quitar uno"><i class="fas fa-minus"></i></button>
                     <button class="btn btn-outline-secondary btn-sm btn-mas" data-product-id="${item.id}" title="Agregar uno"><i class="fas fa-plus"></i></button>
@@ -82,10 +85,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Calcular IVA y total
         const iva = 0.19;
-        const ivaMonto = parseFloat((subtotal * iva).toFixed(2));
-        const total = parseFloat((subtotal + ivaMonto).toFixed(2));
+        const subtotalConDescuento = subtotal - descuentoTotal;
+        const ivaMonto = parseFloat((subtotalConDescuento * iva).toFixed(2));
+        const total = parseFloat((subtotalConDescuento + ivaMonto).toFixed(2));
 
         document.getElementById('subtotal-carrito').textContent = subtotal.toFixed(2);
+        document.getElementById('descuento-carrito').textContent = descuentoTotal.toFixed(2);
         document.getElementById('iva-carrito').textContent = ivaMonto.toFixed(2);
         document.getElementById('total-carrito').textContent = total.toFixed(2);
 

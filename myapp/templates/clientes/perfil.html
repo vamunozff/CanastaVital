@@ -1,116 +1,145 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
-<html>
-<head runat="server">
-    <link rel="stylesheet" href="{% static 'myapp/css/principalStyle.css' %}">
-</head>
-<body>
-    <div class="custom-profile-section">
-        <main>
-            <section class="seccion-perfil-usuario">
-                <div class="perfil-usuario-header">
-                    <div class="perfil-usuario-portada">
-                        <div class="perfil-usuario-avatar">
-                            <img src="{% if cliente.imagen_perfil %}{{ cliente.imagen_perfil.url }}{% else %}{% static 'default/Default.png' %}{% endif %}" alt="Imagen de perfil de {{ cliente.usuario.username  }}">
-                            
-                            <button type="button" class="boton-avatar">
-                                <i class="far fa-image"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="perfil-usuario-body">
-                    <div class="perfil-usuario-bio">
-                        <h3 class="titulo">{{ user.first_name | upper }} {{ user.last_name | upper }}</h3>
-                        <p class="texto">Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.</p>
-                    </div>
-                    <div class="perfil-usuario-footer">
-                        <ul class="lista-datos">
-                            <li>
-                                <label><i class="icono bi bi-card-text"></i> Tipo de Documento:</label>
-                                <span>{{ cliente.get_tipo_documento_display }}</span>
-                            </li>
-                            <li>
-                                <label><i class="icono bi bi-calendar"></i> Fecha de Nacimiento:</label>
-                                <span>{{ cliente.fecha_nacimiento }}</span>
-                            </li>
-                            <li>
-                                <label><i class="bi bi-telephone"></i> Teléfono:</label>
-                                <span>{{ cliente.telefono }}</span>
-                            </li>
-                            <li>
-                                <label><i class="icono bi bi-envelope"></i> Email:</label>
-                                <span>{{ user.email }}</span>
-                            </li>
-                        </ul>
-                        <ul class="lista-datos">
-                            <li>
-                                <label><i class="icono bi bi-list-ol"></i> Número de Documento:</label>
-                                <span>{{ cliente.numero_documento }}</span>
-                            </li>
-                            <li>
-                                <label><i class="icono bi bi-calendar3"></i> Fecha de Registro:</label>
-                                <span>{{ cliente.fecha_registro }}</span>
-                            </li>
-                            <li>
-                                <label><i class="icono fas bi bi-person"></i> Usuario:</label>
-                                <span>{{ user.username }}</span>
-                            </li>
-                        </ul>
-                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#userForm">Actualizar perfil</button>
-                    </div>
-                </div>
-            </section>
-        </main>
+<style>
+    .perfil-minimal {
+        max-width: 420px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,.10);
+        padding: 2.5rem 2rem 2rem 2rem;
+        text-align: center;
+        position: relative;
+    }
+    .perfil-minimal-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #2563eb;
+        margin-top: -70px;
+        background: #f1f5f9;
+        box-shadow: 0 2px 8px 0 rgba(60,72,88,.08);
+    }
+    .perfil-minimal-nombre {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin-top: 1rem;
+        margin-bottom: 0.2rem;
+        letter-spacing: 1px;
+    }
+    .perfil-minimal-usuario {
+        color: #64748b;
+        font-size: 1rem;
+        margin-bottom: 1.2rem;
+    }
+    .perfil-minimal-datos {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.5rem 0;
+        text-align: left;
+    }
+    .perfil-minimal-datos li {
+        margin-bottom: 0.7rem;
+        font-size: 1.05rem;
+        color: #334155;
+        display: flex;
+        align-items: center;
+    }
+    .perfil-minimal-datos i {
+        color: #2563eb;
+        margin-right: 0.7rem;
+        font-size: 1.1rem;
+        width: 22px;
+        text-align: center;
+    }
+    .perfil-minimal-btn {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: background .2s;
+        margin-top: 1rem;
+    }
+    .perfil-minimal-btn:hover {
+        background: #1e40af;
+        color: #fff;
+    }
+    .perfil-minimal-quote {
+        font-size: 1.05rem;
+        color: #64748b;
+        margin: 1.5rem 0 0.5rem 0;
+        font-style: italic;
+    }
+</style>
+<div class="perfil-minimal">
+    <img class="perfil-minimal-avatar" src="{% if cliente.imagen_perfil %}{{ cliente.imagen_perfil.url }}{% else %}{% static 'default/Default.png' %}{% endif %}" alt="Imagen de perfil de {{ cliente.usuario.username }}">
+    <div class="perfil-minimal-nombre">{{ user.first_name|title }} {{ user.last_name|title }}</div>
+    <div class="perfil-minimal-usuario">@{{ user.username }}</div>
+    <ul class="perfil-minimal-datos">
+        <li><i class="bi bi-card-text"></i> <b>Tipo Doc:</b> {{ cliente.get_tipo_documento_display }}</li>
+        <li><i class="bi bi-list-ol"></i> <b>N° Doc: </b> {{ cliente.numero_documento }}</li>
+        <li><i class="bi bi-calendar"></i> <b>Nacimiento: </b> {{ cliente.fecha_nacimiento|date:"d/m/Y" }}</li>
+        <li><i class="bi bi-telephone"></i> <b>Tel: </b> {{ cliente.telefono }}</li>
+        <li><i class="bi bi-envelope"></i> <b>Email: </b> {{ user.email }}</li>
+        <li><i class="bi bi-calendar3"></i> <b>Registro: </b> {{ cliente.fecha_registro|date:"d/m/Y" }}</li>
+    </ul>
+    <button class="perfil-minimal-btn" data-bs-toggle="modal" data-bs-target="#userForm">
+        <i class="bi bi-pencil-square"></i> Editar perfil
+    </button>
+    <div class="perfil-minimal-quote">
+        “Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.”
+    </div>
+</div>
 
-     <!-- Modal for updating data -->
-        <div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="userFormLabel">Actualizar Datos</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Form for updating data -->
-                    <form method="post" enctype="multipart/form-data" action="{% url 'perfil_cliente' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="first_name" class="form-label">Nombres</label>
-                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="last_name" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                            <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ cliente.fecha_nacimiento|date:'Y-m-d' }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="tipo_documento" class="form-label">Tipo de Documento</label>
-                            <input type="text" class="form-control" id="tipo_documento" name="tipo_documento" value="{{ cliente.tipo_documento }}" disabled>
-                        </div>
-                        <div class="mb-3">
-                            <label for="numero_documento" class="form-label">N° Documento</label>
-                            <input type="text" class="form-control" id="numero_documento" name="numero_documento" value="{{ cliente.numero_documento }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="imagen_perfil" class="form-label">Imagen de Perfil</label>
-                            <input type="file" class="form-control" id="imagen_perfil" name="imagen_perfil">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                    </form>
-                </div>
+<!-- Modal para actualizar datos -->
+<div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userFormLabel">Actualizar Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="{% url 'perfil_cliente' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">Nombres</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Apellidos</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ cliente.fecha_nacimiento|date:'Y-m-d' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo_documento" class="form-label">Tipo de Documento</label>
+                        <input type="text" class="form-control" id="tipo_documento" name="tipo_documento" value="{{ cliente.tipo_documento }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="numero_documento" class="form-label">N° Documento</label>
+                        <input type="text" class="form-control" id="numero_documento" name="numero_documento" value="{{ cliente.numero_documento }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ cliente.telefono }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="imagen_perfil" class="form-label">Imagen de Perfil</label>
+                        <input type="file" class="form-control" id="imagen_perfil" name="imagen_perfil">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Guardar cambios</button>
+                </form>
             </div>
         </div>
     </div>
-    </div>
-</body>
-</html>
+</div>
 {% endblock %}

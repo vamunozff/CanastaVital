@@ -76,6 +76,11 @@
                         <span class="fw-semibold">Total:</span> ${{ compra.total }}
                     </div>
                     <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrden{{ compra.id }}" role="button" aria-expanded="false" aria-controls="detalleOrden{{ compra.id }}">
+                            Leer más
+                        </a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrden{{ compra.id }}">
                         <span class="fw-semibold">Productos:</span>
                         <ul class="historial-productos">
                             {% for producto in compra.productos_orden.all %}
@@ -84,61 +89,108 @@
                             </li>
                             {% endfor %}
                         </ul>
-                    </div>
-                    <div class="mt-3 text-end">
-                        <button 
-                            class="btn btn-sm btn-outline-primary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalFactura{{ compra.id }}">
-                            <i class="fa-solid fa-file-invoice"></i> Ver factura
-                        </button>
+                        <div class="mt-3 text-end">
+                            <button 
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalFactura{{ compra.id }}">
+                                <i class="fa-solid fa-file-invoice"></i> Ver factura
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal de Factura -->
-            <div class="modal fade" id="modalFactura{{ compra.id }}" tabindex="-1" aria-labelledby="modalFacturaLabel{{ compra.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalFacturaLabel{{ compra.id }}">Factura de Orden #{{ compra.id }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div>
-                                <strong>Fecha:</strong> {{ compra.fecha_creacion|date:"d/m/Y H:i" }}<br>
-                                <strong>Tienda:</strong> {{ compra.tienda.nombre }}<br>
-                                <strong>Total:</strong> ${{ compra.total }}<br>
-                                <strong>Estado:</strong> {{ compra.get_estado_display }}
-                            </div>
-                            <hr>
-                            <div>
-                                <strong>Productos:</strong>
-                                <ul>
-                                    {% for producto in compra.productos_orden.all %}
-                                    <li>
-                                        {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <hr>
-                            <div>
-                                <strong>Subtotal:</strong> ${{ compra.subtotal }}<br>
-                                <strong>IVA:</strong> ${{ compra.iva }}<br>
-                                <strong>Total:</strong> ${{ compra.total }}
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <a href="{% url 'descargar_factura' compra.id %}" class="btn btn-success" onclick="return alertaDependenciasWeasyPrint();">
-                                <i class="fa-solid fa-file-arrow-down"></i> Descargar factura
-                            </a>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        </div>
+
+<!-- Modal de Factura Minimalista -->
+<div class="modal fade" id="modalFactura{{ compra.id }}" tabindex="-1" aria-labelledby="modalFacturaLabel{{ compra.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px;">
+            <div class="modal-header" style="border-bottom: none; background: #f5f7fa;">
+                <h5 class="modal-title fw-bold" id="modalFacturaLabel{{ compra.id }}">Factura #{{ compra.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="flex-shrink-0 me-3">
+                        {% if compra.tienda.logo_url %}
+                            <img src="{{ compra.tienda.logo_url.url }}" alt="Logo tienda" style="max-width: 90px; max-height: 50px; border-radius: 8px; background: #fff; border: 1px solid #e5e7eb;">
+                        {% else %}
+                            <span class="text-muted small">Sin logo</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size: 1.1rem;">{{ compra.tienda.nombre }}</div>
+                        <div class="text-muted small">Fecha: {{ compra.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                        <span class="badge rounded-pill" style="background: #2563eb1a; color: #2563eb;">{{ compra.get_estado_display }}</span>
                     </div>
                 </div>
+                <div class="mb-3 p-3" style="background: #f8fafc; border-radius: 10px;">
+                    <div class="fw-semibold mb-1" style="color: #2563eb;">Datos del Cliente</div>
+                    <div class="mb-1"><span class="text-muted">Nombre:</span> {{ compra.cliente.usuario.get_full_name }}</div>
+                    <div class="mb-1"><span class="text-muted">Email:</span> {{ compra.cliente.usuario.email }}</div>
+                    {% if compra.direccion_envio %}
+                        <div class="mb-1"><span class="text-muted">Dirección:</span> {{ compra.direccion_envio.direccion }}, {{ compra.direccion_envio.ciudad }}, {{ compra.direccion_envio.departamento }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <div class="fw-semibold mb-2" style="color: #2563eb;">Productos</div>
+                    <ul class="list-group list-group-flush">
+                        {% for producto in compra.productos_orden.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0" style="background: transparent;">
+                            <span>
+                                {{ producto.producto_tienda.producto.nombre }} 
+                                <span class="text-muted small">x{{ producto.cantidad }}</span>
+                                {% if compra.promocion and producto.producto_tienda in compra.promocion.productos_aplicables.all %}
+                                    <i class="fa-solid fa-tag text-danger ms-2"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-placement="top"
+                                       title="Descuento: {{ compra.promocion.descuento_porcentaje }}%">
+                                    </i>
+                                    <span class="badge bg-success ms-2">-{{ compra.promocion.descuento_porcentaje }}%</span>
+                                {% endif %}
+                            </span>
+                            <span>
+                                <span class="fw-semibold">${{ producto.precio_unitario }}</span>
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="d-flex flex-column align-items-end gap-1">
+                    <div class="text-muted">Subtotal: <span class="fw-semibold text-dark">${{ compra.subtotal }}</span></div>
+                    <div class="text-muted">Descuento aplicado: <span class="fw-semibold text-dark">
+                        {% if compra.promocion %}
+                            -{{ compra.promocion.descuento_porcentaje }}%
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </span></div>
+                    <div class="text-muted">IVA: <span class="fw-semibold text-dark">${{ compra.iva }}</span></div>
+                    <div class="fs-5 fw-bold" style="color: #2563eb;">Total: ${{ compra.total }}</div>
+                </div>
             </div>
-            <!-- Fin Modal de Factura -->
+            <div class="modal-footer border-0" style="background: #f5f7fa;">
+                <a href="{% url 'descargar_factura' compra.id %}" class="btn btn-primary rounded-pill px-4" onclick="return alertaDependenciasWeasyPrint();">
+                    <i class="fa-solid fa-file-arrow-down"></i> Descargar PDF
+                </a>
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Fin Modal de Factura Minimalista -->
+
+<script>
+    // Inicializa los tooltips de Bootstrap para los iconos de descuento
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+ 
             {% endfor %}
         {% else %}
             <p>No ha realizado compras aún.</p>
@@ -163,6 +215,11 @@
                         <span class="fw-semibold">Total:</span> ${{ orden.total }}
                     </div>
                     <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenPendiente{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenPendiente{{ orden.id }}">
+                            Leer más
+                        </a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrdenPendiente{{ orden.id }}">
                         <span class="fw-semibold">Productos:</span>
                         <ul class="historial-productos">
                             {% for producto in orden.productos_orden.all %}
@@ -198,6 +255,11 @@
                         <span class="fw-semibold">Total:</span> ${{ orden.total }}
                     </div>
                     <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenProcesando{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenProcesando{{ orden.id }}">
+                            Leer más
+                        </a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrdenProcesando{{ orden.id }}">
                         <span class="fw-semibold">Productos:</span>
                         <ul class="historial-productos">
                             {% for producto in orden.productos_orden.all %}
@@ -233,6 +295,11 @@
                         <span class="fw-semibold">Total:</span> ${{ orden.total }}
                     </div>
                     <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenCancelada{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenCancelada{{ orden.id }}">
+                            Leer más
+                        </a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrdenCancelada{{ orden.id }}">
                         <span class="fw-semibold">Productos:</span>
                         <ul class="historial-productos">
                             {% for producto in orden.productos_orden.all %}

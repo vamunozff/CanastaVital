@@ -89,21 +89,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function prepararDatosOrden(direccionId, metodoPagoId) {
         const carritoData = JSON.parse(localStorage.getItem('carrito')) || [];
-        const subtotal = parseFloat(localStorage.getItem('subtotal') || '0');
-        const iva = subtotal * 0.19;
-        const total = subtotal + iva;
+        // Obtener los valores calculados y mostrados en el HTML, no recalcular aquí
+        const subtotal = parseFloat(document.getElementById('subtotal-carrito').textContent) || 0;
+        const descuento = parseFloat(document.getElementById('descuento-carrito').textContent) || 0;
+        const iva = parseFloat(document.getElementById('iva-carrito').textContent) || 0;
+        const total = parseFloat(document.getElementById('total-carrito').textContent) || 0;
 
         // Asegurarse de que todos los IDs sean números
         const productosValidados = carritoData.map(item => ({
             producto_tienda_id: parseInt(item.producto_tienda_id || item.id),
             cantidad: parseInt(item.cantidad),
-            precio_unitario: parseFloat(item.precio)
+            precio_unitario: parseFloat(item.precio),
+            descuento: item.descuento || 0
         }));
 
         return {
             direccion_envio_id: parseInt(direccionId),
             metodo_pago_id: parseInt(metodoPagoId),
             subtotal,
+            descuento,
             iva,
             total,
             productos: productosValidados
@@ -210,24 +214,31 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        // Cambia el cálculo del subtotal para que use el precio con descuento
-        const subtotal = carritoData.reduce((sum, item) => {
+        // Calcular subtotal, descuento total, iva y total
+        let subtotal = 0;
+        let descuentoTotal = 0;
+        carritoData.forEach(item => {
+            const precioOriginal = parseFloat(item.precio);
+            const cantidad = parseInt(item.cantidad);
             const descuento = item.descuento || 0;
-            const precioActualizado = descuento > 0
-                ? (parseFloat(item.precio) * (1 - descuento / 100))
-                : parseFloat(item.precio);
-            return sum + (precioActualizado * parseInt(item.cantidad));
-        }, 0);
+            subtotal += precioOriginal * cantidad;
+            if (descuento > 0) {
+                descuentoTotal += (precioOriginal * (descuento / 100)) * cantidad;
+            }
+        });
 
-        const iva = subtotal * 0.19;
-        const total = subtotal + iva;
+        const subtotalConDescuento = subtotal - descuentoTotal;
+        const iva = subtotalConDescuento * 0.19;
+        const total = subtotalConDescuento + iva;
 
         document.getElementById('subtotal-carrito').textContent = subtotal.toFixed(2);
+        document.getElementById('descuento-carrito').textContent = descuentoTotal.toFixed(2);
         document.getElementById('iva-carrito').textContent = iva.toFixed(2);
         document.getElementById('total-carrito').textContent = total.toFixed(2);
 
         // Guardar los totales en localStorage
         localStorage.setItem('subtotal', subtotal.toString());
+        localStorage.setItem('descuento', descuentoTotal.toString());
         localStorage.setItem('iva', iva.toString());
         localStorage.setItem('total', total.toString());
 
