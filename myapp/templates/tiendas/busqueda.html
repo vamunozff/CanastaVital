@@ -1,18 +1,171 @@
 {% extends 'base.html' %}
 {% block content %}{% load static %}
+<style>
+
+.logo h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
+}
+.logo span {
+  font-size: 1rem;
+  color: #888;
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+#form-busqueda {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.search-bar {
+  flex: 1 1 250px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  padding: 0.7rem 1rem;
+  padding-right: 2.5rem;
+  font-size: 1rem;
+  background: #fafbfc;
+  transition: border 0.2s;
+}
+.search-bar:focus {
+  border: 1.5px solid #007bff;
+  outline: none;
+}
+.search-icon-btn {
+  position: relative;
+  left: -2.2rem;
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  margin: 0;
+  transition: color 0.2s;
+}
+.search-icon-btn:hover {
+  color: #0056b3;
+}
+#select-ciudad {
+  min-width: 200px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  background: #fafbfc;
+  transition: border 0.2s;
+}
+.btn-light {
+  background: #007bff;
+  color: #fff;
+  border-radius: 8px;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.btn-light:hover {
+  background: #0056b3;
+}
+.categories {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.categories a {
+  color: #888;
+  text-decoration: none;
+  font-weight: 500;
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border 0.2s;
+}
+.categories a.active, .categories a:hover {
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+}
+.item {
+  background: #f8f9fa;
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  padding: 1.2rem 1rem 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+.item:hover {
+  box-shadow: 0 4px 18px rgba(0,123,255,0.08);
+}
+.item-content img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  display: block;
+}
+.item h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 0.3rem;
+  text-align: center;
+}
+.item p {
+  font-size: 0.98rem;
+  color: #555;
+  margin: 0.1rem 0;
+  text-align: center;
+}
+.alert {
+  background: #f5f7fa;
+  color: #888;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  margin-top: 2rem;
+}
+@media (max-width: 600px) {
+  .container_busqueda { padding: 1rem; }
+  .grid { gap: 1rem; }
+}
+</style>
 <div class="container_busqueda">
    <header>
      <div class="logo">
        <h1>Tiendas<span> Puedes realizar búsquedas por ciudad </span></h1>
      </div>
-     <form action="{% url 'busqueda_tiendas' %}" method="GET">
-       <input type="text" class="search-bar" id="search-bar" name="search" placeholder="Buscar tiendas">
-         <button type="submit" class="btn btn-light">Buscar</button>
+     <form action="{% url 'busqueda_tiendas' %}" method="GET" id="form-busqueda" style="position:relative;">
+       <input type="text" class="search-bar" id="search-bar" name="search" placeholder="Buscar tiendas" value="{{ request.GET.search }}">
+       <button type="submit" class="search-icon-btn" aria-label="Buscar">
+         <i class="fas fa-search"></i>
+       </button>
+       <!-- Select de ciudades, oculto por defecto -->
+       <select name="ciudad" id="select-ciudad" style="display:none;">
+         <option value="">Seleccione una ciudad</option>
+         {% for ciudad in ciudades %}
+           <option value="{{ ciudad.id }}" {% if ciudad.id|stringformat:"s" == request.GET.ciudad %}selected{% endif %}>{{ ciudad.nombre }}</option>
+         {% endfor %}
+       </select>
      </form>
      <nav class="categories" id="categories">
-       <a href="#" class="active">Todas</a>
-       <a href="#">Ciudad</a>
-       <a href="#">Tiendas cercanas</a>
+       <a href="#" class="active" id="cat-todas">Todas</a>
+       <a href="#" id="cat-ciudad">Ciudad</a>
+       <a href="#" class="disabled" style="pointer-events:none;opacity:0.5;">Tiendas cercanas</a>
      </nav>
    </header>
 
@@ -30,17 +183,25 @@
           </a>
         </div>
         <h2>{{ tienda.nombre }}</h2>
-        <p>{{ tienda.direccion }}</p>
+        <p>
+          {% with direccion=tienda.direcciones.first %}
+            {% if direccion %}
+              {{ direccion.ciudad.nombre }}, {{ direccion.direccion }}
+            {% else %}
+              Sin dirección registrada
+            {% endif %}
+          {% endwith %}
+        </p>
         <p>Tel: {{ tienda.telefono }}</p>
         <p>Horario: {{ tienda.horarios }}</p>
       </div>
    {% endfor %}
      {% else %}
-       <p>No se encontraron tiendas que coincidan con tu búsqueda.</p>
+       <div class="alert">No se encontraron tiendas que coincidan con tu búsqueda.</div>
     {% endif %}
    </section>
 
-   <section class="overlay" id="overlay">
+   <section class="overlay" id="overlay" style="display:none;">
      <div class="container-img">
        <button id="btn-close-popup">
          <i class="fas fa-times"></i>
@@ -49,5 +210,38 @@
      </div>
      <p class="description"></p>
    </section>
+   <script>
+   // Mostrar el select de ciudad al hacer clic en "Ciudad"
+   document.addEventListener('DOMContentLoaded', function() {
+     const catCiudad = document.getElementById('cat-ciudad');
+     const selectCiudad = document.getElementById('select-ciudad');
+     const searchBar = document.getElementById('search-bar');
+     const catTodas = document.getElementById('cat-todas');
+     if (catCiudad && selectCiudad) {
+       catCiudad.addEventListener('click', function(e) {
+         e.preventDefault();
+         selectCiudad.style.display = 'inline-block';
+         searchBar.style.display = 'none';
+         catCiudad.classList.add('active');
+         catTodas.classList.remove('active');
+       });
+     }
+     if (catTodas && selectCiudad && searchBar) {
+       catTodas.addEventListener('click', function(e) {
+         e.preventDefault();
+         selectCiudad.style.display = 'none';
+         searchBar.style.display = 'inline-block';
+         catTodas.classList.add('active');
+         catCiudad.classList.remove('active');
+       });
+     }
+     // Enviar el formulario automáticamente al seleccionar una ciudad
+     if (selectCiudad) {
+       selectCiudad.addEventListener('change', function() {
+         document.getElementById('form-busqueda').submit();
+       });
+     }
+   });
+   </script>
 </div>
 {% endblock %}

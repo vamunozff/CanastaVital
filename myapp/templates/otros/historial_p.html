@@ -218,6 +218,7 @@
                         <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenPendiente{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenPendiente{{ orden.id }}">
                             Leer más
                         </a>
+                        <a href="{% url 'seguimiento_pedido' orden.id %}" style="color:#1976d2; margin-left:12px;">Ver seguimiento</a>
                     </div>
                     <div class="collapse mt-2" id="detalleOrdenPendiente{{ orden.id }}">
                         <span class="fw-semibold">Productos:</span>
@@ -258,6 +259,7 @@
                         <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenProcesando{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenProcesando{{ orden.id }}">
                             Leer más
                         </a>
+                        <a href="{% url 'seguimiento_pedido' orden.id %}" style="color:#1976d2; margin-left:12px;">Ver seguimiento</a>
                     </div>
                     <div class="collapse mt-2" id="detalleOrdenProcesando{{ orden.id }}">
                         <span class="fw-semibold">Productos:</span>
@@ -316,6 +318,7 @@
             <p>No tiene órdenes canceladas.</p>
         {% endif %}
     </div>
+
 </div>
 <script>
         function alertaDependenciasWeasyPrint() {

@@ -1,44 +1,79 @@
 {% extends 'base.html' %}
 
-{% block title %} Actualizar Proveesor {% endblock %}
+{% block title %}Actualizar Proveedor{% endblock %}
 
 {% block content %}
-    <main>
-    <br>
-            <h2>Editar Proveedor</h2>
-                    <form action="{% url 'actualizar_proveedor' proveedor.id %}" method="POST">
-                        {% csrf_token %}
-                        <div class="inputField">
-
-                            <div>
-                                <label for="city" class="form-label">Razon Social:</label>
-                                <input class="form-control" type="text" id="txtRazonSocial" name="txtRazonSocial" value="{{ proveedor.razon_social }}" required>
-                            </div>
-                            <div>
-                                <label for="city" class="form-label">Email:</label>
-                                <input class="form-control" type="email" id="txtEmail" name="txtEmail" value="{{ proveedor.email }}" required>
-                            </div>
-                            <div>
-                                <label for="city" class="form-label">Télefono:</label>
-                                <input class="form-control" type="number" id="numTelefono" name="numTelefono" value="{{ proveedor.telefono }}" required>
-                            </div>
-                            <div>
-                                <label for="city" class="form-label">Dirección:</label>
-                                <input class="form-control" type="text" id="txtDireccion" name="txtDireccion" value="{{ proveedor.direccion }}" required>
-                            </div>
-                            <div>
-                                <label for="phone" class="form-label">Estado:</label>
-                                <select id="txtEstado" name="txtEstado" class="form-select" required>
-                                    <option value="activo" {% if proveedor.estado == 'activo' %} selected {% endif %}>Activo</option>
-                                    <option value="inactivo" {% if proveedor.estado == 'inactivo' %} selected {% endif %}>Inactivo</option>
-                                </select>
-                            </div>
-                        </div>
-<br>
-                        <div class="form-group">
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                        <button type="button" class="btn btn-secondary" onclick="window.location.href='/index_proveedor'">Volver</button>
-                        </div>
-                    </form>
-    </main>
+<style>
+    .proveedor-edit-section {
+        max-width: 420px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,.10);
+        padding: 2.5rem 2rem 2rem 2rem;
+    }
+    .proveedor-edit-title {
+        color: #2563eb;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
+        text-align: center;
+    }
+    .proveedor-edit-form label {
+        color: #334155;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+    }
+    .proveedor-edit-form input,
+    .proveedor-edit-form select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+    }
+    .proveedor-edit-btn {
+        border-radius: 8px;
+        font-weight: 600;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        margin-right: 0.7rem;
+        transition: background .2s;
+    }
+    .proveedor-edit-btn:hover {
+        background: #1e40af;
+        color: #fff;
+    }
+    .proveedor-edit-btn-secondary {
+        background: #64748b;
+        color: #fff;
+    }
+    .proveedor-edit-btn-secondary:hover {
+        background: #334155;
+        color: #fff;
+    }
+</style>
+<div class="proveedor-edit-section">
+    <h2 class="proveedor-edit-title"><i class="fa-solid fa-user-pen me-2"></i>Editar Proveedor</h2>
+    <form action="{% url 'actualizar_proveedor' proveedor.id %}" method="POST" class="proveedor-edit-form">
+        {% csrf_token %}
+        <label for="txtRazonSocial" class="form-label">Razón Social:</label>
+        <input class="form-control" type="text" id="txtRazonSocial" name="txtRazonSocial" value="{{ proveedor.razon_social }}" required>
+        <label for="txtEmail" class="form-label">Email:</label>
+        <input class="form-control" type="email" id="txtEmail" name="txtEmail" value="{{ proveedor.email }}" required>
+        <label for="numTelefono" class="form-label">Teléfono:</label>
+        <input class="form-control" type="number" id="numTelefono" name="numTelefono" value="{{ proveedor.telefono }}" required>
+        <label for="txtDireccion" class="form-label">Dirección:</label>
+        <input class="form-control" type="text" id="txtDireccion" name="txtDireccion" value="{{ proveedor.direccion }}" required>
+        <label for="txtEstado" class="form-label">Estado:</label>
+        <select id="txtEstado" name="txtEstado" class="form-select" required>
+            <option value="activo" {% if proveedor.estado == 'activo' %} selected {% endif %}>Activo</option>
+            <option value="inactivo" {% if proveedor.estado == 'inactivo' %} selected {% endif %}>Inactivo</option>
+        </select>
+        <div class="d-flex justify-content-between mt-3">
+            <button type="submit" class="proveedor-edit-btn">Guardar Cambios</button>
+            <button type="button" class="proveedor-edit-btn proveedor-edit-btn-secondary" onclick="window.location.href='{% url 'index_proveedor' %}'">Volver</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

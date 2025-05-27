@@ -104,7 +104,7 @@ class TiendaForm(forms.ModelForm):
 class ProductosTiendasForm(forms.ModelForm):
     class Meta:
         model = ProductosTiendas
-        fields = ['producto', 'proveedor', 'precio_unitario', 'cantidad', 'estado', 'imagen']
+        fields = ['producto', 'proveedor', 'precio_unitario', 'cantidad', 'stock_minimo', 'estado', 'imagen']
 
     def clean_precio_unitario(self):
         precio = self.cleaned_data.get('precio_unitario')

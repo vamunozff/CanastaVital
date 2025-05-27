@@ -1,149 +1,150 @@
 {% extends 'base.html' %}
 {% block content %}
-
-<div class="container mt-4">
-    <h1 class="mb-4 text-center">Editar Promoción</h1>
-
-    <form method="POST" class="shadow-lg p-4 bg-white rounded">
+<style>
+    .promo-edit-section {
+        max-width: 640px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,.10);
+        padding: 2.5rem 2rem 2rem 2rem;
+    }
+    .promo-edit-title {
+        color: #2563eb;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        letter-spacing: 1px;
+        text-align: center;
+    }
+    .promo-edit-form label {
+        color: #334155;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+    }
+    .promo-edit-form input,
+    .promo-edit-form textarea,
+    .promo-edit-form select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+    }
+    .promo-edit-btn {
+        border-radius: 8px;
+        font-weight: 600;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        margin-right: 0.7rem;
+        transition: background .2s;
+    }
+    .promo-edit-btn:hover {
+        background: #1e40af;
+        color: #fff;
+    }
+    .promo-edit-btn-danger {
+        background: #ef4444;
+    }
+    .promo-edit-btn-danger:hover {
+        background: #b91c1c;
+    }
+    .promo-edit-divider {
+        border-top: 1px solid #e5e7eb;
+        margin: 1.5rem 0;
+    }
+</style>
+<div class="promo-edit-section">
+    <h2 class="promo-edit-title"><i class="fa-solid fa-tags me-2"></i>Editar Promoción</h2>
+    <form method="POST" class="promo-edit-form">
         {% csrf_token %}
-        <div class="d-flex justify-content-end mb-4">
-            <button type="submit" class="btn btn-success me-2">
+        <div class="d-flex justify-content-end mb-3">
+            <button type="submit" class="promo-edit-btn me-2">
                 <i class="fas fa-save"></i> Actualizar
             </button>
-            <button type="button" class="btn btn-danger" onclick="eliminarPromocion({{ promocion.id }})">
+            <button type="button" class="promo-edit-btn promo-edit-btn-danger" onclick="eliminarPromocion({{ promocion.id }})">
                 <i class="fas fa-trash-alt"></i> Eliminar
             </button>
         </div>
-
         {% if form.non_field_errors %}
             <div class="alert alert-danger">
                 {{ form.non_field_errors }}
             </div>
         {% endif %}
+        <label for="nombre">Nombre</label>
+        <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="nombre" name="nombre" value="{{ promocion.nombre }}" required>
+        {% if form.nombre.errors %}
+            <div class="invalid-feedback">{{ form.nombre.errors }}</div>
+        {% endif %}
 
-        <div class="form-group mb-3">
-            <label for="nombre">Nombre</label>
-            <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" id="nombre" name="nombre" value="{{ promocion.nombre }}" required>
-            {% if form.nombre.errors %}
-                <div class="invalid-feedback">
-                    {{ form.nombre.errors }}
-                </div>
-            {% endif %}
-        </div>
+        <label for="descripcion">Descripción</label>
+        <input type="text" class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}" id="descripcion" name="descripcion" value="{{ promocion.descripcion }}" required>
+        {% if form.descripcion.errors %}
+            <div class="invalid-feedback">{{ form.descripcion.errors }}</div>
+        {% endif %}
 
-{% load humanize %}
+        <label for="descuento_porcentaje">Descuento (%)</label>
+        <input type="number" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ promocion.descuento_porcentaje }}" required>
+        {% if form.descuento_porcentaje.errors %}
+            <div class="invalid-feedback">{{ form.descuento_porcentaje.errors }}</div>
+        {% endif %}
 
-        <div class="form-group">
-            <label for="descripcion">Descrpción</label>
-            <input type="text" class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}"
-                   id="descripcion" name="descripcion" value="{{ promocion.descripcion }}" required
-                   oninput="formatCurrency(this)">
-
-            {% if form.descripcion.errors %}
-                <div class="invalid-feedback">
-                    {{ form.descripcion.errors }}
-                </div>
-            {% endif %}
-        </div>
-<br>
-        <div class="form-group mb-3">
-            <label for="descuento_porcentaje">Descuento porcentaje</label>
-            <input type="number" class="form-control {% if form.descuento_porcentaje.errors %}is-invalid{% endif %}" id="descuento_porcentaje" name="descuento_porcentaje" value="{{ promocion.descuento_porcentaje }}" required>
-            {% if form.descuento_porcentaje.errors %}
-                <div class="invalid-feedback">
-                    {{ form.descuento_porcentaje.errors }}
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Fechas -->
-        <div class="row mb-3">
+        <div class="row">
             <div class="col-md-6">
-                <div class="form-group">
-                    <label for="fecha_inicio">Fecha de Inicio</label>
-                    <input type="datetime-local" class="form-control {% if form.fecha_inicio.errors %}is-invalid{% endif %}" id="fecha_inicio" name="fecha_inicio" value="{{ promocion.fecha_inicio|date:'Y-m-d H:i' }}" required>
-                    {% if form.fecha_inicio.errors %}
-                        <div class="invalid-feedback">
-                            {{ form.fecha_inicio.errors }}
-                        </div>
-                    {% endif %}
-                </div>
+                <label for="fecha_inicio">Fecha de Inicio</label>
+                <input type="datetime-local" class="form-control {% if form.fecha_inicio.errors %}is-invalid{% endif %}" id="fecha_inicio" name="fecha_inicio" value="{{ promocion.fecha_inicio|date:'Y-m-d\\TH:i' }}" required>
+                {% if form.fecha_inicio.errors %}
+                    <div class="invalid-feedback">{{ form.fecha_inicio.errors }}</div>
+                {% endif %}
             </div>
-
             <div class="col-md-6">
-                <div class="form-group">
-                    <label for="fecha_fin">Fecha de Fin</label>
-                    <input type="date" class="form-control {% if form.fecha_fin.errors %}is-invalid{% endif %}" id="fecha_fin" name="fecha_fin" value="{{ promocion.fecha_fin|date:'Y-m-d' }}" required>
-                    {% if form.fecha_fin.errors %}
-                        <div class="invalid-feedback">
-                            {{ form.fecha_fin.errors }}
-                        </div>
-                    {% endif %}
-                </div>
+                <label for="fecha_fin">Fecha de Fin</label>
+                <input type="datetime-local" class="form-control {% if form.fecha_fin.errors %}is-invalid{% endif %}" id="fecha_fin" name="fecha_fin" value="{{ promocion.fecha_fin|date:'Y-m-d\\TH:i' }}" required>
+                {% if form.fecha_fin.errors %}
+                    <div class="invalid-feedback">{{ form.fecha_fin.errors }}</div>
+                {% endif %}
             </div>
         </div>
 
-        <div class="form-group mb-3">
-            <label for="codigo_promocional">Código Promocional (Opcional)</label>
-            <input type="text" class="form-control {% if form.codigo_promocional.errors %}is-invalid{% endif %}" id="codigo_promocional" name="codigo_promocional" value="{{ promocion.codigo_promocional }}">
-            {% if form.codigo_promocional.errors %}
-                <div class="invalid-feedback">
-                    {{ form.codigo_promocional.errors }}
-                </div>
-            {% endif %}
-        </div>
+        <label for="codigo_promocional" class="mt-2">Código Promocional (Opcional)</label>
+        <input type="text" class="form-control {% if form.codigo_promocional.errors %}is-invalid{% endif %}" id="codigo_promocional" name="codigo_promocional" value="{{ promocion.codigo_promocional }}">
+        {% if form.codigo_promocional.errors %}
+            <div class="invalid-feedback">{{ form.codigo_promocional.errors }}</div>
+        {% endif %}
 
-        <div class="form-group mb-3">
-            <label for="condiciones">Condiciones</label>
-            <textarea class="form-control {% if form.condiciones.errors %}is-invalid{% endif %}" id="condiciones" name="condiciones" rows="3">{{ promocion.condiciones }}</textarea>
-            {% if form.condiciones.errors %}
-                <div class="invalid-feedback">
-                    {{ form.condiciones.errors }}
-                </div>
-            {% endif %}
-        </div>
+        <label for="condiciones">Condiciones</label>
+        <textarea class="form-control {% if form.condiciones.errors %}is-invalid{% endif %}" id="condiciones" name="condiciones" rows="2">{{ promocion.condiciones }}</textarea>
+        {% if form.condiciones.errors %}
+            <div class="invalid-feedback">{{ form.condiciones.errors }}</div>
+        {% endif %}
 
-        <div class="row mb-3">
+        <div class="row">
             <div class="col-md-6">
-                <div class="form-group">
-                    <label for="cantidad_minima">Cantidad Mínima (Opcional)</label>
-                    <input type="number" class="form-control {% if form.cantidad_minima.errors %}is-invalid{% endif %}" id="cantidad_minima" name="cantidad_minima" value="{{ promocion.cantidad_minima }}">
-                    {% if form.cantidad_minima.errors %}
-                        <div class="invalid-feedback">
-                            {{ form.cantidad_minima.errors }}
-                        </div>
-                    {% endif %}
-                </div>
+                <label for="cantidad_minima">Cantidad Mínima (Opcional)</label>
+                <input type="number" class="form-control {% if form.cantidad_minima.errors %}is-invalid{% endif %}" id="cantidad_minima" name="cantidad_minima" value="{{ promocion.cantidad_minima }}">
+                {% if form.cantidad_minima.errors %}
+                    <div class="invalid-feedback">{{ form.cantidad_minima.errors }}</div>
+                {% endif %}
             </div>
-
             <div class="col-md-6">
-                <div class="form-group">
-                    <label for="cantidad_maxima">Cantidad Máxima (Opcional)</label>
-                    <input type="number" class="form-control {% if form.cantidad_maxima.errors %}is-invalid{% endif %}" id="cantidad_maxima" name="cantidad_maxima" value="{{ promocion.cantidad_maxima }}">
-                    {% if form.cantidad_maxima.errors %}
-                        <div class="invalid-feedback">
-                            {{ form.cantidad_maxima.errors }}
-                        </div>
-                    {% endif %}
-                </div>
+                <label for="cantidad_maxima">Cantidad Máxima (Opcional)</label>
+                <input type="number" class="form-control {% if form.cantidad_maxima.errors %}is-invalid{% endif %}" id="cantidad_maxima" name="cantidad_maxima" value="{{ promocion.cantidad_maxima }}">
+                {% if form.cantidad_maxima.errors %}
+                    <div class="invalid-feedback">{{ form.cantidad_maxima.errors }}</div>
+                {% endif %}
             </div>
         </div>
 
-        <div class="form-group mb-3">
-            <label for="id_productos_aplicables">Productos Aplicables</label>
-            <select multiple class="form-control" id="id_productos_aplicables" name="productos_aplicables" required>
-                {% for producto_tienda in productos_tiendas %}
-                    <option value="{{ producto_tienda.id }}" {% if producto_tienda.id in productos_aplicables_ids %} selected {% endif %}>
-                        {{ producto_tienda.producto.nombre }}
-                    </option>
-                {% endfor %}
-            </select>
-            {% if form.productos_aplicables.errors %}
-                <div class="text-danger">
-                    {{ form.productos_aplicables.errors }}
-                </div>
-            {% endif %}
-        </div>
+        <label for="id_productos_aplicables" class="mt-2">Productos Aplicables</label>
+        <select multiple class="form-control" id="id_productos_aplicables" name="productos_aplicables" required>
+            {% for producto_tienda in productos_tiendas %}
+                <option value="{{ producto_tienda.id }}" {% if producto_tienda.id in productos_aplicables_ids %} selected {% endif %}>
+                    {{ producto_tienda.producto.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if form.productos_aplicables.errors %}
+            <div class="text-danger">{{ form.productos_aplicables.errors }}</div>
+        {% endif %}
     </form>
 </div>
 
@@ -171,5 +172,4 @@ function eliminarPromocion(id) {
     }
 }
 </script>
-
 {% endblock %}

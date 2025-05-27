@@ -172,6 +172,7 @@ class ProductosTiendas(models.Model):
     tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name='productos_tiendas')
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     cantidad = models.PositiveIntegerField()
+    stock_minimo = models.PositiveIntegerField(null=True, blank=True, verbose_name="Stock mínimo") 
 
     ESTADO_CHOICES = [
         ('activo', 'Activo'),
@@ -269,7 +270,7 @@ class AtencionCliente(models.Model):
     estado_atencion = models.CharField(max_length=50, choices=Estado.choices, default=Estado.NO_LEIDO)
 
     def __str__(self):
-        return f"Consulta {self.id} - Cliente: {self.cliente.user.username} - Tienda: {self.tienda.nombre}"
+        return f"Consulta {self.id} - Cliente: {self.cliente.usuario.username} - Tienda: {self.tienda.nombre}"
 
     class Meta:
         db_table = 'atencion_cliente'

@@ -62,7 +62,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="" class="sidebar-link">
+                            <a href="/inventario/" class="sidebar-link">
                                 <i class="lni lni-popup"></i>
                                 <span>Gestión de inventario</span>
                             </a>
@@ -74,13 +74,13 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="/index_producto/" class="sidebar-link">
+                            <a href="/reporte_tienda/" class="sidebar-link">
                                 <i class="bi bi-pie-chart-fill"></i>
                                 <span>Análisis y reportes</span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="/index_producto/" class="sidebar-link">
+                            <a href="/configuracion_tienda/" class="sidebar-link">
                                 <i class="bi bi-gear-fill"></i>
                                 <span>Config. Métodos de pago</span>
                             </a>
@@ -128,15 +128,9 @@
                         </li>
                     </li>
                     <li class="sidebar-item">
-                        <a href="" class="sidebar-link">
+                        <a href="/ver_promociones_activas/" class="sidebar-link">
                             <i class="bi bi-currency-exchange"></i>
                             <span>Ofertas y promociones</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="" class="sidebar-link">
-                            <i class="bi bi-border-width"></i>
-                            <span>Seguimiento de pedidos</span>
                         </a>
                     </li>
                         <li class="sidebar-item">
@@ -146,7 +140,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">
+                            <a href="/atencion_cliente/" class="sidebar-link">
                                 <i class="bi bi-person-gear"></i>
                                 <span>Atención al cliente</span>
                             </a>
@@ -220,22 +214,6 @@
                     {% endif %}
                 {% endif %}
 
-                <!-- Opciones comunes a todos los roles -->
-                <li class="sidebar-item">
-                    <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
-                        <i class="bi bi-receipt"></i>
-                        <span>Historial de ventas</span>
-                    </a>
-                    <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-                        <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">A la espera</a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">A la espera</a>
-                        </li>
-                    </ul>
-                </li>
             </ul>
 
             <div class="sidebar-footer">
@@ -252,7 +230,7 @@
         <div class="main">
             <nav class="navbar navbar-expand px-4 py-3">
                 <form action="#" class="d-none d-sm-inline-block">
-                    <label>Usuario: {{ user.username | upper }}</label>
+                    <label>Usuario: @{{ user.username }}</label>
                 </form>
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav ms-auto">

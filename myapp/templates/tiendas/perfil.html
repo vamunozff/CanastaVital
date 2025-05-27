@@ -1,89 +1,166 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
-    <div class="custom-profile-section">
+<style>
+/* Diseño minimalista y moderno */
+.profile-card {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    padding: 2.5rem 2rem 2rem 2rem;
+    text-align: center;
+}
+.profile-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #e9ecef;
+    margin-top: -70px;
+    background: #f8f9fa;
+}
+.profile-name {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    letter-spacing: 1px;
+}
+.profile-desc {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+.profile-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+    text-align: left;
+}
+.profile-info-list li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: #495057;
+}
+.profile-info-list label {
+    min-width: 120px;
+    font-weight: 500;
+    color: #adb5bd;
+    margin-right: 10px;
+}
+.profile-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+.profile-actions .btn {
+    border-radius: 20px;
+    font-size: 0.98rem;
+    padding: 0.5rem 1.3rem;
+}
+.edit-avatar-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+</style>
 
-        <section class="seccion-perfil-usuario">
-            <div class="perfil-usuario-header">
-                <div class="perfil-usuario-portada">
-                    <div class="perfil-usuario-avatar">
-                    <img src="{% if tienda.logo_url %}{{ tienda.logo_url.url }}{% else %}{% static 'myapp/img/Default.jpg' %}{% endif %}" alt="Logo de {{ tienda.nombre }}">
-                        <button type="button" class="boton-avatar">
-                            <i class="far fa-image"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="perfil-usuario-body">
-                <div class="perfil-usuario-bio text-center">
-                    <h3 class="titulo">{{ tienda.nombre|upper }}</h3>
-                    <p class="texto">Qué maravilloso es que nadie tenga que esperar ni un segundo para empezar a mejorar el mundo.</p>
-                </div>
-                <div class="perfil-usuario-footer">
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <label><i class="bi bi-geo-alt-fill"></i> Dirección:</label>
-                            <span>{{ direccion.direccion }}, {{ direccion.ciudad }}</span>
-                        </li>
-                        <li class="mb-2">
-                            <label><i class="icono bi bi-calendar"></i> Horario de atención:</label>
-                            <span>{{ tienda.horarios }}</span>
-                        </li>
-                        <li class="mb-2">
-                            <label><i class="bi bi-stopwatch"></i> Teléfono:</label>
-                            <span>{{ tienda.telefono }}</span>
-                        </li>
-                        <li class="mb-2">
-                            <label><i class="bi bi-info-circle"></i> Descripción:</label>
-                            <span>{{ tienda.descripcion }}</span>
-                        </li>
-                        <br>
-                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#userForm">Actualizar Datos</button>
-                    </ul>
-                </div>
+<div class="profile-card position-relative">
+    <div style="position: relative;">
+        <img class="profile-avatar" src="{% if tienda.logo_url %}{{ tienda.logo_url.url }}{% else %}{% static 'myapp/img/Default.jpg' %}{% endif %}" alt="Logo de {{ tienda.nombre }}">
+        <button type="button" class="edit-avatar-btn" data-bs-toggle="modal" data-bs-target="#userForm" title="Actualizar logo">
+            <i class="far fa-image"></i>
+        </button>
+    </div>
+    <div class="profile-name">{{ tienda.nombre|upper }}</div>
+    <div class="profile-desc">{{ tienda.descripcion|default:"Sin descripción" }}</div>
+    <ul class="profile-info-list">
+        <li>
+            <label><i class="bi bi-geo-alt-fill"></i> Dirección:</label>
+            <span>{{ direccion.direccion }}, {{ direccion.ciudad }}</span>
+        </li>
+        <li>
+            <label><i class="bi bi-calendar"></i> Horario:</label>
+            <span>{{ tienda.horarios|default:"No especificado" }}</span>
+        </li>
+        <li>
+            <label><i class="bi bi-telephone"></i> Teléfono:</label>
+            <span>{{ tienda.telefono|default:"No especificado" }}</span>
+        </li>
+    </ul>
+    <div class="profile-actions">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userForm">
+            <i class="bi bi-pencil"></i> Editar perfil
+        </button>
+    </div>
+    <hr>
+    <div style="text-align:left; margin-top:1.5rem;">
+        <h6 class="mb-3" style="color:#495057;font-weight:600;">Datos de cuenta</h6>
+        <ul class="profile-info-list">
+            <li>
+                <label><i class="bi bi-person"></i> Usuario:</label>
+                <span>@{{ request.user.username }}</span>
+            </li>
+            <li>
+                <label><i class="bi bi-envelope"></i> Email:</label>
+                <span>{{ request.user.email|default:"No especificado" }}</span>
+            </li>
+        </ul>
+    </div>
+</div>
 
-            </div>
-        </section>
-
-    <!-- Modal for updating data -->
-    <div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
+<!-- Modal para actualizar datos -->
+<div class="modal fade" id="userForm" tabindex="-1" aria-labelledby="userFormLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" enctype="multipart/form-data" action="{% url 'perfil_tienda' %}">
+                {% csrf_token %}
                 <div class="modal-header">
-                    <h5 class="modal-title" id="userFormLabel">Actualizar Datos</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="userFormLabel">Actualizar Perfil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Form for updating data -->
-                    <form method="post" enctype="multipart/form-data" action="{% url 'perfil_tienda' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ tienda.nombre }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="horarios" class="form-label">Horarios</label>
-                            <input type="text" class="form-control" id="horarios" name="horarios" value="{{ tienda.horarios }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ tienda.telefono }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="descripcion" class="form-label">Descripción</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion">{{ tienda.descripcion }}</textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="logo_url" class="form-label">Logo</label>
-                            <input type="file" class="form-control" id="logo_url" name="logo_url">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                    </form>
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ tienda.nombre }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="horarios" class="form-label">Horarios</label>
+                        <input type="text" class="form-control" id="horarios" name="horarios" value="{{ tienda.horarios }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ tienda.telefono }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion">{{ tienda.descripcion }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="logo_url" class="form-label">Logo</label>
+                        <input type="file" class="form-control" id="logo_url" name="logo_url">
+                    </div>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
         </div>
     </div>
-
-    </div>
-
+</div>
 {% endblock %}

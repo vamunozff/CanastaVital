@@ -22,6 +22,8 @@ from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 import logging  # <-- Agrega esta línea para importar logging
+from django.core.exceptions import ValidationError
+from django.db import models
 
 # Create your views here.
 def hello(request):
@@ -282,10 +284,14 @@ def index_cliente(request):
     promociones_activas = Promocion.objects.filter(activo=True).order_by('fecha_fin')
     categorias = Categoria.objects.all()
 
-    # Contexto para enviar al template
+    # Obtener las tiendas a las que el cliente puede escribir (por ejemplo, todas, o solo las que ha comprado)
+    # Aquí se muestran todas las tiendas, pero puedes filtrar según tu lógica de negocio
+    tiendas = Tienda.objects.all()
+
     contexto = {
         'promociones': promociones_activas,
-        'categorias': categorias
+        'categorias': categorias,
+        'tiendas': tiendas,  # <-- Asegúrate de pasar esto al template
     }
 
     return render(request, 'clientes/index.html', contexto)
@@ -318,6 +324,7 @@ def asignarProducto(request):
             proveedor_id = int(request.POST.get('txtProveedor_id'))
             precio_unitario = Decimal(request.POST.get('txtPrecioUnitario'))
             cantidad = int(request.POST.get('txtCantidad'))
+            stock_minimo = int(request.POST.get('txtStockMinimo'))
             estado = request.POST.get('txtEstado')
             imagen = request.FILES.get('logo_url', None)
 
@@ -337,6 +344,7 @@ def asignarProducto(request):
                 tienda=tienda,
                 precio_unitario=precio_unitario,
                 cantidad=cantidad,
+                stock_minimo=stock_minimo,
                 estado=estado,
                 imagen=imagen
             )
@@ -610,21 +618,51 @@ def eliminar_proveedor(request, id):
 
 @login_required
 def busqueda_tiendas(request):
-    query = request.GET.get('search', '')
-    if query:
-        tiendas = Tienda.objects.filter(nombre__icontains=query)
-    else:
-        tiendas = Tienda.objects.all()
+    search = request.GET.get('search', '')
+    ciudad_id = request.GET.get('ciudad', '')
 
-    return render(request, 'tiendas/busqueda.html', {'tiendas': tiendas})
+    # Obtener los IDs de ciudades únicas de las direcciones de tiendas
+    ciudad_ids = Direccion.objects.filter(tienda__isnull=False).values_list('ciudad', flat=True).distinct()
+    ciudades = Ciudad.objects.filter(id__in=ciudad_ids).order_by('nombre')
+
+    tiendas = Tienda.objects.all()
+    if search:
+        tiendas = tiendas.filter(nombre__icontains=search)
+    if ciudad_id:
+        # ciudad_id debe ser un número (id), pero si llega el nombre, buscar el id correspondiente
+        try:
+            ciudad_obj = Ciudad.objects.get(id=ciudad_id)
+            tiendas = tiendas.filter(direcciones__ciudad=ciudad_obj).distinct()
+        except (Ciudad.DoesNotExist, ValueError):
+            # Si no es un id válido, intentar buscar por nombre
+            ciudad_obj = Ciudad.objects.filter(nombre=ciudad_id).first()
+            if ciudad_obj:
+                tiendas = tiendas.filter(direcciones__ciudad=ciudad_obj).distinct()
+            else:
+                tiendas = tiendas.none()
+
+    return render(request, 'tiendas/busqueda.html', {
+        'tiendas': tiendas,
+        'ciudades': ciudades,
+    })
 
 @login_required
 def busqueda_productos(request, tienda_id):
     tienda = get_object_or_404(Tienda, id=tienda_id)
+    promocion_id = request.GET.get('promocion_id')
 
-    productosTiendas = ProductosTiendas.objects.filter(
-        tienda=tienda, estado='activo'
-    ).select_related('producto', 'proveedor').prefetch_related('promociones')
+    if promocion_id:
+        # Filtrar productos de la tienda que están en la promoción seleccionada
+        productosTiendas = ProductosTiendas.objects.filter(
+            tienda=tienda,
+            promociones__id=promocion_id,
+            estado='activo'
+        ).select_related('producto', 'proveedor').prefetch_related('promociones')
+    else:
+        productosTiendas = ProductosTiendas.objects.filter(
+            tienda=tienda, estado='activo'
+        ).select_related('producto', 'proveedor').prefetch_related('promociones')
+
     context = {
         'tienda': tienda,
         'productosTiendas': productosTiendas
@@ -779,16 +817,15 @@ def crear_orden(request):
         try:
             data = json.loads(request.body)
 
-            # Obtener el cliente asociado al usuario actual
             try:
                 cliente = Cliente.objects.get(usuario=request.user)
             except Cliente.DoesNotExist:
                 return JsonResponse({'success': False, 'error': 'No tienes un cliente asociado a tu cuenta.'}, status=400)
 
             direccion_envio_id = data.get('direccion_envio_id')
-            metodo_pago_id = data.get('metodo_pago_id')  # <-- Asegúrate de recibirlo
+            metodo_pago_id = data.get('metodo_pago_id')  
             subtotal = float(data.get('subtotal', 0))
-            descuento = float(data.get('descuento', 0))  # <-- Recibe el descuento aplicado
+            descuento = float(data.get('descuento', 0))  
             iva = float(data.get('iva', 0))
             total = float(data.get('total', 0))
             productos = data.get('productos', [])
@@ -1180,10 +1217,6 @@ def historial_compra(request):
 
     return render(request, 'otros/historial_p.html', context)
 
-def inventario(request):
-    return render(request, 'otros/inventario.html')
-
-
 @login_required
 @user_is_tienda
 def ordenes(request):
@@ -1193,25 +1226,34 @@ def ordenes(request):
         messages.error(request, "No tienes una tienda asociada para gestionar órdenes.")
         return redirect("index_tienda")
 
-    ordenes_pendientes = Orden.objects.filter(tienda=tienda, estado='pendiente').order_by('-fecha_creacion')
+    ordenes_pendientes = Orden.objects.filter(
+        tienda=tienda,
+        estado__in=['pendiente', 'procesando']
+    ).order_by('-fecha_creacion')
     ordenes_completadas = Orden.objects.filter(tienda=tienda, estado='completada').order_by('-fecha_creacion')
+    ordenes_canceladas = Orden.objects.filter(tienda=tienda, estado='cancelada').order_by('-fecha_creacion')
 
     paginator_pendientes = Paginator(ordenes_pendientes, 10)
     paginator_completadas = Paginator(ordenes_completadas, 10)
+    paginator_canceladas = Paginator(ordenes_canceladas, 10)
 
     page_number_pendientes = request.GET.get('pendientes_page')
     page_number_completadas = request.GET.get('completadas_page')
+    page_number_canceladas = request.GET.get('canceladas_page')
 
     page_obj_pendientes = paginator_pendientes.get_page(page_number_pendientes)
     page_obj_completadas = paginator_completadas.get_page(page_number_completadas)
+    page_obj_canceladas = paginator_canceladas.get_page(page_number_canceladas)
 
     # Depuración
     print("Pendientes:", ordenes_pendientes.count())
     print("Completadas:", ordenes_completadas.count())
+    print("Canceladas:", ordenes_canceladas.count())
 
     return render(request, "productos/ordenes.html", {
         "ordenes_pendientes": page_obj_pendientes,
         "ordenes_completadas": page_obj_completadas,
+        "ordenes_canceladas": page_obj_canceladas,
         "tienda": tienda,
     })
 
@@ -1251,3 +1293,197 @@ def descargar_factura(request, orden_id):
     weasyprint.HTML(string=html_string).write_pdf(response)
     return response
 
+@login_required
+@user_is_tienda
+def inventario(request):
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar inventario.")
+        return redirect("unauthorized")
+
+    query = request.GET.get('q', '')
+    productos_tiendas = ProductosTiendas.objects.filter(tienda=tienda)
+    if query:
+        productos_tiendas = productos_tiendas.filter(producto__nombre__icontains=query)
+
+    # Puedes agregar paginación si lo deseas
+    paginator = Paginator(productos_tiendas, 15)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'productos/inventario.html', {
+        'productos_tiendas': page_obj,
+        'tienda': tienda,
+        'query': query,
+    })
+
+
+@login_required
+@user_is_tienda
+def reporte_tienda(request):
+    tienda = Tienda.objects.get(usuario=request.user)
+    total_productos = ProductosTiendas.objects.filter(tienda=tienda).count()
+    productos_bajo_stock = ProductosTiendas.objects.filter(tienda=tienda, stock_minimo__isnull=False, cantidad__lte=models.F('stock_minimo')).count()
+    ventas_hoy = Orden.objects.filter(tienda=tienda, fecha_creacion__date=timezone.now().date()).aggregate(Sum('total'))['total__sum'] or 0
+    pedidos_pendientes = Orden.objects.filter(tienda=tienda, estado='pendiente').count()
+    ultimos_pedidos = Orden.objects.filter(tienda=tienda).order_by('-fecha_creacion')[:10]
+    return render(request, 'tiendas/reporte.html', {
+        'total_productos': total_productos,
+        'productos_bajo_stock': productos_bajo_stock,
+        'ventas_hoy': ventas_hoy,
+        'pedidos_pendientes': pedidos_pendientes,
+        'ultimos_pedidos': ultimos_pedidos,
+    })
+
+@login_required
+@user_is_tienda
+def cambiar_estado_orden(request, id):
+    orden = get_object_or_404(Orden, id=id)
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada para gestionar órdenes.")
+        return redirect("ordenes")
+
+    if orden.tienda != tienda:
+        messages.error(request, "No tienes permiso para modificar esta orden.")
+        return redirect("ordenes")
+
+    if request.method == "POST":
+        nuevo_estado = request.POST.get("nuevo_estado")
+        if nuevo_estado in dict(Orden.Estado.choices):
+            orden.estado = nuevo_estado
+            orden.save()
+            messages.success(request, "Estado de la orden actualizado correctamente.")
+        else:
+            messages.error(request, "Estado no válido.")
+    return redirect("ordenes")
+
+@login_required
+@user_is_tienda
+def configuracion_tienda(request):
+    try:
+        tienda = Tienda.objects.get(usuario=request.user)
+    except Tienda.DoesNotExist:
+        messages.error(request, "No tienes una tienda asociada.")
+        return redirect('index_tienda')
+
+    metodos_pago = MetodoPago.objects.all()
+    metodos_pago_seleccionados = []
+
+    if request.method == 'POST':
+        seleccionados = request.POST.getlist('metodos_pago')
+        # Aquí puedes guardar la selección en la sesión, base de datos, etc.
+        # Por simplicidad, solo lo devolvemos al template
+        metodos_pago_seleccionados = [int(mid) for mid in seleccionados]
+        messages.success(request, "Métodos de pago guardados correctamente.")
+    else:
+        # Si quieres cargar los métodos guardados, hazlo aquí
+        metodos_pago_seleccionados = []
+
+    return render(request, 'tiendas/configuracion.html', {
+        'metodos_pago': metodos_pago,
+        'metodos_pago_seleccionados': metodos_pago_seleccionados,
+        'tienda': tienda,
+    })
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Orden
+
+@login_required
+def ver_promociones_activas(request):
+    """
+    Vista para mostrar todas las promociones activas a cualquier usuario autenticado (incluyendo clientes).
+    """
+    from django.utils import timezone
+    from .models import Promocion
+    now = timezone.now()
+    promociones = Promocion.objects.filter(
+        activo=True,
+        fecha_inicio__lte=now,
+        fecha_fin__gte=now
+    )
+    return render(request, 'clientes/promociones_activas.html', {'promociones': promociones})
+
+@login_required
+@user_is_cliente
+def atencion_cliente(request):
+    cliente = get_object_or_404(Cliente, usuario=request.user)  # Asegúrate de usar 'usuario' y no 'user'
+    consultas = cliente.atencion_cliente.select_related('tienda').order_by('-fecha_creacion')
+
+    if request.method == 'POST':
+        mensaje = request.POST.get('mensaje', '').strip()
+        tienda_id = request.POST.get('tienda_id')
+        if mensaje and tienda_id:
+            tienda = get_object_or_404(Tienda, id=tienda_id)
+            from .models import AtencionCliente
+            AtencionCliente.objects.create(
+                cliente=cliente,
+                tienda=tienda,
+                mensaje=mensaje
+            )
+            messages.success(request, "Tu consulta fue enviada correctamente.")
+            return redirect('atencion_cliente')
+        else:
+            messages.error(request, "Debes seleccionar una tienda y escribir un mensaje.")
+
+    tiendas = Tienda.objects.filter(ordenes__cliente=cliente).distinct()
+
+    return render(request, 'clientes/atencion_cliente.html', {
+        'consultas': consultas,
+        'tiendas': tiendas,
+    })
+
+@login_required
+@user_is_cliente
+def seguimiento_pedido(request, orden_id):
+    cliente = get_object_or_404(Cliente, usuario=request.user)
+    orden = get_object_or_404(Orden, id=orden_id, cliente=cliente)
+    estados = ['pendiente', 'procesando', 'completada', 'cancelada']
+    try:
+        estado_actual_idx = estados.index(orden.estado)
+    except ValueError:
+        estado_actual_idx = 0
+    return render(request, 'clientes/seguimiento_pedido.html', {
+        'orden': orden,
+        'estados': estados,
+        'estado_actual_idx': estado_actual_idx
+    })
+
+@csrf_exempt
+def guardar_mensaje(request):
+    if request.method == 'POST':
+        try:
+            datos = json.loads(request.body)
+            cliente_id = datos.get('cliente_id')
+            tienda_id = datos.get('tienda_id')
+            mensaje = datos.get('mensaje', '').strip()
+
+            # Validar datos mínimos
+            if not cliente_id or not tienda_id or not mensaje:
+                return JsonResponse({'status': 'error', 'detail': 'Faltan datos requeridos.'}, status=400)
+
+            # Asegúrate de que los IDs sean enteros
+            cliente = Cliente.objects.get(id=int(cliente_id))
+            tienda = Tienda.objects.get(id=int(tienda_id))
+
+            from .models import AtencionCliente
+
+            # Si tu modelo AtencionCliente no tiene estado_atencion, elimina esa línea
+            atencion = AtencionCliente.objects.create(
+                cliente=cliente,
+                tienda=tienda,
+                mensaje=mensaje,
+                estado_atencion=getattr(AtencionCliente, 'Estado', None) and getattr(AtencionCliente.Estado, 'NO_LEIDO', 'NO_LEIDO') or 'NO_LEIDO'
+            )
+            return JsonResponse({'status': 'ok'})
+        except Cliente.DoesNotExist:
+            return JsonResponse({'status': 'error', 'detail': 'Cliente no encontrado.'}, status=400)
+        except Tienda.DoesNotExist:
+            return JsonResponse({'status': 'error', 'detail': 'Tienda no encontrada.'}, status=400)
+        except Exception as e:
+            print("Error al guardar mensaje:", e)
+            return JsonResponse({'status': 'error', 'detail': str(e)}, status=400)
+    return JsonResponse({'status': 'error'}, status=400)

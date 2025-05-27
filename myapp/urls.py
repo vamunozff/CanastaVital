@@ -16,7 +16,7 @@ urlpatterns = [
     path('index_cliente/', index_cliente, name='index_cliente'),
     path('index_administrador/', index_administrador, name='index_administrador'),
     path('categorias/', categoria, name='categorias'),
-    path('asignarProducto/', views.asignarProducto),
+    path('asignar_producto/', views.asignarProducto, name='asignar_producto'),
     path('index_producto/', index_producto, name='index_producto'),
     path('buscar_producto/', views.buscar_producto, name='buscar_producto'),
     path('index_producto/actualizar_producto/<int:id>/', views.actualizar_producto, name='actualizar_producto'),
@@ -44,6 +44,13 @@ urlpatterns = [
     path('ordenes/', views.ordenes, name='ordenes'),
     path('unauthorized/', unauthorized, name='unauthorized'),
     path('agregar_al_carrito/<int:producto_tienda_id>/', views.agregar_al_carrito, name='agregar_al_carrito'),
-    path('factura/<int:orden_id>/', views.descargar_factura, name='descargar_factura')
+    path('factura/<int:orden_id>/', views.descargar_factura, name='descargar_factura'),
+    path('reporte_tienda/', views.reporte_tienda, name='reporte_tienda'),
+    path('cambiar_estado_orden/<int:id>/', views.cambiar_estado_orden, name='cambiar_estado_orden'),
+    path('configuracion_tienda/', views.configuracion_tienda, name='configuracion_tienda'),
+    path('ver_promociones_activas/', views.ver_promociones_activas, name='ver_promociones_activas'),
+    path('atencion_cliente/', views.atencion_cliente, name='atencion_cliente'),
+    path('seguimiento_pedido/<int:orden_id>/', views.seguimiento_pedido, name='seguimiento_pedido'),
+    path('guardar_mensaje/', views.guardar_mensaje, name='guardar_mensaje'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
