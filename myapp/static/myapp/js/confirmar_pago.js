@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
     const botonPago = document.getElementById('boton-carrito');
-    const botonVaciarCarrito = document.getElementById('vaciar-carrito');
     const spinner = document.getElementById('spinner');
 
     botonPago.addEventListener('click', async function () {
@@ -48,9 +47,29 @@ document.addEventListener("DOMContentLoaded", function () {
             spinner.style.display = 'none';
         
             if (data.success) {
-                Swal.fire('¡Compra exitosa!', `Tu ID de orden es: ${data.orden_id}`, 'success');
-                vaciarCarrito();
-                window.location.href = '/index_cliente/';
+                // Mostrar mensaje de "Procesando su solicitud"
+                Swal.fire({
+                    title: 'Procesando su solicitud...',
+                    text: 'Por favor espere un momento.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Esperar 1.5 segundos y luego mostrar éxito
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Compra exitosa!',
+                        text: `Tu ID de orden es: ${data.orden_id}`,
+                        confirmButtonText: 'Aceptar'
+                    }).then(() => {
+                        vaciarCarrito();
+                        window.location.href = '/index_cliente/';
+                    });
+                }, 1500);
             } else {
                 Swal.fire('Error', `No se pudo crear la orden: ${data.error}`, 'error');
                 botonPago.disabled = false;
@@ -70,25 +89,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function prepararDatosOrden(direccionId, metodoPagoId) {
         const carritoData = JSON.parse(localStorage.getItem('carrito')) || [];
-        const subtotal = parseFloat(localStorage.getItem('subtotal') || '0');
-        const iva = subtotal * 0.19;
-        const total = subtotal + iva;
+        // Obtener los valores calculados y mostrados en el HTML, no recalcular aquí
+        const subtotal = parseFloat(document.getElementById('subtotal-carrito').textContent) || 0;
+        const descuento = parseFloat(document.getElementById('descuento-carrito').textContent) || 0;
+        const iva = parseFloat(document.getElementById('iva-carrito').textContent) || 0;
+        const total = parseFloat(document.getElementById('total-carrito').textContent) || 0;
+
+        // Asegurarse de que todos los IDs sean números
+        const productosValidados = carritoData.map(item => ({
+            producto_tienda_id: parseInt(item.producto_tienda_id || item.id),
+            cantidad: parseInt(item.cantidad),
+            precio_unitario: parseFloat(item.precio),
+            descuento: item.descuento || 0
+        }));
 
         return {
-            direccion_envio_id: direccionId,
-            metodo_pago_id: metodoPagoId,
+            direccion_envio_id: parseInt(direccionId),
+            metodo_pago_id: parseInt(metodoPagoId),
             subtotal,
+            descuento,
             iva,
             total,
-            productos: carritoData.map(item => ({
-                producto_tienda_id: item.producto_tienda_id,
-                cantidad: item.cantidad,
-                precio_unitario: item.precio
-            }))
+            productos: productosValidados
         };
     }
 
-    
     function vaciarCarrito() {
         localStorage.removeItem('carrito');
         localStorage.removeItem('subtotal');
@@ -101,54 +126,47 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log('Ejecutando validarCarrito');
         const carritoData = JSON.parse(localStorage.getItem('carrito')) || [];
         console.log('Datos del carrito en validarCarrito:', carritoData);
-    
+
         if (carritoData.length === 0) {
-            alert('Su carrito está vacío. Agregue productos antes de proceder al pago.');
+            Swal.fire('Carrito vacío', 'Su carrito está vacío. Agregue productos antes de proceder al pago.', 'warning');
             return false;
         }
-    
+
+        // Crear un nuevo array con el formato correcto
+        const carritoCorregido = [];
+
         for (let item of carritoData) {
             console.log('Producto en carrito:', JSON.stringify(item));
-    
-            if (!item.producto_tienda_id) { 
-                alert(`El producto "${item.nombre}" no tiene un identificador válido.`);
+
+            // Usar id si producto_tienda_id no está disponible
+            const productoId = parseInt(item.producto_tienda_id || item.id);
+            if (isNaN(productoId) || productoId <= 0) { 
+                Swal.fire('Error', `El producto "${item.nombre}" no tiene un identificador válido.`, 'error');
+                console.error(`ID inválido para ${item.nombre}: ${item.id || item.producto_tienda_id}`);
                 return false;
             }
-            if (isNaN(item.cantidad) || item.cantidad <= 0) {
-                alert(`La cantidad del producto "${item.nombre}" no es válida.`);
+            
+            const cantidad = parseInt(item.cantidad);
+            if (isNaN(cantidad) || cantidad <= 0) {
+                Swal.fire('Error', `La cantidad del producto "${item.nombre}" no es válida.`, 'error');
                 return false;
             }
-        }
-    
-        return true;
-    }
-    
-    function agregarAlCarrito(producto_tienda_id, nombre, precio, cantidad) {
-        if (isNaN(cantidad) || cantidad <= 0) {
-            alert('Cantidad inválida. Debe ser un número mayor a 0.');
-            return;
-        }
-    
-        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-        const productoExistente = carrito.find(item => item.producto_tienda_id === producto_tienda_id);
-    
-        if (productoExistente) {
-            productoExistente.cantidad += cantidad;
-        } else {
-            carrito.push({
-                producto_tienda_id,
-                nombre,
-                precio,
-                cantidad
+            
+            // Crear un nuevo objeto con el formato correcto
+            carritoCorregido.push({
+                producto_tienda_id: productoId,
+                nombre: item.nombre,
+                precio: parseFloat(item.precio),
+                cantidad: cantidad
             });
         }
-    
-        localStorage.setItem('carrito', JSON.stringify(carrito));
-        console.log('Carrito actualizado:', carrito);
-        actualizarTablaCarrito();
+        
+        // Guardar el carrito con el formato correcto
+        localStorage.setItem('carrito', JSON.stringify(carritoCorregido));
+        
+        return true;
     }
-    
-    
+
     function getCSRFToken() {
         let cookieValue = null;
         const name = 'csrftoken';
@@ -166,36 +184,107 @@ document.addEventListener("DOMContentLoaded", function () {
         const carritoData = JSON.parse(localStorage.getItem('carrito')) || [];
         cuerpoTablaCarrito.innerHTML = '';
 
-        carritoData.forEach((item, index) => {
-            const fila = document.createElement('tr');
-            fila.innerHTML = `
-                <td>${item.nombre}</td>
-                <td>${item.cantidad}</td>
-                <td>$${item.precio.toFixed(2)}</td>
-                <td>$${(item.precio * item.cantidad).toFixed(2)}</td>
-                <td><button class="eliminar-btn btn btn-danger" data-product-index="${index}">Eliminar</button></td>
-            `;
-            cuerpoTablaCarrito.appendChild(fila);
+        if (carritoData.length === 0) {
+            const filaMensaje = document.createElement('tr');
+            filaMensaje.id = 'mensaje-vacio';
+            filaMensaje.innerHTML = '<td colspan="8" class="text-center">Tu carrito está vacío.</td>';
+            cuerpoTablaCarrito.appendChild(filaMensaje);
+        } else {
+            carritoData.forEach((item, index) => {
+                const precioUnitario = parseFloat(item.precio).toFixed(2);
+                const descuento = item.descuento || 0;
+                const descuentoTexto = descuento > 0 ? descuento + '%' : '—';
+                const precioActualizado = descuento > 0 ? (item.precio * (1 - descuento / 100)).toFixed(2) : precioUnitario;
+                const precioTotal = (precioActualizado * item.cantidad).toFixed(2);
+
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${item.nombre}</td>
+                    <td>${item.cantidad}</td>
+                    <td>$${precioUnitario}</td>
+                    <td>${descuentoTexto}</td>
+                    <td>$${precioActualizado}</td>
+                    <td>$${precioTotal}</td>
+                    <td>
+                        <button class="btn btn-outline-secondary btn-sm btn-menos" data-index="${index}" title="Quitar uno"><i class="fas fa-minus"></i></button>
+                        <button class="btn btn-outline-secondary btn-sm btn-mas" data-index="${index}" title="Agregar uno"><i class="fas fa-plus"></i></button>
+                    </td>
+                `;
+                cuerpoTablaCarrito.appendChild(fila);
+            });
+        }
+
+        // Calcular subtotal, descuento total, iva y total
+        let subtotal = 0;
+        let descuentoTotal = 0;
+        carritoData.forEach(item => {
+            const precioOriginal = parseFloat(item.precio);
+            const cantidad = parseInt(item.cantidad);
+            const descuento = item.descuento || 0;
+            subtotal += precioOriginal * cantidad;
+            if (descuento > 0) {
+                descuentoTotal += (precioOriginal * (descuento / 100)) * cantidad;
+            }
         });
 
-        const subtotal = carritoData.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
-        const iva = subtotal * 0.19;
-        const total = subtotal + iva;
+        const subtotalConDescuento = subtotal - descuentoTotal;
+        const iva = subtotalConDescuento * 0.19;
+        const total = subtotalConDescuento + iva;
 
         document.getElementById('subtotal-carrito').textContent = subtotal.toFixed(2);
+        document.getElementById('descuento-carrito').textContent = descuentoTotal.toFixed(2);
         document.getElementById('iva-carrito').textContent = iva.toFixed(2);
         document.getElementById('total-carrito').textContent = total.toFixed(2);
 
-        document.querySelectorAll('.eliminar-btn').forEach(boton => {
-            boton.addEventListener('click', function () {
-                const productoId = parseInt(this.getAttribute('data-product-id'));
-                const nuevoCarrito = carritoData.filter(item => item.producto_tienda_id !== productoId);
-                localStorage.setItem('carrito', JSON.stringify(nuevoCarrito));
-                actualizarTablaCarrito();
+        // Guardar los totales en localStorage
+        localStorage.setItem('subtotal', subtotal.toString());
+        localStorage.setItem('descuento', descuentoTotal.toString());
+        localStorage.setItem('iva', iva.toString());
+        localStorage.setItem('total', total.toString());
+
+        // Botones menos, más y eliminar
+        document.querySelectorAll('.btn-menos').forEach(boton => {
+            boton.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                modificarCantidad(idx, -1);
             });
-        });        
+        });
+        document.querySelectorAll('.btn-mas').forEach(boton => {
+            boton.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                modificarCantidad(idx, 1);
+            });
+        });
+        document.querySelectorAll('.eliminar-btn').forEach(boton => {
+            boton.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                eliminarProducto(idx);
+            });
+        });
     }
 
+    function modificarCantidad(index, delta) {
+        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+        if (index >= 0 && index < carrito.length) {
+            carrito[index].cantidad += delta;
+            if (carrito[index].cantidad <= 0) {
+                carrito.splice(index, 1);
+            }
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarTablaCarrito();
+        }
+    }
+
+    function eliminarProducto(index) {
+        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+        if (index >= 0 && index < carrito.length) {
+            carrito.splice(index, 1);
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarTablaCarrito();
+        }
+    }
+
+    const botonVaciarCarrito = document.getElementById('vaciar-carrito');
     if (botonVaciarCarrito) {
         botonVaciarCarrito.addEventListener('click', function () {
             Swal.fire({
@@ -213,6 +302,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Inicializar la tabla del carrito al cargar la página
     actualizarTablaCarrito();
 });
-

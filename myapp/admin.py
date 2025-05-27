@@ -69,7 +69,7 @@ class ProductoAdmin(admin.ModelAdmin):
 
 @admin.register(ProductosTiendas)
 class ProductosTiendasAdmin(admin.ModelAdmin):
-    list_display = ('producto', 'proveedor', 'tienda', 'precio_unitario', 'cantidad', 'estado', 'fecha_registro', 'imagen_preview')
+    list_display = ('producto', 'proveedor', 'tienda', 'precio_unitario', 'cantidad', 'stock_minimo', 'estado', 'fecha_registro', 'imagen_preview')
     list_filter = ('estado', 'fecha_registro', 'producto__categoria', 'proveedor')
     search_fields = ('producto__nombre', 'proveedor__razon_social', 'tienda__nombre')
     list_per_page = 20
@@ -79,7 +79,7 @@ class ProductosTiendasAdmin(admin.ModelAdmin):
             'fields': ('producto', 'proveedor', 'tienda', 'imagen')
         }),
         ('Detalles de Inventario', {
-            'fields': ('precio_unitario', 'cantidad', 'estado', 'fecha_registro')
+            'fields': ('precio_unitario', 'cantidad', 'stock_minimo', 'estado', 'fecha_registro')
         }),
     )
 
@@ -187,7 +187,7 @@ class MetodoPagoAdmin(admin.ModelAdmin):
 @admin.register(AtencionCliente)
 class AtencionClienteAdmin(admin.ModelAdmin):
     list_display = ('cliente', 'tienda', 'estado_atencion', 'fecha_creacion', 'mensaje', 'respuesta')
-    search_fields = ('cliente__user__username', 'tienda__nombre', 'mensaje')
+    search_fields = ('cliente__usuario__username', 'tienda__nombre', 'mensaje')
     list_filter = ('estado_atencion', 'fecha_creacion', 'tienda')
     ordering = ('-fecha_creacion',)
 
@@ -207,7 +207,7 @@ class AtencionClienteAdmin(admin.ModelAdmin):
 class OrdenAdmin(admin.ModelAdmin):
     list_display = ('id', 'cliente', 'tienda', 'direccion_envio', 'total', 'estado', 'fecha_creacion', 'fecha_venta')
     list_filter = ('estado', 'tienda', 'fecha_creacion')
-    search_fields = ('cliente__user__username', 'tienda__nombre', 'estado')
+    search_fields = ('cliente__usuario__username', 'tienda__nombre', 'estado')
     date_hierarchy = 'fecha_creacion'
     ordering = ('-fecha_creacion',)
     readonly_fields = ('fecha_creacion',)

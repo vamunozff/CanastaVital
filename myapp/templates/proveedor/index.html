@@ -1,90 +1,115 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Proveedor{% endblock %}</title>
-  </head>
-  <body>
-  <main>
-    <section class="p-3">
-    <h1>Consulta de proveedores</h1>
-        <!-- Alert Messages -->
-        {% if messages %}
-          <div class="container mt-3">
-            {% for message in messages %}
-              <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <strong class="text-dark">{{ message }}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        <div class="row">
-            <div class="col-12">
-                <button class="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Registrar proveedor</button>
-            </div>
+<style>
+    .proveedor-section {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,.10);
+        padding: 2.5rem 2rem 2rem 2rem;
+        margin-bottom: 2rem;
+    }
+    .proveedor-title {
+        color: #2563eb;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
+    }
+    .proveedor-btn {
+        border-radius: 8px;
+        font-weight: 600;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        margin-bottom: 1.2rem;
+        transition: background .2s;
+    }
+    .proveedor-btn:hover {
+        background: #1e40af;
+        color: #fff;
+    }
+    .proveedor-table th, .proveedor-table td {
+        vertical-align: middle;
+        border: none;
+    }
+    .proveedor-table th {
+        background: #f1f5f9;
+        font-weight: 600;
+        color: #334155;
+    }
+    .proveedor-table tr {
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .proveedor-table td {
+        color: #475569;
+    }
+    .proveedor-badge {
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 0.3em 0.8em;
+    }
+    .badge-activo { background: #059669; color: #fff; }
+    .badge-inactivo { background: #ef4444; color: #fff; }
+    .proveedor-search, .proveedor-filter {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 1rem;
+        width: 100%;
+    }
+</style>
+<div class="proveedor-section">
+    <h2 class="proveedor-title mb-4"><i class="fa-solid fa-truck me-2"></i>Consulta de Proveedores</h2>
+    <div class="mb-3">
+        <button class="proveedor-btn" data-bs-toggle="modal" data-bs-target="#userForm">
+            <i class="fa-solid fa-plus"></i> Registrar proveedor
+        </button>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6 mb-2 mb-md-0">
+            <input type="text" id="search-input" class="proveedor-search" placeholder="Buscar proveedor...">
         </div>
-<br>
-        <div class="row mb-4">
-    <!-- Barra de búsqueda -->
-    <div class="col-md-6">
-        <div class="input-group">
-            <input type="text" id="search-input" class="form-control" placeholder="Buscar proveedor...">
-            <button class="btn btn-primary" type="button" id="search-button">
-                <i class="fas fa-search"></i>
-            </button>
+        <div class="col-md-3">
+            <select class="proveedor-filter" id="filter-status">
+                <option value="">Filtrar por estado</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+            </select>
         </div>
     </div>
-
-    <!-- Filtro por estado -->
-    <div class="col-md-3">
-        <select class="form-select" id="filter-status">
-            <option value="">Filtrar por estado</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-        </select>
+    <div class="table-responsive mt-4">
+        <table class="table proveedor-table align-middle">
+            <thead class="text-center">
+                <tr>
+                    <th>#</th>
+                    <th>Razón Social</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Dirección</th>
+                    <th>Estado</th>
+                    <th>Fecha de Registro</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proveedor in proveedores %}
+                <tr class="text-center">
+                    <td>{{ forloop.counter }}</td>
+                    <td><a href="{% url 'actualizar_proveedor' proveedor.id %}">{{ proveedor.razon_social }}</a></td>
+                    <td>{{ proveedor.email }}</td>
+                    <td>{{ proveedor.telefono }}</td>
+                    <td>{{ proveedor.direccion }}</td>
+                    <td>
+                        <span class="proveedor-badge {% if proveedor.estado == 'activo' %}badge-activo{% else %}badge-inactivo{% endif %}">
+                            {{ proveedor.estado|capfirst }}
+                        </span>
+                    </td>
+                    <td>{{ proveedor.fecha_registro|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
-
-            <div class="table-responsive mt-4">
-                <table class="table table-hover table-bordered align-middle">
-                    <thead class="table-dark text-center">
-                        <tr>
-                            <th>#</th>
-                            <th>Razon Social</th>
-                            <th>Email</th>
-                            <th>Télefono</th>
-                            <th>Dirección</th>
-                            <th>Estado</th>
-                            <th>Fecha de Registro</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for proveedor in proveedores %}
-                        <tr class="text-center">
-                            <td>{{ forloop.counter }}</td>
-                            <td><a href="{% url 'actualizar_proveedor' proveedor.id %}">{{ proveedor.razon_social }}</a></td>
-                            <td>{{ proveedor.email }}</td>
-                            <td>{{ proveedor.telefono }}</td>
-                            <td>{{ proveedor.direccion }}</td>
-                            <td>
-                                <span class="badge {% if proveedor.estado == 'activo' %} bg-success {% else %} bg-danger {% endif %}">
-                                    {{ proveedor.estado|capfirst }}
-                                </span>
-                            </td>
-                            <td>{{ proveedor.fecha_registro|date:"d M Y" }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-    </section>
 
     <!--Modal Form-->
     <div class="modal fade" id="userForm">
@@ -131,9 +156,8 @@
             </div>
         </div>
     </div>
-  </main>
-  </body>
-</html>
+</div>
+{% endblock %}
 
 <script>
     // Esperar a que el DOM esté completamente cargado
@@ -153,5 +177,3 @@
       });
     });
   </script>
-  
-{% endblock %}

@@ -53,30 +53,15 @@ class ClienteForm(forms.ModelForm):
 
     def clean_fecha_nacimiento(self):
         fecha = self.cleaned_data.get('fecha_nacimiento')
-        if fecha and fecha > date.today():
+        if fecha and fecha > timezone.now().date():
             raise forms.ValidationError("La fecha de nacimiento no puede ser en el futuro.")
         return fecha
 
     def clean_numero_documento(self):
-        numero_documento = self.cleaned_data['numero_documento']
+        numero_documento = self.cleaned_data.get('numero_documento')
         if len(numero_documento) < 6:
             raise forms.ValidationError("El número de documento es demasiado corto.")
         return numero_documento
-
-    def clean(self):
-        cleaned_data = super().clean()
-        tipo_documento = cleaned_data.get('tipo_documento')
-        numero_documento = cleaned_data.get('numero_documento')
-        fecha_nacimiento = cleaned_data.get('fecha_nacimiento')
-
-        if not tipo_documento:
-            cleaned_data['tipo_documento'] = self.instance.tipo_documento
-        if not numero_documento:
-            cleaned_data['numero_documento'] = self.instance.numero_documento
-        if not fecha_nacimiento:
-            cleaned_data['fecha_nacimiento'] = self.instance.fecha_nacimiento
-
-        return cleaned_data
 
 
 class DireccionForm(forms.ModelForm):
@@ -119,7 +104,7 @@ class TiendaForm(forms.ModelForm):
 class ProductosTiendasForm(forms.ModelForm):
     class Meta:
         model = ProductosTiendas
-        fields = ['producto', 'proveedor', 'precio_unitario', 'cantidad', 'estado', 'imagen']
+        fields = ['producto', 'proveedor', 'precio_unitario', 'cantidad', 'stock_minimo', 'estado', 'imagen']
 
     def clean_precio_unitario(self):
         precio = self.cleaned_data.get('precio_unitario')

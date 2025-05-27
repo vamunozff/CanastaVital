@@ -2,198 +2,308 @@
 {% load static %}
 
 {% block content %}
-    <h1>Órdenes Pendientes o Procesando</h1>
-
+<style>
+    .ordenes-section {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,.10);
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+    }
+    .ordenes-title {
+        color: #2563eb;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
+    }
+    .ordenes-table th, .ordenes-table td {
+        vertical-align: middle;
+        border: none;
+    }
+    .ordenes-table th {
+        background: #f1f5f9;
+        font-weight: 600;
+        color: #334155;
+    }
+    .ordenes-table tr {
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .ordenes-table td {
+        color: #475569;
+    }
+    .ordenes-badge {
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 0.3em 0.8em;
+    }
+    .badge-pendiente { background: #f59e42; color: #fff; }
+    .badge-procesando { background: #2563eb; color: #fff; }
+    .badge-completada { background: #059669; color: #fff; }
+    .ordenes-btn {
+        border-radius: 8px;
+        font-weight: 500;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        transition: background .2s;
+    }
+    .ordenes-btn:hover {
+        background: #1e40af;
+        color: #fff;
+    }
+    .ordenes-search {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 1rem;
+        width: 100%;
+    }
+    .ordenes-filter {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 1rem;
+    }
+    .ordenes-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 2px 8px 0 rgba(60,72,88,.06);
+        padding: 1.2rem 1.5rem;
+        transition: box-shadow .2s;
+    }
+    .ordenes-card:hover {
+        box-shadow: 0 4px 24px 0 rgba(60,72,88,.12);
+        background: #f1f5f9;
+    }
+    .ordenes-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.7rem;
+    }
+    .ordenes-card-title {
+        font-weight: 600;
+        color: #2563eb;
+        font-size: 1.1rem;
+    }
+    .ordenes-card-footer {
+        text-align: right;
+        margin-top: 0.7rem;
+    }
+    .ordenes-card-list {
+        margin-bottom: 0.2rem;
+        color: #475569;
+        font-size: 0.97rem;
+        padding-left: 1.2rem;
+    }
+    .ver-mas-link {
+        color: #2563eb;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: underline;
+        margin-left: 0.5rem;
+    }
+    .orden-detalle {
+        display: none;
+        margin-top: 0.7rem;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+    }
+</style>
+<div class="ordenes-section">
+    <h2 class="ordenes-title mb-4"><i class="fa-solid fa-boxes-stacked me-2"></i>Órdenes Pendientes o Procesando</h2>
     {% if mensaje %}
-        <div class="alert alert-warning">
-            {{ mensaje }}
-        </div>
+        <div class="alert alert-warning">{{ mensaje }}</div>
     {% endif %}
-        
-     <div class="row mb-4">
-            <!-- Barra de búsqueda -->
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" id="search-input" class="form-control" placeholder="Buscar por codigo de orden...">
-                    <button class="btn btn-primary" type="button" id="search-button">
-                        <i class="fas fa-search"></i> <!-- Ícono de lupa -->
-                    </button>
-                </div>
-            </div>
-        
-            <!-- Filtro por estado -->
-            <div class="col-md-3">
-                <select class="form-select" id="filter-status">
-                    <option value="">Filtrar por estado</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Procesado">Procesado</option>
-                </select>
-            </div>
-        
-            <div class="col-md-3">
-                <button id="btn-completadas" class="btn btn-primary">Órdenes Completadas</button>
-            </div>
+    <div class="row mb-4">
+        <div class="col-md-6 mb-2 mb-md-0">
+            <input type="text" id="search-input" class="ordenes-search" placeholder="Buscar por código de orden...">
         </div>
-
-    <!-- Tabla de órdenes no completadas -->
-    <table class="table table-hover table-bordered align-middle">
-        <thead class="table-dark text-center">
-            <tr>
-                <th scope="col">ID</th>
-                <th>Cliente</th>
-                <th>Productos</th>
-                <th>Estado</th>
-                <th>Total</th>
-                <th>Fecha de Creación</th>
-                <th>Dirección de Envío</th>
-                <th>Método de Pago</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for orden in ordenes_no_completadas %}
-                <tr>
-                    <td>{{ orden.id }}</td>
-                    <td>
-                        <a href="#" class="cliente-info text-primary fw-bold"
-                       data-id="{{ orden.cliente.perfil.user.id }}"
-                       data-first_name="{{ orden.cliente.perfil.user.first_name }}"
-                       data-last_name="{{ orden.cliente.perfil.user.last_name }}"
-                       data-telefono="{{ orden.cliente.telefono }}"
-                       data-tipo_documento="{{ orden.cliente.tipo_documento }}"
-                       data-numero_documento="{{ orden.cliente.numero_documento }}">
-                       {{ orden.cliente.perfil.user.username }}
-                        </a>
-                    </td>
-                    <td>
-                        <ul>
-                            {% for producto in orden.productos_orden.all %}
-                                <li>
-                                    {{ producto.producto_tienda.producto.nombre }} - 
-                                    Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>{{ orden.get_estado_display }}</td>
-                    <td>${{ orden.total }}</td>
-                    <td>{{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}</td>
-                    <td>{{ orden.direccion_envio }}</td>
-                    <td>{{ orden.metodo_pago|capfirst }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="8">No hay órdenes pendientes o en proceso.</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-
-        <!-- Modal Cliente -->
-        <div class="modal fade" id="clienteModal">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Detalles del Cliente</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
-                        <p><strong>Apellido:</strong> <span id="ClienteApellido"></span></p>
-                        <p><strong>Teléfono:</strong> <span id="ClienteTelefono"></span></p>
-                        <p><strong>Tipo de Documento:</strong> <span id="clienteTipoDocumento"></span></p>
-                        <p><strong>N° documento:</strong> <span id="clienteNumeroDocumento"></span></p>
-                    </div>
-                </div>
-            </div>
+        <div class="col-md-3 text-end">
+            <button id="btn-completadas" class="ordenes-btn"><i class="fa-solid fa-check-double"></i> Órdenes Completadas</button>
+            <button id="btn-canceladas" class="ordenes-btn ms-2" style="background:#ef4444;"><i class="fa-solid fa-ban"></i> Órdenes Canceladas</button>
         </div>
-
-    <!-- Tabla de órdenes completadas, inicialmente oculta -->
-    <h3>Órdenes Completadas</h3>
-    <div id="tabla-completadas" style="display: none;">
-
-        <div class="row mb-4">
-            <!-- Barra de búsqueda -->
-            <div class="col-md-6">
-                <div class="input-group">
-                    <input type="text" id="search-input" class="form-control" placeholder="Buscar por codigo de orden...">
-                    <button class="btn btn-primary" type="button" id="search-button">
-                        <i class="fas fa-search"></i> <!-- Ícono de lupa -->
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <table class="table table-hover table-bordered align-middle">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th>Productos</th>
-                    <th>Estado</th>
-                    <th>Total</th>
-                    <th>Fecha de Creación</th>
-                    <th>Dirección de Envío</th>
-                    <th>Método de Pago</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for orden in ordenes_completadas %}
-                    <tr>
-                        <td>{{ orden.id }}</td>
-                        <td>{{ orden.cliente.perfil.user.username }}</td>
-                        <td>
-                            <ul>
-                                {% for producto in orden.productos_orden.all %}
-                                    <li>
-                                        {{ producto.producto_tienda.producto.nombre }} - 
-                                        Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>{{ orden.get_estado_display }}</td>
-                        <td>${{ orden.total }}</td>
-                        <td>{{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}</td>
-                        <td>{{ orden.direccion_envio }}</td>
-                        <td>{{ orden.metodo_pago|capfirst }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="8">No hay órdenes completadas.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 
-    <script>
-        // Función para alternar la visibilidad de las órdenes completadas
-        document.getElementById('btn-completadas').onclick = function() {
-            var tablaCompletadas = document.getElementById('tabla-completadas');
-            if (tablaCompletadas.style.display === "none") {
-                tablaCompletadas.style.display = "block";
-            } else {
-                tablaCompletadas.style.display = "none";
-            }
-        };
+    {% for orden in ordenes_pendientes %}
+    <div class="ordenes-card">
+        <div class="ordenes-card-header">
+            <span class="ordenes-card-title">Orden #{{ orden.id }}</span>
+            <span class="ordenes-badge badge-{{ orden.estado }}">{{ orden.get_estado_display }}</span>
+        </div>
+        <div>
+            <b>Cliente:</b>
+            <a href="#" class="cliente-info text-primary fw-bold"
+                data-id="{{ orden.cliente.usuario.id }}"
+                data-first_name="{{ orden.cliente.usuario.first_name }}"
+                data-last_name="{{ orden.cliente.usuario.last_name }}"
+                data-telefono="{{ orden.cliente.telefono }}"
+                data-tipo_documento="{{ orden.cliente.tipo_documento }}"
+                data-numero_documento="{{ orden.cliente.numero_documento }}">
+                @{{ orden.cliente.usuario.username }}
+            </a>
+            <span class="ver-mas-link" onclick="toggleDetalle('detalle-{{ orden.id }}')">Ver más</span>
+        </div>
+        <div id="detalle-{{ orden.id }}" class="orden-detalle">
+            <div>
+                <b>Productos:</b>
+                <ul class="ordenes-card-list">
+                    {% for producto in orden.productos_orden.all %}
+                    <li>
+                        {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <b>Total:</b> ${{ orden.total }}<br>
+                <b>Fecha:</b> {{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}<br>
+                <b>Dirección:</b> {{ orden.direccion_envio }}<br>
+                <b>Método de Pago:</b> {{ orden.metodo_pago|capfirst }}
+            </div>
+        </div>
+        <div class="ordenes-card-footer">
+            <form method="post" action="{% url 'cambiar_estado_orden' orden.id %}" style="display:inline;">
+                {% csrf_token %}
+                <select name="nuevo_estado" class="form-select d-inline w-auto" style="display:inline-block;">
+                    <option value="pendiente" {% if orden.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="procesando" {% if orden.estado == 'procesando' %}selected{% endif %}>Procesando</option>
+                    <option value="completada" {% if orden.estado == 'completada' %}selected{% endif %}>Completada</option>
+                    <option value="cancelada" {% if orden.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-success ms-2">Actualizar Estado</button>
+            </form>
+            <a href="{% url 'descargar_factura' orden.id %}" class="btn btn-sm btn-outline-primary ms-2" title="Descargar factura">
+                <i class="fa-solid fa-file-pdf"></i> Factura
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info text-center">No hay órdenes pendientes o en proceso.</div>
+    {% endfor %}
 
-        // Script del Modal Cliente -->
-        document.addEventListener('DOMContentLoaded', function() {
-            const clienteModal  = new bootstrap.Modal(document.getElementById('clienteModal'));
+    <!-- Modal Cliente -->
+    <div class="modal fade" id="clienteModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
+                    <p><strong>Apellido:</strong> <span id="ClienteApellido"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="ClienteTelefono"></span></p>
+                    <p><strong>Tipo de Documento:</strong> <span id="clienteTipoDocumento"></span></p>
+                    <p><strong>N° documento:</strong> <span id="clienteNumeroDocumento"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            document.querySelectorAll('.cliente-info').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.getElementById('clienteNombre').innerText = `${item.getAttribute('data-first_name')}`;
-                    document.getElementById('ClienteApellido').innerText = `${item.getAttribute('data-last_name')}`;
-                    document.getElementById('ClienteTelefono').innerText = `${item.getAttribute('data-telefono')}`;
-                    document.getElementById('clienteTipoDocumento').innerText = `${item.getAttribute('data-tipo_documento')}`;
-                    document.getElementById('clienteNumeroDocumento').innerText = `${item.getAttribute('data-numero_documento')}`;
-                    clienteModal.show();
-                });
+    <h3 class="ordenes-title mt-5 mb-3"><i class="fa-solid fa-check-double me-2"></i>Órdenes Completadas</h3>
+    <div id="tabla-completadas" style="display: none;">
+        {% for orden in ordenes_completadas %}
+        <div class="ordenes-card">
+            <div class="ordenes-card-header">
+                <span class="ordenes-card-title">Orden #{{ orden.id }}</span>
+                <span class="ordenes-badge badge-{{ orden.estado }}">{{ orden.get_estado_display }}</span>
+            </div>
+            <div>
+                <b>Cliente:</b> {{ orden.cliente.usuario.username }}
+            </div>
+            <div>
+                <b>Productos:</b>
+                <ul class="ordenes-card-list">
+                    {% for producto in orden.productos_orden.all %}
+                    <li>
+                        {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <b>Total:</b> ${{ orden.total }}<br>
+                <b>Fecha:</b> {{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}<br>
+                <b>Dirección:</b> {{ orden.direccion_envio }}<br>
+                <b>Método de Pago:</b> {{ orden.metodo_pago|capfirst }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info text-center">No hay órdenes completadas.</div>
+        {% endfor %}
+    </div>
+
+    <h3 class="ordenes-title mt-5 mb-3" style="color:#ef4444;"><i class="fa-solid fa-ban me-2"></i>Órdenes Canceladas</h3>
+    <div id="tabla-canceladas" style="display: none;">
+        {% for orden in ordenes_canceladas %}
+        <div class="ordenes-card">
+            <div class="ordenes-card-header">
+                <span class="ordenes-card-title">Orden #{{ orden.id }}</span>
+                <span class="ordenes-badge badge-cancelada" style="background:#ef4444;">Cancelada</span>
+            </div>
+            <div>
+                <b>Cliente:</b> {{ orden.cliente.usuario.username }}
+            </div>
+            <div>
+                <b>Productos:</b>
+                <ul class="ordenes-card-list">
+                    {% for producto in orden.productos_orden.all %}
+                    <li>
+                        {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} x ${{ producto.precio_unitario }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <b>Total:</b> ${{ orden.total }}<br>
+                <b>Fecha:</b> {{ orden.fecha_creacion|date:"Y-m-d H:i:s" }}<br>
+                <b>Dirección:</b> {{ orden.direccion_envio }}<br>
+                <b>Método de Pago:</b> {{ orden.metodo_pago|capfirst }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info text-center">No hay órdenes canceladas.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Alternar visibilidad de órdenes completadas y canceladas
+    document.getElementById('btn-completadas').onclick = function() {
+        var tablaCompletadas = document.getElementById('tabla-completadas');
+        tablaCompletadas.style.display = tablaCompletadas.style.display === "none" ? "block" : "none";
+    };
+    document.getElementById('btn-canceladas').onclick = function() {
+        var tablaCanceladas = document.getElementById('tabla-canceladas');
+        tablaCanceladas.style.display = tablaCanceladas.style.display === "none" ? "block" : "none";
+    };
+
+    // Mostrar/ocultar detalle de orden
+    function toggleDetalle(id) {
+        var el = document.getElementById(id);
+        if (el.style.display === "none" || el.style.display === "") {
+            el.style.display = "block";
+        } else {
+            el.style.display = "none";
+        }
+    }
+
+    // Modal Cliente
+    document.addEventListener('DOMContentLoaded', function() {
+        const clienteModal  = new bootstrap.Modal(document.getElementById('clienteModal'));
+        document.querySelectorAll('.cliente-info').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('clienteNombre').innerText = `${item.getAttribute('data-first_name')}`;
+                document.getElementById('ClienteApellido').innerText = `${item.getAttribute('data-last_name')}`;
+                document.getElementById('ClienteTelefono').innerText = `${item.getAttribute('data-telefono')}`;
+                document.getElementById('clienteTipoDocumento').innerText = `${item.getAttribute('data-tipo_documento')}`;
+                document.getElementById('clienteNumeroDocumento').innerText = `${item.getAttribute('data-numero_documento')}`;
+                clienteModal.show();
             });
         });
-
-    </script>
+    });
+</script>
 {% endblock %}

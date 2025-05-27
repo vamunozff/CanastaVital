@@ -21,9 +21,17 @@
                 <button class="toggle-btn" type="button">
                     <i class="bi bi-house"></i>
                 </button>
-                <div class="sidebar-logo">
-                    <a href="/">Inicio</a>
-                </div>
+                    {% if user.is_authenticated %}
+                    {% if request.session.groups == 'Tienda' %}
+                        <div class="sidebar-logo">
+                            <a href="/index_tienda">Inicio</a>
+                        </div>
+                    {% elif request.session.groups == 'Cliente' %}
+                        <div class="sidebar-logo">
+                            <a href="/index_cliente">Inicio</a>
+                        </div>
+                    {% endif %}
+                    {% endif %}
             </div>
             <ul class="sidebar-nav">
                 <!-- Opciones específicas por rol -->
@@ -54,7 +62,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="" class="sidebar-link">
+                            <a href="/inventario/" class="sidebar-link">
                                 <i class="lni lni-popup"></i>
                                 <span>Gestión de inventario</span>
                             </a>
@@ -66,13 +74,13 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="/index_producto/" class="sidebar-link">
+                            <a href="/reporte_tienda/" class="sidebar-link">
                                 <i class="bi bi-pie-chart-fill"></i>
                                 <span>Análisis y reportes</span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="/index_producto/" class="sidebar-link">
+                            <a href="/configuracion_tienda/" class="sidebar-link">
                                 <i class="bi bi-gear-fill"></i>
                                 <span>Config. Métodos de pago</span>
                             </a>
@@ -92,6 +100,7 @@
                                 </li>
                             </ul>
                         </li>
+
                     {% elif request.session.groups == 'Cliente' %}
                         <li class="sidebar-item">
                             <a href="/perfil_cliente/" class="sidebar-link">
@@ -119,15 +128,9 @@
                         </li>
                     </li>
                     <li class="sidebar-item">
-                        <a href="" class="sidebar-link">
+                        <a href="/ver_promociones_activas/" class="sidebar-link">
                             <i class="bi bi-currency-exchange"></i>
                             <span>Ofertas y promociones</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="" class="sidebar-link">
-                            <i class="bi bi-border-width"></i>
-                            <span>Seguimiento de pedidos</span>
                         </a>
                     </li>
                         <li class="sidebar-item">
@@ -137,11 +140,12 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">
+                            <a href="/atencion_cliente/" class="sidebar-link">
                                 <i class="bi bi-person-gear"></i>
                                 <span>Atención al cliente</span>
                             </a>
                         </li>
+                        
                     {% elif request.session.groups == 'Administrador' %}
                     <li class="sidebar-item">
                         <a href="" class="sidebar-link">
@@ -210,22 +214,6 @@
                     {% endif %}
                 {% endif %}
 
-                <!-- Opciones comunes a todos los roles -->
-                <li class="sidebar-item">
-                    <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
-                        <i class="bi bi-receipt"></i>
-                        <span>Historial de ventas</span>
-                    </a>
-                    <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-                        <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">A la espera</a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">A la espera</a>
-                        </li>
-                    </ul>
-                </li>
             </ul>
 
             <div class="sidebar-footer">
@@ -242,10 +230,11 @@
         <div class="main">
             <nav class="navbar navbar-expand px-4 py-3">
                 <form action="#" class="d-none d-sm-inline-block">
-                    <label>Usuario: {{ user.username | upper }}</label>
+                    <label>Usuario: @{{ user.username }}</label>
                 </form>
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav ms-auto">
+
                         <li class="nav-item dropdown">
                             {% if user.is_authenticated %}
                                 <a href="#" class="nav-link dropdown-toggle" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -266,12 +255,23 @@
                                     {% endif %}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    {% if user.is_authenticated %}
+                                    {% if request.session.groups == 'Tienda' %}
                                     <li>
-                                        <a href="/perfil/" class="dropdown-item">
+                                        <a href="/perfil_tienda/" class="dropdown-item">
                                             <i class="bi bi-person-check"></i>
                                             <span>Perfil</span>
                                         </a>
                                     </li>
+                                    {% elif request.session.groups == 'Cliente' %}
+                                    <li>
+                                        <a href="/perfil_cliente/" class="dropdown-item">
+                                            <i class="bi bi-person-check"></i>
+                                            <span>Perfil</span>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% endif %}
                                     <li>
                                         <a href="#" class="dropdown-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="lni lni-timer"></i>
@@ -292,6 +292,8 @@
 
     <script src="{% static 'myapp/js/base.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </body>
 
 </html>

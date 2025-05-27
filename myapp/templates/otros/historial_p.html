@@ -2,65 +2,339 @@
 {% block title %}Historial de compra{% endblock %}
 
 {% block content %}
+<style>
+    .historial-section {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,.08);
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+    }
+    .historial-title {
+        color: #2563eb;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+    .historial-estado {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .historial-card {
+        border: none;
+        border-radius: 12px;
+        background: #f8fafc;
+        margin-bottom: 1rem;
+        transition: box-shadow .2s;
+    }
+    .historial-card:hover {
+        box-shadow: 0 4px 24px 0 rgba(60,72,88,.12);
+        background: #f1f5f9;
+    }
+    .historial-card .card-body {
+        padding: 1.2rem 1.5rem;
+    }
+    .historial-card .badge {
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 0.4em 0.8em;
+        border-radius: 8px;
+    }
+    .badge-completada { background: #059669; color: #fff; }
+    .badge-pendiente { background: #f59e42; color: #fff; }
+    .badge-procesando { background: #2563eb; color: #fff; }
+    .badge-cancelada { background: #ef4444; color: #fff; }
+    .historial-productos {
+        font-size: 0.97rem;
+        color: #475569;
+        margin-bottom: 0.2rem;
+    }
+    .historial-productos li {
+        margin-bottom: 0.1rem;
+    }
+</style>
 <div class="container mt-4">
-    <h4 class="text-center mb-4">Historial de Compras</h4>
+    <h4 class="text-center historial-title">Historial de Compras</h4>
 
-    <h5>Compras Completadas</h5>
-    {% if compras %}
-    <div class="list-group">
-        {% for compra in compras %}
-        <a href="#" class="list-group-item list-group-item-action">
-            <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">Orden #{{ compra.id }}</h5>
-                <small class="text-muted">Fecha: {{ compra.fecha_creacion|date:"d/m/Y" }}</small>
+    <div class="historial-section">
+        <div class="historial-estado">Compras Completadas</div>
+        {% if compras %}
+            {% for compra in compras %}
+            <div class="card historial-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold">Orden #{{ compra.id }}</span>
+                            <span class="badge badge-completada ms-2">{{ compra.get_estado_display }}</span>
+                        </div>
+                        <small class="text-muted">Fecha: {{ compra.fecha_creacion|date:"d/m/Y" }}</small>
+                    </div>
+                    <div class="mt-2">
+                        <span class="fw-semibold">Tienda:</span> {{ compra.tienda.nombre }}<br>
+                        <span class="fw-semibold">Total:</span> ${{ compra.total }}
+                    </div>
+                    <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrden{{ compra.id }}" role="button" aria-expanded="false" aria-controls="detalleOrden{{ compra.id }}">
+                            Leer más
+                        </a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrden{{ compra.id }}">
+                        <span class="fw-semibold">Productos:</span>
+                        <ul class="historial-productos">
+                            {% for producto in compra.productos_orden.all %}
+                            <li>
+                                {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="mt-3 text-end">
+                            <button 
+                                class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalFactura{{ compra.id }}">
+                                <i class="fa-solid fa-file-invoice"></i> Ver factura
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <p class="mb-1">Tienda: <strong>{{ compra.tienda.nombre }}</strong></p>
-            <p>Total: ${{ compra.total }}</p>
-            <p>Estado: {{ compra.get_estado_display }}</p>
 
-            <!-- Mostrar productos de la orden -->
-            <h6>Productos:</h6>
-            <ul>
-                {% for producto in compra.productos_orden.all %}
-                <li>
-                    {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
-                </li>
-                {% endfor %}
-            </ul>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p>No ha realizado compras aún.</p>
-    {% endif %}
 
-    <h5 class="mt-4">Órdenes Pendientes</h5>
-    {% if ordenes_pendientes %}
-    <div class="list-group">
-        {% for orden in ordenes_pendientes %}
-        <a href="#" class="list-group-item list-group-item-action">
-            <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">Orden #{{ orden.id }}</h5>
-                <small class="text-muted">Fecha: {{ orden.fecha_creacion|date:"d/m/Y" }}</small>
+<!-- Modal de Factura Minimalista -->
+<div class="modal fade" id="modalFactura{{ compra.id }}" tabindex="-1" aria-labelledby="modalFacturaLabel{{ compra.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px;">
+            <div class="modal-header" style="border-bottom: none; background: #f5f7fa;">
+                <h5 class="modal-title fw-bold" id="modalFacturaLabel{{ compra.id }}">Factura #{{ compra.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <p class="mb-1">Tienda: <strong>{{ orden.tienda.nombre }}</strong></p>
-            <p>Total: ${{ orden.total }}</p>
-            <p>Estado: {{ orden.get_estado_display }}</p>
-
-            <!-- Mostrar productos de la orden -->
-            <h6>Productos:</h6>
-            <ul>
-                {% for producto in orden.productos_orden.all %}
-                <li>
-                    {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
-                </li>
-                {% endfor %}
-            </ul>
-        </a>
-        {% endfor %}
+            <div class="modal-body px-4 py-3">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="flex-shrink-0 me-3">
+                        {% if compra.tienda.logo_url %}
+                            <img src="{{ compra.tienda.logo_url.url }}" alt="Logo tienda" style="max-width: 90px; max-height: 50px; border-radius: 8px; background: #fff; border: 1px solid #e5e7eb;">
+                        {% else %}
+                            <span class="text-muted small">Sin logo</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="font-size: 1.1rem;">{{ compra.tienda.nombre }}</div>
+                        <div class="text-muted small">Fecha: {{ compra.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                        <span class="badge rounded-pill" style="background: #2563eb1a; color: #2563eb;">{{ compra.get_estado_display }}</span>
+                    </div>
+                </div>
+                <div class="mb-3 p-3" style="background: #f8fafc; border-radius: 10px;">
+                    <div class="fw-semibold mb-1" style="color: #2563eb;">Datos del Cliente</div>
+                    <div class="mb-1"><span class="text-muted">Nombre:</span> {{ compra.cliente.usuario.get_full_name }}</div>
+                    <div class="mb-1"><span class="text-muted">Email:</span> {{ compra.cliente.usuario.email }}</div>
+                    {% if compra.direccion_envio %}
+                        <div class="mb-1"><span class="text-muted">Dirección:</span> {{ compra.direccion_envio.direccion }}, {{ compra.direccion_envio.ciudad }}, {{ compra.direccion_envio.departamento }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <div class="fw-semibold mb-2" style="color: #2563eb;">Productos</div>
+                    <ul class="list-group list-group-flush">
+                        {% for producto in compra.productos_orden.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0" style="background: transparent;">
+                            <span>
+                                {{ producto.producto_tienda.producto.nombre }} 
+                                <span class="text-muted small">x{{ producto.cantidad }}</span>
+                                {% if compra.promocion and producto.producto_tienda in compra.promocion.productos_aplicables.all %}
+                                    <i class="fa-solid fa-tag text-danger ms-2"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-placement="top"
+                                       title="Descuento: {{ compra.promocion.descuento_porcentaje }}%">
+                                    </i>
+                                    <span class="badge bg-success ms-2">-{{ compra.promocion.descuento_porcentaje }}%</span>
+                                {% endif %}
+                            </span>
+                            <span>
+                                <span class="fw-semibold">${{ producto.precio_unitario }}</span>
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="d-flex flex-column align-items-end gap-1">
+                    <div class="text-muted">Subtotal: <span class="fw-semibold text-dark">${{ compra.subtotal }}</span></div>
+                    <div class="text-muted">Descuento aplicado: <span class="fw-semibold text-dark">
+                        {% if compra.promocion %}
+                            -{{ compra.promocion.descuento_porcentaje }}%
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </span></div>
+                    <div class="text-muted">IVA: <span class="fw-semibold text-dark">${{ compra.iva }}</span></div>
+                    <div class="fs-5 fw-bold" style="color: #2563eb;">Total: ${{ compra.total }}</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0" style="background: #f5f7fa;">
+                <a href="{% url 'descargar_factura' compra.id %}" class="btn btn-primary rounded-pill px-4" onclick="return alertaDependenciasWeasyPrint();">
+                    <i class="fa-solid fa-file-arrow-down"></i> Descargar PDF
+                </a>
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <p>No tiene órdenes pendientes.</p>
-    {% endif %}
 </div>
+<!-- Fin Modal de Factura Minimalista -->
+
+<script>
+    // Inicializa los tooltips de Bootstrap para los iconos de descuento
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+ 
+            {% endfor %}
+        {% else %}
+            <p>No ha realizado compras aún.</p>
+        {% endif %}
+    </div>
+
+    <div class="historial-section">
+        <div class="historial-estado">Órdenes Pendientes</div>
+        {% if ordenes_pendientes %}
+            {% for orden in ordenes_pendientes %}
+            <div class="card historial-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold">Orden #{{ orden.id }}</span>
+                            <span class="badge badge-pendiente ms-2">{{ orden.get_estado_display }}</span>
+                        </div>
+                        <small class="text-muted">Fecha: {{ orden.fecha_creacion|date:"d/m/Y" }}</small>
+                    </div>
+                    <div class="mt-2">
+                        <span class="fw-semibold">Tienda:</span> {{ orden.tienda.nombre }}<br>
+                        <span class="fw-semibold">Total:</span> ${{ orden.total }}
+                    </div>
+                    <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenPendiente{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenPendiente{{ orden.id }}">
+                            Leer más
+                        </a>
+                        <a href="{% url 'seguimiento_pedido' orden.id %}" style="color:#1976d2; margin-left:12px;">Ver seguimiento</a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrdenPendiente{{ orden.id }}">
+                        <span class="fw-semibold">Productos:</span>
+                        <ul class="historial-productos">
+                            {% for producto in orden.productos_orden.all %}
+                            <li>
+                                {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No tiene órdenes pendientes.</p>
+        {% endif %}
+    </div>
+
+    <div class="historial-section">
+        <div class="historial-estado">Órdenes Procesando</div>
+        {% if ordenes_procesando and ordenes_procesando|length > 0 %}
+            {% for orden in ordenes_procesando %}
+            <div class="card historial-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold">Orden #{{ orden.id }}</span>
+                            <span class="badge badge-procesando ms-2">{{ orden.get_estado_display }}</span>
+                        </div>
+                        <small class="text-muted">Fecha: {{ orden.fecha_creacion|date:"d/m/Y" }}</small>
+                    </div>
+                    <div class="mt-2">
+                        <span class="fw-semibold">Tienda:</span> {{ orden.tienda.nombre }}<br>
+                        <span class="fw-semibold">Total:</span> ${{ orden.total }}
+                    </div>
+                    <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenProcesando{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenProcesando{{ orden.id }}">
+                            Leer más
+                        </a>
+                        <a href="{% url 'seguimiento_pedido' orden.id %}" style="color:#1976d2; margin-left:12px;">Ver seguimiento</a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrdenProcesando{{ orden.id }}">
+                        <span class="fw-semibold">Productos:</span>
+                        <ul class="historial-productos">
+                            {% for producto in orden.productos_orden.all %}
+                            <li>
+                                {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No tiene órdenes en proceso.</p>
+        {% endif %}
+    </div>
+
+    <div class="historial-section">
+        <div class="historial-estado">Órdenes Canceladas</div>
+        {% if ordenes_canceladas and ordenes_canceladas|length > 0 %}
+            {% for orden in ordenes_canceladas %}
+            <div class="card historial-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold">Orden #{{ orden.id }}</span>
+                            <span class="badge badge-cancelada ms-2">{{ orden.get_estado_display }}</span>
+                        </div>
+                        <small class="text-muted">Fecha: {{ orden.fecha_creacion|date:"d/m/Y" }}</small>
+                    </div>
+                    <div class="mt-2">
+                        <span class="fw-semibold">Tienda:</span> {{ orden.tienda.nombre }}<br>
+                        <span class="fw-semibold">Total:</span> ${{ orden.total }}
+                    </div>
+                    <div class="mt-2">
+                        <a class="btn btn-link p-0 leer-mas-link" data-bs-toggle="collapse" href="#detalleOrdenCancelada{{ orden.id }}" role="button" aria-expanded="false" aria-controls="detalleOrdenCancelada{{ orden.id }}">
+                            Leer más
+                        </a>
+                    </div>
+                    <div class="collapse mt-2" id="detalleOrdenCancelada{{ orden.id }}">
+                        <span class="fw-semibold">Productos:</span>
+                        <ul class="historial-productos">
+                            {% for producto in orden.productos_orden.all %}
+                            <li>
+                                {{ producto.producto_tienda.producto.nombre }} - Cantidad: {{ producto.cantidad }} - Precio Unitario: ${{ producto.precio_unitario }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No tiene órdenes canceladas.</p>
+        {% endif %}
+    </div>
+
+</div>
+<script>
+        function alertaDependenciasWeasyPrint() {
+            // Solo muestra el mensaje si estás en Windows y no tienes las dependencias
+            // Puedes eliminar este script cuando tengas todo instalado correctamente
+            {% if request.user.is_superuser %}
+            alert(
+                "Para descargar la factura en PDF necesitas tener instaladas las dependencias del sistema para WeasyPrint.\n\n" +
+                "En Windows, debes instalar:\n" +
+                "- GTK3 (https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases)\n" +
+                "- Agregar la carpeta bin de GTK3 a tu variable de entorno PATH\n\n" +
+                "Guía oficial: https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation"
+            );
+            {% endif %}
+            // Permite continuar con la descarga (el error real aparecerá si no tienes las dependencias)
+            return true;
+        }
+    </script>
 {% endblock %}
